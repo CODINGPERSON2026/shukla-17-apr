@@ -1,0 +1,315 @@
+<!-- Interview Pending Modal -->
+<div class="modal fade" id="view_company_interview_pending" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+  
+        <!-- Header -->
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold">
+            Interview Pending – Company Personnel
+          </h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal">
+          </button>
+        </div>
+  
+        <!-- Body -->
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Home State</th>
+                  <th>JCO</th>
+                </tr>
+              </thead>
+              <tbody id="pendingInterviewTable">
+                <tr>
+                  <td colspan="7" class="text-center text-muted">
+                    Loading data...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+  
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal">
+            Close
+          </button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="assignJcoModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+  
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold">
+            Available JCO's
+          </h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <div class="modal-body">
+          <input type="hidden" id="assignHomeState">
+  
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Home State</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="jcoListTable">
+                <tr>
+                  <td colspan="5" class="text-center text-muted">
+                    Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">
+            Close
+          </button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const companyModalEl = document.getElementById('view_company_interview_pending');
+    const assignJcoModalEl = document.getElementById('assignJcoModal');
+  
+    const companyModal = new bootstrap.Modal(companyModalEl);
+    const assignJcoModal = new bootstrap.Modal(assignJcoModalEl);
+  
+    companyModalEl.addEventListener('shown.bs.modal', fetchInterviewPending);
+  
+    function fetchInterviewPending() {
+      const tableBody = document.getElementById("pendingInterviewTable");
+  
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center text-muted">Loading...</td>
+        </tr>
+      `;
+  
+      fetch("/api/company/interview-pending")
+        .then(res => res.json())
+        .then(response => {
+          const data = response.pending_interviews || [];
+          tableBody.innerHTML = "";
+  
+          if (data.length === 0) {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="7" class="text-center text-danger">
+                  No interview pending records found
+                </td>
+              </tr>
+            `;
+            return;
+          }
+  
+          const grouped = {};
+          data.forEach(row => {
+            if (!grouped[row.home_state]) grouped[row.home_state] = [];
+            grouped[row.home_state].push(row);
+          });
+  
+          let srNo = 1;
+  
+          Object.entries(grouped).forEach(([state, rows]) => {
+            const hasJCO = rows.some(r => r.jco_name);
+  
+            rows.forEach(row => {
+              tableBody.innerHTML += `
+                <tr>
+                  <td>${srNo++}</td>
+                  <td>${row.army_number}</td>
+                  <td>${row.rank}</td>
+                  <td>${row.name}</td>
+                  <td>${row.company}</td>
+                  <td>${row.home_state}</td>
+                  <td>
+                    ${
+                      row.jco_name
+                        ? `<span class="text-success fw-semibold">${row.jco_name}</span>`
+                        : `<span class="text-muted">NO JCO</span>`
+                    }
+                  </td>
+                </tr>
+              `;
+            });
+  
+            if (!hasJCO) {
+              tableBody.innerHTML += `
+                <tr class="table-warning">
+                  <td colspan="6" class="fw-semibold text-center">
+                    No JCO assigned for <strong>${state}</strong>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      class="btn btn-sm btn-primary"
+                      onclick="openAssignJco('${state}')">
+                      Assign JCO
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }
+          });
+        })
+        .catch(() => {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="text-center text-danger">
+                Failed to load data
+              </td>
+            </tr>
+          `;
+        });
+    }
+  
+    /* 🔹 SAFE MODAL SWITCH */
+    function openAssignJco(homeState) {
+      document.getElementById("assignHomeState").value = homeState;
+  
+      // Close first modal
+      companyModal.hide();
+  
+      // Wait until fully hidden
+      companyModalEl.addEventListener(
+        'hidden.bs.modal',
+        () => {
+          loadJcos(homeState);
+          assignJcoModal.show();
+        },
+        { once: true }
+      );
+    }
+  
+    function loadJcos(homeState) {
+      const tableBody = document.getElementById("jcoListTable");
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted">Loading...</td>
+        </tr>
+      `;
+  
+      fetch(`/api/company/available-jcos?home_state=${encodeURIComponent(homeState)}`)
+        .then(res => res.json())
+        .then(response => {
+          const jcos = response.jcos || [];
+          tableBody.innerHTML = "";
+  
+          if (jcos.length === 0) {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center text-danger">
+                  No eligible JCO available
+                </td>
+              </tr>
+            `;
+            return;
+          }
+  
+          jcos.forEach((jco, index) => {
+            tableBody.innerHTML += `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${jco.army_number}</td>
+                <td>${jco.rank}</td>
+                <td>${jco.name}</td>
+                <td>${jco.home_state}</td>
+                <td>
+                  <button
+                    class="btn btn-sm btn-success"
+                    onclick="confirmAssignJco('${jco.army_number}', '${homeState}')">
+                    Assign
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+        });
+    }
+  
+    /* 🔹 BACK TO COMPANY MODAL (SMOOTH) */
+    assignJcoModalEl.addEventListener('hidden.bs.modal', () => {
+      companyModal.show();
+    });
+  
+    
+  </script>
+  <script>
+    function confirmAssignJco(armyNumber, homeState) {
+        if (!armyNumber || !homeState) {
+            alert("Invalid data. Army Number or Home State missing.");
+            return;
+        }
+    
+        const confirmMsg = `Assign JCO\n\nArmy No: ${armyNumber}\nAssigned Home State: ${homeState}`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+    
+        fetch('/assign_jco', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: JSON.stringify({
+                army_number: armyNumber,
+                additional_assigned_home_state: homeState
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("JCO assigned successfully ✔");
+                
+                // Optional: refresh list / update UI
+                location.reload();
+            } else {
+                alert(data.message || "Assignment failed");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Server error. Please try again.");
+        });
+    }
+    </script>
+    
+  
+  
+  

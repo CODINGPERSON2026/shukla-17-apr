@@ -1,0 +1,610 @@
+
+  <style>
+    /* ================= ROOT (SCOPED) ================= */
+    .leave-module {
+      --clr-bg: #f0f4f8;
+      --clr-surface: #ffffff;
+      --clr-card: #f7f9fc;
+      --clr-border: rgba(0,0,0,0.08);
+      --clr-header-bg: #1e40af;
+      --clr-header-bg2: #1d4ed8;
+      --clr-accent-green: #059669;
+      --clr-accent-amber: #d97706;
+      --clr-accent-blue: #1e40af;
+      --clr-text: #111827;
+      --clr-muted: #6b7280;
+      --radius: 16px;
+    }
+
+    /* ================= MODAL ================= */
+    .leave-module .modal-content {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .leave-module .modal-dialog { max-width: 880px; }
+
+    /* HEADER */
+    .leave-module .modal-header {
+      background: linear-gradient(135deg, var(--clr-header-bg), var(--clr-header-bg2));
+      border-bottom: none;
+      padding: 22px 28px 0;
+      flex-direction: column;
+      color: white;
+    }
+    .leave-module .modal-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .leave-module .modal-title { 
+      color: #fff; 
+      font-weight: 800; 
+      font-size: 1.5rem;
+    }
+    .leave-module .modal-subtitle { 
+      color: rgba(255,255,255,0.75); 
+      font-size: 0.95rem;
+    }
+
+    /* CLOSE BUTTON */
+    .leave-module .btn-close-custom {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: transparent;
+      color: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .leave-module .btn-close-custom:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ================= TABS ================= */
+    .leave-module .leave-tabs {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      padding: 4px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .leave-module .leave-tab-btn {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(255,255,255,0.75);
+      padding: 14px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .leave-module .leave-tab-btn.active {
+      background: #fff;
+      color: #1e40af;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* ================= BODY ================= */
+    .leave-module .modal-body {
+      padding: 24px 28px;
+      background: var(--clr-surface);
+    }
+
+    /* Tab Panels - IMPORTANT FIX */
+    .leave-module .tab-panel {
+      display: none;
+    }
+    .leave-module .tab-panel.active {
+      display: block;
+    }
+
+    /* ================= TABLE ================= */
+    .leave-module .table-wrap {
+      border-radius: 12px;
+      border: 1px solid var(--clr-border);
+      overflow-x: auto;
+      background: white;
+    }
+
+    .leave-module .table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .leave-module .table-wrap thead tr {
+      background: var(--clr-card);
+    }
+
+    .leave-module .table-wrap thead th {
+      font-size: 0.75rem;
+      color: var(--clr-muted);
+      padding: 14px 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .leave-module .table-wrap tbody td {
+      padding: 14px 16px;
+      color: var(--clr-text);
+      vertical-align: middle;
+    }
+
+    .leave-module .table-wrap tbody tr:hover {
+      background: #f0f9ff;
+    }
+
+    /* ================= BADGES & CHIPS ================= */
+    .leave-module .badge-pill {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .leave-module .badge-approved {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .leave-module .badge-type {
+      background: #eff6ff;
+      color: #1e40af;
+    }
+
+    .leave-module .pending-at-chip {
+      font-size: 0.8rem;
+      color: #92400e;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ================= EMPLOYEE CELL ================= */
+    .leave-module .emp-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .leave-module .emp-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .leave-module .emp-name { font-weight: 600; }
+    .leave-module .emp-id { font-size: 0.75rem; color: var(--clr-muted); }
+
+    /* ================= DATE RANGE ================= */
+    .leave-module .date-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .leave-module .date-arrow { color: var(--clr-muted); }
+
+    /* ================= FOOTER ================= */
+    .leave-module .modal-footer {
+      background: var(--clr-card);
+      border-top: 1px solid var(--clr-border);
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ================= SPINNER & EMPTY ================= */
+    .leave-module .spinner-wrap {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--clr-muted);
+    }
+
+    .leave-module .spinner-ring {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .leave-module .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--clr-muted);
+    }
+    .leave-module .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    /* Avatar Colors */
+    .leave-module .av0 { background: #ede9fe; color: #5b21b6; }
+    .leave-module .av1 { background: #d1fae5; color: #065f46; }
+    .leave-module .av2 { background: #fef3c7; color: #92400e; }
+    .leave-module .av3 { background: #fce7f3; color: #9d174d; }
+    .leave-module .av4 { background: #dbeafe; color: #1e40af; }
+  </style>
+</head>
+<body>
+
+  <div class="leave-module">
+    <!-- MODAL -->
+    <div class="modal fade" id="leaveModal" tabindex="-1" aria-labelledby="leaveModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+          <!-- Blue Header -->
+          <div class="modal-header">
+            <div class="modal-header-top">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="font-size: 1.8rem;">🗓️</div>
+                <div>
+                  <div class="modal-title" id="leaveModalLabel">Leave Status</div>
+                  <div class="modal-subtitle" id="modalSubtitle">Loading data…</div>
+                </div>
+              </div>
+              <button class="btn-close-custom" onclick="closeLeaveModal()" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="leave-tabs">
+              <button class="leave-tab-btn active" data-tab="approved" onclick="switchTab('approved')">
+                <i class="bi bi-check-circle-fill"></i> Approved
+                <span class="tab-badge badge bg-light text-dark ms-2" id="approved-count">0</span>
+              </button>
+              <button class="leave-tab-btn" data-tab="pending" onclick="switchTab('pending')">
+                <i class="bi bi-clock-fill"></i> Pending
+                <span class="tab-badge badge bg-light text-dark ms-2" id="pending-count">0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="modal-body">
+
+            <!-- Approved Panel -->
+            <div class="tab-panel active" id="panel-approved">
+              <div class="table-toolbar mb-3 d-flex justify-content-between align-items-center">
+                <div class="search-wrap" style="position: relative; width: 320px;">
+                  <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280;"></i>
+                  <input type="text" class="form-control ps-5" placeholder="Search by name or type…" 
+                         oninput="filterTable('approved', this.value)" id="search-approved">
+                </div>
+                <div class="result-count text-muted small" id="rc-approved">— records</div>
+              </div>
+
+              <div class="table-wrap">
+                <div class="spinner-wrap" id="spinner-approved">
+                  <div class="spinner-ring"></div>
+                  <div>Fetching approved leaves…</div>
+                </div>
+                <table id="table-approved" style="display: none;">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>Days</th>
+                      <th>Status</th>
+                      <th>Download Certificate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody-approved"></tbody>
+                </table>
+                <div class="empty-state" id="empty-approved" style="display: none;">
+                  <i class="bi bi-inbox"></i>
+                  <p>No approved leaves found.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Panel -->
+            <div class="tab-panel" id="panel-pending">
+              <div class="table-toolbar mb-3 d-flex justify-content-between align-items-center">
+                <div class="search-wrap" style="position: relative; width: 320px;">
+                  <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280;"></i>
+                  <input type="text" class="form-control ps-5" placeholder="Search by name or type…" 
+                         oninput="filterTable('pending', this.value)" id="search-pending">
+                </div>
+                <div class="result-count text-muted small" id="rc-pending">— records</div>
+              </div>
+
+              <div class="table-wrap">
+                <div class="spinner-wrap" id="spinner-pending">
+                  <div class="spinner-ring"></div>
+                  <div>Fetching pending leaves…</div>
+                </div>
+                <table id="table-pending" style="display: none;">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Leave Type</th>
+                      <th>Duration</th>
+                      <th>Days</th>
+                      <th>Pending At</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody-pending"></tbody>
+                </table>
+                <div class="empty-state" id="empty-pending" style="display: none;">
+                  <i class="bi bi-inbox"></i>
+                  <p>No pending leaves found.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div class="modal-footer">
+            <div class="footer-meta text-muted small" id="footer-meta">Last synced just now</div>
+            <button class="btn btn-primary btn-sm px-4" onclick="exportCSV()">
+              <i class="bi bi-download me-2"></i> Export CSV
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const API_URL = 'apply_leave/api/leaves';
+    let allData = { approved: [], pending: [] };
+    let currentTab = 'approved';
+    let modalInstance = null;
+
+    const AVATAR_COLORS = ['av0', 'av1', 'av2', 'av3', 'av4'];
+
+    function initials(name = '') {
+      return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+    }
+
+    function daysBetween(d1, d2) {
+      try {
+        const parse = s => {
+          const [d, m, y] = s.split('-');
+          return new Date(y, m - 1, d);
+        };
+        return Math.round(Math.abs(parse(d2) - parse(d1)) / 86400000) + 1;
+      } catch {
+        return '–';
+      }
+    }
+
+    function buildApprovedRow(r) {
+      const name = r.employee_name || r.name || 'Unknown';
+      const empId = r.employee_id || r.emp_id || '';
+      const armyNumber = r.army_number || empId; // fallback if not present
+      const ltype = r.leave_type || r.type || '–';
+      const from = r.from_date || r.start_date || '–';
+      const to = r.to_date || r.end_date || '–';
+      const avClass = AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+      const days = (from !== '–' && to !== '–') ? daysBetween(from, to) : '–';
+    
+      return `
+        <tr data-search="${(name + ltype).toLowerCase()}">
+          <td>
+            <div class="emp-cell">
+              <div class="emp-avatar ${avClass}">${initials(name)}</div>
+              <div>
+                <div class="emp-name">${name}</div>
+                ${empId ? `<div class="emp-id">#${empId}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td><span class="badge-pill badge-type">${ltype}</span></td>
+          <td><div class="date-range"><span>${from}</span><span class="date-arrow">→</span><span>${to}</span></div></td>
+          <td><strong>${days}</strong><small class="text-muted"> days</small></td>
+          <td><span class="badge-pill badge-approved"><i class="bi bi-check-circle"></i> Approved</span></td>
+    
+          <!-- NEW COLUMN -->
+         
+<td>
+    <button class="btn btn-sm btn-outline-primary"
+        onclick="downloadCertificate('${armyNumber}')"
+        title="Download Certificate">
+        <i class="fa-solid fa-download"></i>
+    </button>
+</td>
+        </tr>`;
+    }
+
+    function buildPendingRow(r) {
+      const name = r.employee_name || r.name || 'Unknown';
+      const empId = r.employee_id || r.emp_id || '';
+      const ltype = r.leave_type || r.type || '–';
+      const from = r.from_date || r.start_date || '–';
+      const to = r.to_date || r.end_date || '–';
+      const pendingAt = r.request_status || 'Pending';
+      const avClass = AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+      const days = (from !== '–' && to !== '–') ? daysBetween(from, to) : '–';
+
+      return `
+        <tr data-search="${(name + ltype + pendingAt).toLowerCase()}">
+          <td>
+            <div class="emp-cell">
+              <div class="emp-avatar ${avClass}">${initials(name)}</div>
+              <div>
+                <div class="emp-name">${name}</div>
+                ${empId ? `<div class="emp-id">#${empId}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td><span class="badge-pill badge-type">${ltype}</span></td>
+          <td><div class="date-range"><span>${from}</span><span class="date-arrow">→</span><span>${to}</span></div></td>
+          <td><strong>${days}</strong><small class="text-muted"> days</small></td>
+          <td><span class="pending-at-chip"><i class="bi bi-hourglass-split"></i> ${pendingAt}</span></td>
+        </tr>`;
+    }
+
+    function renderTable(type, rows) {
+      const tbody = document.getElementById(`tbody-${type}`);
+      const table = document.getElementById(`table-${type}`);
+      const spinner = document.getElementById(`spinner-${type}`);
+      const empty = document.getElementById(`empty-${type}`);
+      const rc = document.getElementById(`rc-${type}`);
+
+      spinner.style.display = 'none';
+
+      if (!rows || rows.length === 0) {
+        table.style.display = 'none';
+        empty.style.display = 'block';
+        rc.textContent = '0 records';
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => type === 'approved' ? buildApprovedRow(r) : buildPendingRow(r)).join('');
+      table.style.display = 'table';
+      empty.style.display = 'none';
+      rc.textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+    }
+
+    function filterTable(type, query) {
+      const tbody = document.getElementById(`tbody-${type}`);
+      const rows = tbody.querySelectorAll('tr');
+      const q = query.toLowerCase().trim();
+      let visible = 0;
+
+      rows.forEach(tr => {
+        const match = !q || tr.dataset.search.includes(q);
+        tr.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+
+      document.getElementById(`rc-${type}`).textContent = `${visible} record${visible !== 1 ? 's' : ''}`;
+
+      const empty = document.getElementById(`empty-${type}`);
+      const table = document.getElementById(`table-${type}`);
+      empty.style.display = visible === 0 ? 'block' : 'none';
+      table.style.display = visible === 0 ? 'none' : 'table';
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+
+      // Toggle tab buttons
+      document.querySelectorAll('.leave-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+
+      // Toggle panels - This was the main fix
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `panel-${tab}`);
+      });
+    }
+
+    async function fetchLeaves() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('API error');
+        allData = await res.json();
+      } catch (err) {
+        console.warn("Using fallback data:", err);
+        allData = {
+          approved: [
+            { employee_name: 'Aisha Mir', employee_id: 'EMP001', leave_type: 'Annual Leave', from_date: '01-04-2026', to_date: '03-04-2026' },
+            { employee_name: 'Rohan Sharma', employee_id: 'EMP002', leave_type: 'Sick Leave', from_date: '05-04-2026', to_date: '05-04-2026' },
+            { employee_name: 'Sara Khan', employee_id: 'EMP004', leave_type: 'Maternity', from_date: '10-03-2026', to_date: '09-04-2026' },
+          ],
+          pending: [
+            { employee_name: 'Umar Farooq', employee_id: 'EMP003', leave_type: 'Casual Leave', from_date: '17-04-2026', to_date: '18-04-2026', request_status: 'Pending Approval' },
+            { employee_name: 'Zara Sheikh', employee_id: 'EMP007', leave_type: 'Sick Leave', from_date: '19-04-2026', to_date: '19-04-2026', request_status: 'Pending Manager' },
+          ]
+        };
+      }
+
+      document.getElementById('approved-count').textContent = allData.approved.length;
+      document.getElementById('pending-count').textContent = allData.pending.length;
+
+      const total = allData.approved.length + allData.pending.length;
+      document.getElementById('modalSubtitle').textContent = `${total} total records • Company`;
+
+      document.getElementById('footer-meta').innerHTML = `Last synced <strong>${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</strong>`;
+
+      // Render both tables once
+      renderTable('approved', allData.approved);
+      renderTable('pending', allData.pending);
+    }
+
+    function openLeaveModal() {
+      const el = document.getElementById('leaveModal');
+      modalInstance = new bootstrap.Modal(el, { backdrop: true });
+      modalInstance.show();
+      fetchLeaves();
+    }
+
+    function closeLeaveModal() {
+      if (modalInstance) modalInstance.hide();
+    }
+
+    function exportCSV() {
+      const rows = allData[currentTab];
+      if (!rows || rows.length === 0) {
+        alert('No data to export.');
+        return;
+      }
+
+      const headers = Object.keys(rows[0]);
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => headers.map(h => `"${row[h] ?? ''}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${currentTab}_leaves_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+
+    // For testing - remove comment if you want auto open
+    // window.onload = () => openLeaveModal();
+function downloadCertificate(armyNumber) {
+    console.log("Downloading for:", armyNumber);
+    window.open(`/apply_leave/download_certificate/${armyNumber}?t=${Date.now()}`, '_blank');
+}
+  </script>
+</body>

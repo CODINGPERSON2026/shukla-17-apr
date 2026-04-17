@@ -1,0 +1,214 @@
+<!-- ==================== STATISTICS MODAL (prjStatsModal) ==================== -->
+<div class="modal fade" id="prjStatsModal" tabindex="-1" aria-labelledby="prjStatsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      
+      <!-- Header -->
+      <div class="modal-header text-white" 
+           style="background: linear-gradient(135deg, #0d6efd, #6610f2); padding: 1.5rem 2rem;">
+        <h5 class="modal-title fw-bold mb-0" id="prjStatsModalLabel">
+          <i class="fas fa-chart-bar me-2"></i>
+          Project Cost Statistics
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4" style="min-height: 520px; background: #f8f9fa;">
+        <div class="d-flex flex-column h-100">
+          <div class="mb-4">
+            <h6 class="fw-semibold text-secondary mb-1">Overview</h6>
+            <p class="text-muted small mb-0">
+              Total <strong>project_cost</strong> grouped by project head
+            </p>
+          </div>
+
+          <!-- Chart container -->
+          <div id="chartContainer" style="flex: 1; position: relative; min-height: 380px;">
+            <canvas id="statsCostByHeadChart"></canvas>
+          </div>
+
+          <!-- Footer note -->
+          <div class="mt-4 text-center small text-muted">
+            Data is aggregated from the <code>projects</code> table • Last updated: real-time
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer bg-light border-0">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary px-4" onclick="refreshStatsChart()">
+          <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Chart.js v4+ (latest stable)
+
+let statsChart = null;
+
+async function loadStatisticsChart() {
+    const canvas = document.getElementById('statsCostByHeadChart');
+    const container = document.getElementById('chartContainer');
+
+    if (!canvas || !container) {
+        console.warn("Chart elements not found");
+        return;
+    }
+
+    // Show loading
+    container.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading chart...</span>
+            </div>
+        </div>`;
+
+    try {
+        const response = await fetch('/projects/stats/cost_by_head');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Restore canvas
+        container.innerHTML = '';
+        container.appendChild(canvas);
+        canvas.style.display = 'block';
+
+        // Handle empty data
+        if (result.status !== 'success' || !Array.isArray(result.data) || result.data.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info text-center py-5 m-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No cost data available yet
+                </div>`;
+            return;
+        }
+
+        const data = result.data;
+        const labels = data.map(item => item.head || 'Unassigned');
+        const values = data.map(item => Number(item.total_cost) || 0);
+
+        // Destroy existing chart
+        if (statsChart instanceof Chart) {
+            statsChart.destroy();
+        }
+
+        // Generate distinct colors for each bar
+        const backgroundColors = labels.map((_, index) => {
+            const hue = (index * 137.5) % 360; // Golden angle for good distribution
+            return `hsla(${hue}, 85%, 58%, 0.85)`;
+        });
+
+        const borderColors = backgroundColors.map(color => color.replace('0.85', '0.95'));
+
+        // Create new chart with better bar spacing
+        statsChart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Cost (₹)',
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    maxBarThickness: 65,        // ← Prevents bars from becoming too wide
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: false 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const val = ctx.raw;
+                                const cnt = data[ctx.dataIndex]?.count || 0;
+                                return ` ₹ ${Number(val).toLocaleString('en-IN')}  (${cnt} project${cnt !== 1 ? 's' : ''})`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { 
+                            display: false 
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: (v) => '₹ ' + Number(v).toLocaleString('en-IN', { notation: 'compact' })
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error('Chart load error:', err);
+        
+        container.innerHTML = `
+            <div class="alert alert-danger text-center py-5 m-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Failed to load chart<br>
+                <small>${err.message || 'Network or server error'}</small>
+            </div>`;
+    }
+}
+
+// Refresh function (called from footer button)
+function refreshStatsChart() {
+    loadStatisticsChart();
+}
+
+// Open Statistics Modal (with dashboard modal handling)
+function openStatisticsModal() {
+    const dashboardModalEl = document.getElementById('projDash_modal');
+    const statsModalEl = document.getElementById('prjStatsModal');
+
+    if (!statsModalEl) return;
+
+    const dashboardModal = bootstrap.Modal.getInstance(dashboardModalEl) || 
+                           new bootstrap.Modal(dashboardModalEl);
+
+    const statsModal = new bootstrap.Modal(statsModalEl, {
+        backdrop: true,
+        keyboard: true
+    });
+
+    // Hide dashboard when stats modal opens
+    statsModalEl.addEventListener('show.bs.modal', () => {
+        dashboardModal.hide();
+    }, { once: true });
+
+    // Re-show dashboard when stats modal is closed
+    statsModalEl.addEventListener('hidden.bs.modal', () => {
+        dashboardModal.show();
+    }, { once: true });
+
+    // Show the modal
+    statsModal.show();
+
+    // Load chart after modal is visible
+    setTimeout(loadStatisticsChart, 400);
+}
+</script>

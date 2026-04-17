@@ -1,0 +1,454 @@
+<!-- Modal -->
+<div class="modal fade" id="personnelModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Assign Personnel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Search -->
+        <div class="d-flex mb-3">
+          <input type="text" id="searchInput" class="form-control me-2" placeholder="Enter army number">
+          <button class="btn btn-success" id="searchBtn">Search</button>
+        </div>
+
+        <p id="warningMessage" style="font-weight:bold;font-size:16px;"></p>
+
+        <!-- Action Selector -->
+        <div class="mb-3">
+          <label class="form-label">Select Action</label>
+          <select id="actionType" class="form-select">
+            <option value="">-- Select Action --</option>
+            <option value="det">Detachment</option>
+            <option value="posting">Posting</option>
+            <option value="TD">Attachment</option>
+            <option value="any_other">Any Other</option>
+          </select>
+        </div>
+
+        <!-- Location Dropdown -->
+        <div class="mb-3" id="locationBox">
+          <label class="form-label">Select Location</label>
+          <select id="locationDropdown" class="form-select"></select>
+        </div>
+        <!-- Posting Input Field -->
+<div class="mb-3" id="postingInputBox" style="display:none;">
+    <label class="form-label">Enter Posting Location</label>
+    <input type="text" id="postingInput" class="form-control" placeholder="Enter Posting Location">
+  </div>
+  
+
+        <!-- TD / Any Other -->
+        <div class="mb-3" id="remarksBox" style="display:none;">
+
+          <!-- TD -->
+          <div id="tdFields" style="display:none;">
+            <label class="form-label">TD Location</label>
+            <input type="text" id="tdLocation" class="form-control mb-2" placeholder="Enter TD Location">
+
+            <label class="form-label">Authority</label>
+            <input type="text" id="tdAuthority" class="form-control" placeholder="Enter Authority">
+          </div>
+
+          <!-- Any Other -->
+          <div id="otherFields" style="display:none;">
+            <label class="form-label">Enter Remarks</label>
+            <input type="text" id="remarksInput" class="form-control" placeholder="Enter reason...">
+          </div>
+
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Select</th>
+                <th>Army Number</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Trade</th>
+                <th>Coy</th>
+              </tr>
+            </thead>
+            <tbody id="personnelTableBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="assignBtn">Assign Selected</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% include 'modals/success-modal/modal.html' %}
+
+<script>
+let selectedPersonnel = new Set();
+const dropdown = document.getElementById('locationDropdown');
+const actionSelect = document.getElementById('actionType');
+const locationBox = document.getElementById('locationBox');
+const remarksBox = document.getElementById('remarksBox');
+const tdFields = document.getElementById('tdFields');
+const otherFields = document.getElementById('otherFields');
+const warningMessage = document.getElementById('warningMessage');
+const searchInput = document.getElementById('searchInput');
+const personnelTableBody = document.getElementById('personnelTableBody');
+const assignBtn = document.getElementById('assignBtn');
+const postingInputBox = document.getElementById('postingInputBox');
+const postingInput = document.getElementById('postingInput');
+
+// ACTION CHANGE
+// ACTION CHANGE
+actionSelect.addEventListener("change", async function () {
+    const action = this.value;
+
+    // Reset all
+    dropdown.innerHTML = "";
+    locationBox.style.display = "none";
+    postingInputBox.style.display = "none";
+    remarksBox.style.display = "none";
+    tdFields.style.display = "none";
+    otherFields.style.display = "none";
+
+    if (action === "posting") {
+
+        // ✅ Show input field instead of dropdown
+        postingInputBox.style.display = "block";
+
+    } else if (action === "det") {
+
+        locationBox.style.display = "block";
+
+        try {
+            const res = await fetch('/get_locations');
+
+            if (res.status === 401) {
+                warningMessage.innerText = "Please login again";
+                warningMessage.style.color = "red";
+                dropdown.innerHTML = '<option value="">Error loading locations</option>';
+                return;
+            }
+
+            const locations = await res.json();
+
+            if (locations.error) {
+                warningMessage.innerText = locations.error;
+                warningMessage.style.color = "red";
+                dropdown.innerHTML = '<option value="">Error loading locations</option>';
+            } else {
+                dropdown.innerHTML = locations
+                    .map(l => `<option value="${l.det_id}">${l.det_name}</option>`)
+                    .join('');
+            }
+
+        } catch (error) {
+            console.error('Error loading locations:', error);
+            dropdown.innerHTML = '<option value="">Error loading locations</option>';
+        }
+
+    } else if (action === "TD") {
+        remarksBox.style.display = "block";
+        tdFields.style.display = "block";
+
+    } else if (action === "any_other") {
+        remarksBox.style.display = "block";
+        otherFields.style.display = "block";
+    }
+});
+
+// LOAD DETACHMENTS ON MODAL OPEN
+document.getElementById('personnelModal').addEventListener('shown.bs.modal', async () => {
+    try {
+        const res = await fetch('/get_locations');
+        
+        if (res.status === 401) {
+            warningMessage.innerText = "Please login again";
+            warningMessage.style.color = "red";
+            dropdown.innerHTML = '<option value="">Error loading locations</option>';
+            return;
+        }
+        
+        const locations = await res.json();
+        
+        if (locations.error) {
+            warningMessage.innerText = locations.error;
+            warningMessage.style.color = "red";
+            dropdown.innerHTML = '<option value="">Error loading locations</option>';
+        } else {
+            dropdown.innerHTML = locations
+                .map(l => `<option value="${l.det_id}">${l.det_name}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading locations:', error);
+        dropdown.innerHTML = '<option value="">Error loading locations</option>';
+    }
+});
+
+// CLEAR ON MODAL CLOSE
+document.getElementById('personnelModal').addEventListener('hidden.bs.modal', () => {
+    // Clear all fields
+    searchInput.value = '';
+    actionSelect.value = '';
+    warningMessage.innerText = '';
+    personnelTableBody.innerHTML = '';
+    selectedPersonnel.clear();
+    assignBtn.disabled = true;
+    
+    // Reset visibility
+    locationBox.style.display = "block";
+    remarksBox.style.display = "none";
+    tdFields.style.display = "none";
+    otherFields.style.display = "none";
+    tdLocation.value = '';
+    tdAuthority.value = '';
+    remarksInput.value = '';
+});
+
+// SEARCH
+document.getElementById('searchBtn').addEventListener('click', async () => {
+  const query = searchInput.value.trim();
+  warningMessage.innerText = "";
+  assignBtn.disabled = true;
+  personnelTableBody.innerHTML = "";
+
+  if (!query) {
+      warningMessage.innerText = "Please enter Army Number";
+      warningMessage.style.color = "red";
+      return;
+  }
+
+  try {
+      const res = await fetch('/search_personnel', {
+          method: 'POST',
+          headers: {'Content-Type':'application/x-www-form-urlencoded'},
+          body: `army_number=${encodeURIComponent(query)}`
+      });
+
+      // Handle authentication errors
+      if (res.status === 401) {
+          warningMessage.innerText = "Please login again";
+          warningMessage.style.color = "red";
+          return;
+      }
+
+      // Handle forbidden access (different company)
+      if (res.status === 403) {
+          warningMessage.innerText = "Access denied - Personnel not in your company";
+          warningMessage.style.color = "red";
+          return;
+      }
+
+      const personnel = await res.json();
+
+      // Handle other errors
+      if (personnel.error) {
+          warningMessage.innerText = personnel.error;
+          warningMessage.style.color = "red";
+          return;
+      }
+
+      if (!personnel || personnel.length === 0) {
+          warningMessage.innerText = "Army number not found in your company";
+          warningMessage.style.color = "red";
+          return;
+      }
+
+      // Sort to show selected items first
+      personnel.sort((a,b)=>selectedPersonnel.has(b.army_number)-selectedPersonnel.has(a.army_number));
+      
+      // Clear table
+      personnelTableBody.innerHTML = "";
+
+      // Populate table
+      personnel.forEach(p => {
+        personnelTableBody.innerHTML += `
+          <tr>
+            <td><input type="checkbox" class="personnel-checkbox" data-id="${p.army_number}" ${selectedPersonnel.has(p.army_number)?"checked":""}></td>
+            <td>${p.army_number}</td>
+            <td>${p.rank}</td>
+            <td>${p.name}</td>
+            <td>${p.trade}</td>
+            <td>${p.company}</td>
+          </tr>`;
+      });
+
+      // Check personnel availability
+      const p = personnel[0];
+      if (p.posting_status || p.leave_status || p.det_status) {
+          warningMessage.innerText = "Personnel not available for assignment";
+          warningMessage.style.color = "red";
+          assignBtn.disabled = true;
+          return;
+      }
+
+      warningMessage.innerText = "Personnel is Available";
+      warningMessage.style.color = "green";
+      assignBtn.disabled = false;
+
+  } catch (error) {
+      console.error('Search error:', error);
+      warningMessage.innerText = "Error searching personnel";
+      warningMessage.style.color = "red";
+  }
+});
+
+// CHECKBOX TRACK
+document.addEventListener('change', e => {
+  if (e.target.classList.contains('personnel-checkbox')) {
+      const id = e.target.dataset.id;
+      if (e.target.checked) {
+          selectedPersonnel.add(id);
+      } else {
+          selectedPersonnel.delete(id);
+      }
+      
+      // Enable/disable assign button based on selection
+      assignBtn.disabled = selectedPersonnel.size === 0;
+  }
+});
+
+// SUBMIT ASSIGNMENT
+assignBtn.addEventListener('click', async () => {
+    let remarks = "";
+    const action = actionSelect.value;
+    const tdLocation = document.getElementById('tdLocation');
+    const tdAuthority = document.getElementById('tdAuthority');
+    const remarksInput = document.getElementById('remarksInput');
+
+    // Validate action
+    if (!action) {
+        showStatusModal("Please select an action first", "Red", 2500);
+        return;
+    }
+
+    // Validate based on action type
+    if (action === "TD") {
+        const loc = tdLocation.value.trim();
+        const auth = tdAuthority.value.trim();
+        if (!loc || !auth) {
+            showStatusModal("Please enter TD Location and Authority", "Red", 2500);
+            return;
+        }
+        remarks = `Location: ${loc}, Authority: ${auth}`;
+
+    } else if (action === "any_other") {
+        remarks = remarksInput.value.trim();
+        if (!remarks) {
+            showStatusModal("Please enter Remarks", "Red", 2500);
+            return;
+        }
+
+    }
+    else if (action === "posting") {
+
+        remarks = postingInput.value.trim();
+    
+        if (!remarks) {
+            showStatusModal("Please enter Posting Location", "Red", 2500);
+            return;
+        }
+    
+    } 
+
+
+     else {
+        remarks = dropdown.value;
+        if (!remarks) {
+            showStatusModal("Please select a Location", "Red", 2500);
+            return;
+        }
+    }
+
+    // Validate selection
+    if (selectedPersonnel.size === 0) {
+        showStatusModal("Please select at least one personnel", "Red", 2500);
+        return;
+    }
+
+    // Disable button to prevent double click
+    assignBtn.disabled = true;
+    assignBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Assigning...';
+
+    try {
+        const res = await fetch('/assign_personnel', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                army_number: [...selectedPersonnel],
+                status: action,
+                remarks: remarks
+            })
+        });
+
+        const data = await res.json();
+
+        // Reset button state
+        assignBtn.disabled = false;
+        assignBtn.innerHTML = 'Assign Selected';
+
+        // Handle responses
+        if (res.status === 401) {
+            showStatusModal("Please login again", "Red", 2500);
+            return;
+        }
+
+        if (res.status === 403) {
+            showStatusModal(`Error: ${data.error}`, "Red", 2500);
+            return;
+        }
+
+        if (res.status === 400) {
+            showStatusModal(`Error: ${data.error}`, "Red", 2500);
+            return;
+        }
+
+        if (res.ok) {
+            showStatusModal(`Personnel ${data.message}`, "Green", 2500);
+            // Close modal and refresh after delay
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('personnelModal'));
+                modal.hide();
+                location.reload();
+            }, 2500);
+        } else {
+            showStatusModal(`Error: ${data.error || 'Unknown error'}`, "Red", 2500);
+        }
+
+    } catch (error) {
+        console.error('Assignment error:', error);
+        assignBtn.disabled = false;
+        assignBtn.innerHTML = 'Assign Selected';
+        showStatusModal("Network error. Please try again.", "Red", 2500);
+    }
+});
+
+// Utility function to show status modal
+function showStatusModal(message, color, duration) {
+    // You can implement this based on your existing modal system
+    // If you have a toast or notification system, use that instead
+    alert(message); // Temporary - replace with your modal/toast
+    
+    // Or if you have a custom modal:
+    // const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+    // document.getElementById('statusMessage').textContent = message;
+    // document.getElementById('statusMessage').style.color = color;
+    // statusModal.show();
+    // setTimeout(() => statusModal.hide(), duration);
+}
+
+// Optional: Press Enter to search
+searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+    }
+});
+</script>

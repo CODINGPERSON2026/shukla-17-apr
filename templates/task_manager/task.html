@@ -1,0 +1,479 @@
+{% extends "baseView.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-free-7.1.0-web/css/all.min.css') }}" />
+
+<style>
+  
+
+  /* Active button */
+  .active-btn {
+    background-color: #82a6db !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Smooth form transition */
+  #createTaskForm {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+
+  #createTaskForm.show {
+    opacity: 1;
+    max-height: 1200px;
+    margin-bottom: 2rem;
+  }
+
+  /* Sticky table header */
+  #taskTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0d6efd;
+    color: white;
+  }
+
+  /* Icon hover effect */
+  #taskTable button:hover i {
+    transform: scale(1.25);
+    transition: transform 0.2s;
+  }
+
+  /* Loader */
+  .dots-loader {
+    width: 60px;
+    display: flex;
+    justify-content: space-between;
+    margin: 20px auto;
+  }
+
+  .dots-loader::before,
+  .dots-loader::after,
+  .dots-loader div {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: #0d6efd;
+    border-radius: 50%;
+    animation: bounce 0.6s infinite alternate;
+  }
+
+  .dots-loader div {
+    animation-delay: .2s;
+  }
+
+  .dots-loader::after {
+    animation-delay: .4s;
+  }
+
+  @keyframes bounce {
+    from {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+
+    to {
+      transform: translateY(-10px);
+      opacity: 1;
+    }
+  }
+
+  /* === IMPROVED SEARCH RESULTS DROPDOWN === */
+  #searchResults {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+  }
+
+  #searchResults.show {
+    display: block;
+  }
+
+  #searchResults .list-group-item {
+    padding: 10px 15px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  #searchResults .list-group-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  #searchResults .list-group-item:last-child {
+    border-bottom: none;
+  }
+
+  #searchResults .no-results {
+    padding: 12px 15px;
+    color: #6c757d;
+    font-style: italic;
+  }
+</style>
+
+  {% set header = "Task Management" %}
+  {% set subscript = "Create tasks → View tasks → Update tasks → Assign tasks" %}
+  {% include 'navbar/navbar.html' %}
+
+  <!-- Buttons Row -->
+  <div class="container mt-4">
+    <div class="card shadow-sm p-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <button id="btnCreateTask" class="btn btn-primary btn-md">Create Task</button>
+        </div>
+        <div class="col-auto">
+          <button id="btnViewTask" class="btn btn-primary btn-md">View Tasks</button>
+        </div>
+        <!-- <div class="col-md-4 ms-auto">
+          <form method="GET">
+            <input type="text" name="query" class="form-control" placeholder="Search for a task...">
+          </form>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Task Form -->
+  <div class="container mt-4" id="createTaskForm">
+    <div class="card shadow-sm p-4">
+      <h4>Create New Task</h4>
+      <hr>
+      <form id="taskForm">
+        <div class="mb-3">
+          <label class="form-label">Task Name</label>
+          <input type="text" class="form-control" name="task_name" required placeholder="Enter task name">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" name="description" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Priority</label>
+          <select class="form-control" name="priority" required>
+            <option value="">Select Priority</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+        <div class="mb-3 position-relative">
+          <label class="form-label">Assigned To</label>
+          <input type="text" id="searchPersonnel" class="form-control mb-2" placeholder="Search personnel..."
+            autocomplete="off" required>
+          <div id="searchResults"></div>
+          <input type="hidden" name="assigned_to" id="assignedTo" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Due Date</label>
+          <input type="date" class="form-control" name="due_date" required>
+        </div>
+        <button type="submit" class="btn btn-success">Save Task</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Tasks Section -->
+  <div class="container mt-4" id="viewTaskSection" style="display:none;">
+    <div class="card shadow-sm p-4">
+      <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-outline-secondary filter-btn active" data-status="all">Show All</button>
+        <button class="btn btn-outline-success filter-btn" data-status="Completed">Completed</button>
+        <button class="btn btn-outline-warning filter-btn" data-status="In Progress">In Progress</button>
+        <button class="btn btn-outline-danger filter-btn" data-status="Pending">Pending</button>
+      </div>
+
+      <div class="table-responsive" style="max-height:650px;">
+        <div id="taskLoader" class="text-center py-5" style="display:none;">
+          <div class="dots-loader">
+            <div></div>
+          </div>
+          <p class="mt-2 text-muted">Loading tasks...</p>
+        </div>
+
+        <table class="table table-hover" id="taskTable" style="display:none;">
+          <thead class="table-primary">
+            <tr>
+              <th>Id</th>
+              <th>Task Name</th>
+              <th>Assigned To</th>
+              <th>Status</th>
+              <th style="width:210px;">Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% include 'modals/delete-confirmation/deleteConfirmation.html'%}
+{% include 'modals/view_task_status/task_status.html'%}
+{% include 'modals/view_task_status/editTaskModal.html'%}
+{% include 'modals/success-modal/modal.html'%}
+
+<script>
+  let tasksData = []; 
+  const btnCreate = document.getElementById("btnCreateTask");
+  const btnView = document.getElementById("btnViewTask");
+  const formDiv = document.getElementById("createTaskForm");
+  const viewSection = document.getElementById("viewTaskSection");
+  const taskTableBody = document.querySelector("#taskTable tbody");
+  const filterBtns = document.querySelectorAll(".filter-btn");
+  const taskForm = document.getElementById("taskForm");
+
+  // Toggle Create / View
+  btnCreate.addEventListener("click", () => {
+    const isVisible = formDiv.classList.contains("show");
+    formDiv.classList.toggle("show", !isVisible);
+    btnCreate.classList.toggle("active-btn", !isVisible);
+    btnView.classList.remove("active-btn");
+    viewSection.style.display = "none";
+  });
+
+  btnView.addEventListener("click", () => {
+    formDiv.classList.remove("show");
+    btnCreate.classList.remove("active-btn");
+    btnView.classList.add("active-btn");
+    viewSection.style.display = "block";
+    loadTasks("all");
+  });
+
+  // Create Task
+  taskForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!taskForm.checkValidity()) return taskForm.reportValidity();
+
+    const dueDate = new Date(taskForm.due_date.value);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (dueDate < today) return alert("Due date cannot be in the past.");
+
+    const data = {
+      task_name: taskForm.task_name.value,
+      description: taskForm.description.value,
+      priority: taskForm.priority.value,
+      assigned_to: taskForm.assigned_to.value,
+      due_date: taskForm.due_date.value,
+      assigned_by: "{{ session['user_id'] }}"
+    };
+
+    const res = await fetch("/task_manager/create-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+
+    if (result.status === "success") {
+      showStatusModal("Task created successfull!", "Green", 2500);
+      taskForm.reset();
+      document.getElementById("searchPersonnel").value = "";
+      formDiv.classList.remove("show");
+    } else {
+      alert("Error: " + result.message);
+    }
+  });
+
+
+  // Load & Render Tasks
+  async function loadTasks(status = "all") {
+    document.getElementById('taskLoader').style.display = 'block';
+    document.getElementById('taskTable').style.display = 'none';
+  
+    const res = await fetch("/task_manager/view_task");
+    const tasks = await res.json();
+    tasksData = tasks; // store globally
+    const filtered = status === "all" ? tasks : tasks.filter(t => t.task_status === status);
+    renderTasks(filtered);
+  
+    setTimeout(() => {
+      document.getElementById('taskLoader').style.display = 'none';
+      document.getElementById('taskTable').style.display = 'table';
+    }, 300);
+  }
+
+  function renderTasks(data) {
+    const taskTableBody = document.querySelector("#taskTable tbody");
+    taskTableBody.innerHTML = "";
+  
+    if (!data.length) {
+      taskTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No tasks found</td></tr>`;
+      return;
+    }
+  
+    data.forEach(task => {
+      const badge = task.task_status === "Pending" ? "bg-danger" :
+                    task.task_status === "In Progress" ? "bg-warning text-dark" :
+                    task.task_status === "Completed" ? "bg-success" : "bg-secondary";
+  
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${task.id}</td>
+        <td>${task.task_name}</td>
+        <!-- <td>${task.assigned_to}</td> -->
+        <td>
+        ${task.assigned_name || 'Unknown'}
+        <br>
+        <small class="text-muted">${task.assigned_to}</small>
+        </td>
+
+
+
+        <td><span class="badge ${badge}">${task.task_status || "Unknown"}</span></td>
+        <td>
+       <button class="btn btn-sm btn-info me-1 edit-btn" title="Edit" onClick="openEditModal(${task.id})">
+  <i class="fa-solid fa-pen"></i>
+</button>
+
+          <button class="btn btn-sm btn-danger delete-btn" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+          <button class="btn btn-sm btn-primary view-btn" title="View Details">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </td>
+      `;
+      taskTableBody.appendChild(row);
+  
+      // Edit button
+      
+      // Delete button
+      row.querySelector('.delete-btn').addEventListener('click', () => deleteTask(task.id));
+      // View button
+      row.querySelector('.view-btn').addEventListener('click', () => viewModal(task.id));
+    });
+  }
+  
+  // Filter buttons
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadTasks(btn.dataset.status);
+    });
+  });
+
+  // Filter buttons
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadTasks(btn.dataset.status);
+    });
+  });
+
+  // Personnel Search (Improved UI)
+  let debounceTimer;
+  document.getElementById("searchPersonnel").addEventListener("input", function () {
+    clearTimeout(debounceTimer);
+    const query = this.value.trim();
+
+    debounceTimer = setTimeout(() => {
+      if (query.length < 2) {
+        document.getElementById("searchResults").classList.remove("show");
+        return;
+      }
+
+      fetch(`/search_officer?name=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+          const box = document.getElementById("searchResults");
+          box.innerHTML = "";
+
+          if (data.length === 0) {
+            box.innerHTML = '<div class="no-results">No personnel found</div>';
+          } else {
+            data.forEach(item => {
+              const li = document.createElement("div");
+              li.className = "list-group-item";
+              li.textContent = `${item.name} | ${item.rank} | ${item.company} | ${item.army_number}`;
+              li.addEventListener("click", () => {
+                document.getElementById("assignedTo").value = item.army_number;
+                document.getElementById("searchPersonnel").value = `${item.name}`;
+                box.classList.remove("show");
+              });
+              box.appendChild(li);
+            });
+          }
+          box.classList.add("show");
+        });
+    }, 350);
+  });
+
+  // Hide dropdown when clicking outside
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#searchPersonnel") && !e.target.closest("#searchResults")) {
+      document.getElementById("searchResults").classList.remove("show");
+    }
+  });
+
+function deleteTask(taskId){
+  console.log(taskId)
+   let taskToDelete =  taskId
+   const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+   deleteModal.show()
+
+   const confirmDeleteBtn = document.getElementById('confirmDelete');
+confirmDeleteBtn.addEventListener('click', function () {
+    if (taskToDelete !== null) {
+        deleteBck(taskToDelete);
+        taskToDelete = null; // reset
+        // Hide the modal
+        const deleteModalEl = document.getElementById('deleteModal');
+        const modalInstance = bootstrap.Modal.getInstance(deleteModalEl);
+        modalInstance.hide();
+    }
+});
+
+}
+
+
+
+
+
+
+
+
+
+
+
+  //function to deltet the task
+  const confirmDeleteBtn = document.getElementById('confirmDelete');
+  function deleteBck(taskId) {
+
+    // User clicked OK
+    fetch(`/task_manager/delete_task/${taskId}`, {
+      method: 'DELETE'
+    })
+      .then(function (res) {
+        if (!res.ok) {
+          throw new Error('Server erro')
+        }
+        return res.json()
+      })
+      .then((data) => console.log(data))
+      .finally(() => {
+        showStatusModal("Task Deleted", "Red", 2000);
+
+        loadTasks()
+        
+      })
+      
+  }
+
+
+
+</script>
+
+{% endblock %}

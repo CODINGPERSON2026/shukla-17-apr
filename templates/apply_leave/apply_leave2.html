@@ -1,0 +1,375 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+<style>
+  .card {
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+
+  .toggle-btn {
+    cursor: pointer;
+    font-size: 18px;
+  }
+</style>
+
+<!-- Loader -->
+<div id="loadingOverlay" class="position-fixed top-50 start-50 translate-middle d-none" style="z-index:9999;">
+  <div class="spinner-border text-primary"></div>
+</div>
+
+<div class="content-wrapper">
+  {% set header = "Leave Management" %}
+  {% set subscript = "Search employee → Select employee → View leave balance → Apply leave" %}
+  {% include 'navbar/navbar.html' %}
+
+  <!-- SEARCH -->
+  <div class="card p-4 mb-4">
+    <h5>Search Employee</h5>
+    <div class="input-group">
+      <input type="text" id="searchArmyNumber" class="form-control" placeholder="Enter Army Number">
+      <button class="btn btn-primary" id="searchBtn">Search</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" class="card p-4 mb-4" style="display:none;">
+    <h5>Select Employee</h5>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Army No</th>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Trade</th>
+          <th>Section</th>
+          <th>Company</th>
+        </tr>
+      </thead>
+      <tbody id="resultsTable"></tbody>
+    </table>
+  </div>
+
+  <!-- LEAVE DETAILS -->
+  <div id="leaveDetailsDiv" class="card p-4" style="display:none;">
+
+    <!-- Toggle -->
+    <div class="d-flex justify-content-between align-items-center">
+      <h5>Leave Balance</h5>
+      <span id="toggleLeaveTable" class="toggle-btn">⬆️</span>
+    </div>
+
+    <div id="leaveBalanceTable">
+      <table class="table table-bordered mb-4">
+        <thead>
+          <tr>
+            <th>Leave Type</th>
+            <th>Total</th>
+            <th>Taken</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="leaveTable"></tbody>
+      </table>
+    </div>
+
+    <h6 class="fw-bold mb-3">Apply for Leave</h6>
+
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Leave Type</label>
+        <select id="leaveType" class="form-select"></select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" id="fromDate" class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" id="toDate" class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Total Leave Days</label>
+        <input type="number" id="days" class="form-control" readonly>
+      </div>
+
+      <!-- PREFIX / SUFFIX CHECKBOX -->
+      <div class="col-md-6">
+        <div class="form-check mt-4">
+          <input class="form-check-input" type="checkbox" id="prefixCheck">
+          <label class="form-check-label">
+            Prefix (Holiday before leave)
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="suffixCheck">
+          <label class="form-check-label">
+            Suffix (Holiday after leave)
+          </label>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <label class="form-label">Reason</label>
+        <textarea id="reason" class="form-control" rows="3" placeholder="Enter reason for leave"></textarea>
+      </div>
+
+      <div class="col-md-12">
+        <div id="leaveSummary" class="alert alert-info d-none"></div>
+      </div>
+
+      <div class="col-md-4 ms-auto">
+        <button id="applyLeaveBtn" class="btn btn-success w-100">
+          Apply Leave
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'modals/success-modal/modal.html'%}
+
+<script>
+  let selectedPersonArmyNumber = null;
+
+  const showLoading = () => loadingOverlay.classList.remove("d-none");
+  const hideLoading = () => loadingOverlay.classList.add("d-none");
+
+  /* Toggle leave balance table */
+  toggleLeaveTable.onclick = () => {
+    const div = document.getElementById("leaveBalanceTable");
+    if (div.style.display === "none") {
+      div.style.display = "block";
+      toggleLeaveTable.textContent = "⬆️";
+    } else {
+      div.style.display = "none";
+      toggleLeaveTable.textContent = "⬇️";
+    }
+  };
+
+  /* SEARCH */
+  searchBtn.onclick = async () => {
+    if (!searchArmyNumber.value.trim()) {
+      alert("Enter Army Number");
+      return;
+    }
+
+    showLoading();
+
+    const res = await fetch(
+      `/apply_leave/search_personnel?query=${searchArmyNumber.value}`
+    );
+    const data = await res.json();
+    console.log(data);
+
+    // ✅ CASE: Existing leave present
+    if (data.exists) {
+      const leave = data.existing_leave;
+      resultsSection.style.display = "block";
+      resultsTable.innerHTML = "";
+
+      // 🚫 Disable Apply button
+      applyLeaveBtn.disabled = false;
+
+      if (leave.request_status === "Approved") {
+        resultsTable.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; color:green; font-weight:bold;">
+          ✅ Your <b>${leave.leave_type}</b> leave has been
+          <b>APPROVED</b> for Army No <b>${leave.army_number}</b>.
+          <br><br>
+          <button class="btn btn-success"
+            onclick="downloadCertificate('${leave.army_number}')">
+            Download Leave Certificate
+          </button>
+        </td>
+      </tr>
+    `;
+      }
+      else if (leave.request_status === "Pending") {
+        resultsTable.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; color:orange; font-weight:bold;">
+          ⏳ Your <b>${leave.leave_type}</b> leave request for Army No
+          <b>${leave.army_number}</b> is currently
+          <b>PENDING</b>.
+          <br>Please wait until it is processed.
+        </td>
+      </tr>
+    `;
+      }
+      else if (leave.request_status === "Rejected") {
+        resultsTable.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; color:red; font-weight:bold;">
+          ❌ Your <b>${leave.leave_type}</b> leave request for Army No
+          <b>${leave.army_number}</b> has been
+          <b>REJECTED</b>.
+          <br>Please contact admin for details.
+        </td>
+      </tr>
+    `;
+
+        // ✅ Allow re-apply if rejected
+        applyLeaveBtn.disabled = false;
+      }
+      else {
+        resultsTable.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; color:red; font-weight:bold;">
+          Leave status:
+          <b>${leave.request_status}</b>
+        </td>
+      </tr>
+    `;
+      }
+
+      hideLoading();
+      return;
+    }
+
+
+
+
+
+    // ✅ CASE 2: No existing leave → show personnel list
+    resultsTable.innerHTML = "";
+    resultsSection.style.display = "block";
+
+    data.forEach(p => {
+      const r = resultsTable.insertRow();
+
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "selectPerson";
+      radio.onchange = () => {
+        selectedPersonArmyNumber = p.army_number;
+        personnel_name = p.name
+        getLeaveDetails(p.army_number, personnel_name);
+      };
+
+      r.insertCell().appendChild(radio);
+      r.insertCell().textContent = p.army_number;
+      r.insertCell().textContent = p.rank;
+      r.insertCell().textContent = p.name;
+      r.insertCell().textContent = p.trade;
+      r.insertCell().textContent = p.section;
+      r.insertCell().textContent = p.company;
+    });
+
+    hideLoading();
+  };
+
+  function downloadCertificate(armyNumber) {
+    window.location.href = `/apply_leave/leave/download_certificate/${armyNumber}`;
+  }
+  /* FETCH LEAVE DETAILS */
+  async function getLeaveDetails(id, name) {
+    showLoading();
+    const res = await fetch("/apply_leave/get_leave_details", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ person_id: id })
+    });
+    const data = await res.json();
+
+    leaveTable.innerHTML = "";
+    leaveType.innerHTML = "";
+    leaveDetailsDiv.style.display = "block";
+
+    data.leave_balance.forEach(l => {
+      leaveTable.insertRow().innerHTML =
+        `<td>${l.leave_type}</td>
+       <td>${l.total_leave}</td>
+       <td>${l.leave_taken}</td>
+       <td>${l.balance_leave}</td>`;
+
+      leaveType.add(new Option(l.leave_type, l.leave_type));
+    });
+    hideLoading();
+  }
+
+  /* ARMY LEAVE DAY CALCULATION */
+  function calculateLeaveDays() {
+    if (!fromDate.value || !toDate.value) return;
+
+    const from = new Date(fromDate.value);
+    const to = new Date(toDate.value);
+
+    if (to < from) {
+      alert("To Date cannot be before From Date");
+      toDate.value = "";
+      return;
+    }
+
+    // Base leave days (inclusive)
+    let totalDays = Math.floor((to - from) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Prefix & Suffix logic
+    if (prefixCheck.checked) totalDays += 1;
+    if (suffixCheck.checked) totalDays += 1;
+
+    days.value = totalDays;
+
+    leaveSummary.innerHTML = `
+    <strong>${totalDays} days ${leaveType.value}</strong><br>
+    Leave Period: ${fromDate.value} to ${toDate.value}<br>
+    Prefix: ${prefixCheck.checked ? "Yes (+1 day)" : "No"}<br>
+    Suffix: ${suffixCheck.checked ? "Yes (+1 day)" : "No"}
+  `;
+    leaveSummary.classList.remove("d-none");
+  }
+
+  [fromDate, toDate, prefixCheck, suffixCheck, leaveType]
+    .forEach(el => el.addEventListener("change", calculateLeaveDays));
+
+  /* APPLY LEAVE */
+  /* APPLY LEAVE */
+  applyLeaveBtn.onclick = async () => {
+    if (!selectedPersonArmyNumber) return alert("Select employee");
+    if (!days.value) return alert("Select leave dates");
+    if (!reason.value.trim()) return alert("Enter reason");
+
+    showLoading();
+
+    try {
+      const res = await fetch("/apply_leave/submit_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          person_id: selectedPersonArmyNumber,
+          leave_type: leaveType.value,
+          from_date: fromDate.value,
+          to_date: toDate.value,
+          total_days: days.value, // includes prefix/suffix automatically
+          reason: reason.value,
+          name: personnel_name
+        })
+      });
+
+      const response = await res.json();
+
+      console.log(response)
+      if (response.status === 'error') {
+        alert(response.error)
+      }
+      showStatusModal("Leave request has been sent", "Green", 2000);
+
+      setTimeout(() => {
+        if (res.ok) location.reload();
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to apply leave.");
+    } finally {
+      hideLoading();
+    }
+  };
+
+</script>
+
+{% endblock %}

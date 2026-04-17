@@ -1,0 +1,165 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+    <style>
+        .card {
+            border-radius: 15px;
+        }
+        .form-control:disabled {
+            background: #f0f0f0;
+        }
+        body {
+            background: #f8f9fa;
+        }
+        .page-title {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+       
+    </style>
+</head>
+
+<body>
+  <div class="content-wrapper">
+   {% set header = "Daily Vehicle Running Status" %}
+    {% set subscript = "Search vehicle → auto-fill type & class → enter trip details" %}
+{% include 'navbar/navbar.html' %}
+  </div>
+<div class="container py-4">
+
+    
+   
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <div class="card shadow-sm p-4">
+
+                <form id="runningForm">
+
+                    <!-- Vehicle Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Vehicle Number</label>
+                            <input type="text" id="vehicle_no" name="vehicle_no" class="form-control" placeholder="Enter vehicle number…" required>
+                        </div>
+
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" id="searchVehicle" class="btn btn-primary w-100">
+                                <i class="fa fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Auto Fields -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Type</label>
+                            <input type="text" id="type" name="type" class="form-control" >
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Class</label>
+                            <input type="text" id="class" name="class" class="form-control" >
+                        </div>
+                    </div>
+
+                    <!-- From-To -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">From</label>
+                            <input type="text" name="from_place" class="form-control" placeholder="Starting point…" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">To</label>
+                            <input type="text" name="to_place" class="form-control" placeholder="Destination…" required>
+                        </div>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <textarea name="remarks" rows="3" class="form-control" placeholder="Enter remarks…"></textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fa fa-save"></i> Save Entry
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- jQuery -->
+
+
+<!-- Search Vehicle AJAX -->
+<script>
+document.getElementById("searchVehicle").addEventListener("click", function () {
+    let vehicle_no = document.getElementById("vehicle_no").value.trim();
+    console.log('xyz', vehicle_no);
+
+    if (!vehicle_no) {
+        alert("Please enter a vehicle number");
+        return;
+    }
+
+    // Create form data
+    let formData = new FormData();
+    formData.append("vehicle_no", vehicle_no);
+   
+    fetch("/get_vehicle_details", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Vehicle not found");
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById("type").value = data.type;
+        document.getElementById("class").value = data.class;
+    })
+    .catch(() => {
+        alert("Vehicle not found!");
+        document.getElementById("type").value = "";
+        document.getElementById("class").value = "";
+    });
+});
+
+
+// Handle form submit
+document.getElementById("runningForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    let formElement = document.getElementById("runningForm");
+    let formData = new FormData(formElement);
+ console.log("form data", formData)
+    fetch("/submit_running", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        formElement.reset();
+    })
+    .catch(() => {
+        alert("Error saving data");
+    });
+});
+
+</script>
+
+
+{% endblock %}

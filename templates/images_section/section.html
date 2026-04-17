@@ -1,0 +1,320 @@
+<style>
+  /* ===== GLOBAL ===== */
+  html, body {
+      overflow-x: hidden;
+      background: #fff;
+  }
+  
+  /* ===== SECTION ===== */
+  .gallery-section {
+      padding: 20px 5vw 60px;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+  }
+  
+  /* ===== HEADER ===== */
+  .gallery-header {
+      margin-bottom: 10px;
+  }
+  
+  /* ===== TITLE ===== */
+  .gallery-title {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 900;
+      color: #000;
+      white-space: nowrap;
+  
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+      filter: blur(6px);
+      transition: all 0.8s ease;
+  }
+  
+  .gallery-title.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+  }
+  
+  /* ===== SUBTITLE ===== */
+  .gallery-subtitle {
+      font-size: 1rem;
+      color: #555;
+  
+      opacity: 0;
+      transform: translateY(20px);
+      filter: blur(4px);
+      transition: all 0.8s ease 0.2s;
+  }
+  
+  .gallery-subtitle.active {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+  }
+  
+  /* ===== CONTAINER ===== */
+  .gallery-container {
+      height: 60vh;
+      max-width: 1200px;
+      margin: 25px auto 0;
+      perspective: 1600px;
+      overflow: hidden;
+      position: relative;
+  }
+  
+  /* ===== TRACK ===== */
+  .gallery-track {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      transition: transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  
+  /* ===== ITEMS ===== */
+  .gallery-item {
+      flex: 0 0 55%;
+      margin: 0 15px;
+      position: relative;
+  
+      opacity: 0.35;
+      transform: scale(0.75) rotateY(25deg);
+      transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  
+  /* ===== IMAGE QUALITY FIX ===== */
+  .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* 🔥 NO CROPPING */
+      border-radius: 18px;
+  
+      image-rendering: auto;
+      backface-visibility: hidden;
+  
+      box-shadow: 0 30px 100px rgba(0,0,0,0.55);
+      transition: all 0.5s ease;
+  }
+  
+  /* ===== CENTER ACTIVE ===== */
+  .gallery-item.active {
+      opacity: 1;
+      transform: scale(1.15) rotateY(0deg);
+      z-index: 20;
+  }
+  
+  /* ===== SIDE ===== */
+  .gallery-item.left,
+  .gallery-item.right {
+      transform: scale(0.85) rotateY(25deg);
+      opacity: 0.5;
+  }
+  
+  /* ===== HOVER FULL VIEW ===== */
+  .gallery-item:hover {
+      transform: scale(1.25) !important;
+      z-index: 50;
+  }
+  
+  .gallery-item:hover img {
+      object-fit: contain;
+      transform: scale(1.05);
+      box-shadow: 0 40px 120px rgba(0,0,0,0.7);
+  }
+  
+  /* ===== DOTS ===== */
+  .gallery-indicators {
+      margin-top: 20px;
+  }
+  
+  .indicator {
+      width: 8px;
+      height: 8px;
+      background: #bbb;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+  }
+  
+  .indicator.active {
+      background: #000;
+      transform: scale(1.6);
+  }
+  </style>
+  
+  <section class="gallery-section">
+  
+      <div class="gallery-header">
+          <h1 class="gallery-title" id="title">Gallery</h1>
+          <p class="gallery-subtitle" id="subtitle"></p>
+      </div>
+  
+      <div class="gallery-container" id="container">
+          <div class="gallery-track" id="track"></div>
+      </div>
+  
+      <div class="gallery-indicators" id="indicators"></div>
+  
+  </section>
+  
+  <script>
+  class AppleStyleCarousel {
+      constructor() {
+          this.track = document.getElementById('track');
+          this.container = document.getElementById('container');
+  
+          this.titleEl = document.getElementById('title');
+          this.subtitleEl = document.getElementById('subtitle');
+  
+          this.data = [];
+          this.index = 0;
+  
+          this.raf = null;
+          this.lastTime = 0;
+          this.delay = 4500;
+          this.animating = false;
+          this.isPaused = false;
+  
+          this.init();
+      }
+  
+      async init() {
+          await this.load();
+          this.render();
+          this.update();
+          this.bind();
+          this.startAuto();
+      }
+  
+      async load() {
+          try {
+              const res = await fetch('/api/gallery');
+              this.data = await res.json();
+          } catch {
+              this.data = [
+                  {image:'1.jpg',title:'Image 1',subtitle:'Description 1'},
+                  {image:'2.jpg',title:'Image 2',subtitle:'Description 2'},
+                  {image:'3.jpg',title:'Image 3',subtitle:'Description 3'}
+              ];
+          }
+      }
+  
+      render() {
+          this.track.innerHTML = '';
+          const indicatorWrap = document.getElementById('indicators');
+          indicatorWrap.innerHTML = '';
+  
+          this.data.forEach((item,i)=>{
+              const div = document.createElement('div');
+              div.className = 'gallery-item';
+  
+              div.innerHTML = `<img src="/static/uploads/gallery/${item.image}" loading="lazy">`;
+  
+              // 🔥 HOVER PAUSE
+              div.addEventListener('mouseenter', () => this.pauseAuto());
+              div.addEventListener('mouseleave', () => this.resumeAuto());
+  
+              this.track.appendChild(div);
+  
+              const dot = document.createElement('span');
+              dot.className = 'indicator';
+              dot.onclick = ()=> this.go(i);
+  
+              indicatorWrap.appendChild(dot);
+          });
+      }
+  
+      updateText() {
+          this.titleEl.classList.remove('active');
+          this.subtitleEl.classList.remove('active');
+  
+          setTimeout(()=>{
+              this.titleEl.textContent = this.data[this.index].title;
+              this.subtitleEl.textContent = this.data[this.index].subtitle;
+  
+              requestAnimationFrame(()=>{
+                  this.titleEl.classList.add('active');
+                  this.subtitleEl.classList.add('active');
+              });
+          },200);
+      }
+  
+      update() {
+          const items = document.querySelectorAll('.gallery-item');
+          const dots = document.querySelectorAll('.indicator');
+  
+          items.forEach((el,i)=>{
+              el.classList.remove('active','left','right');
+  
+              if(i === this.index) el.classList.add('active');
+              else if(i === this.index-1) el.classList.add('left');
+              else if(i === this.index+1) el.classList.add('right');
+          });
+  
+          dots.forEach((d,i)=>{
+              d.classList.toggle('active', i === this.index);
+          });
+  
+          const itemWidth = items[0].offsetWidth + 30;
+          const offset = (this.container.offsetWidth - itemWidth)/2;
+  
+          this.track.style.transform =
+              `translateX(${-this.index * itemWidth + offset}px)`;
+  
+          this.updateText();
+      }
+  
+      next() {
+          if (this.animating || this.isPaused) return;
+  
+          this.animating = true;
+  
+          this.index = (this.index + 1) % this.data.length;
+          this.update();
+  
+          setTimeout(()=>{
+              this.animating = false;
+          },1600);
+      }
+  
+      go(i){
+          this.index = i;
+          this.update();
+      }
+  
+      bind(){
+          this.container.addEventListener('mouseenter', () => this.pauseAuto());
+          this.container.addEventListener('mouseleave', () => this.resumeAuto());
+      }
+  
+      startAuto() {
+          const loop = (time) => {
+              if (!this.lastTime) this.lastTime = time;
+  
+              if (!this.isPaused && (time - this.lastTime > this.delay)) {
+                  this.next();
+                  this.lastTime = time;
+              }
+  
+              this.raf = requestAnimationFrame(loop);
+          };
+  
+          this.raf = requestAnimationFrame(loop);
+      }
+  
+      pauseAuto() {
+          this.isPaused = true;
+      }
+  
+      resumeAuto() {
+          this.isPaused = false;
+          this.lastTime = performance.now();
+      }
+  }
+  
+  new AppleStyleCarousel();
+  </script>

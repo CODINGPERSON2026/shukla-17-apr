@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>
+    {% block title %}Army Personnel Management System{% endblock %}
+  </title>
+
+  <!-- Bootstrap & Font Awesome -->
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" />
+
+
+
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-free-7.1.0-web/css/all.min.css') }}" />
+
+
+
+  <style>
+    :root {
+      --saffron: #ff9933;
+      --white: #ffffff;
+      --green: #138808;
+      --accent: #000080;
+      --dark-bg: #0f2027;
+      --dark-bg-2: #203a43;
+      --dark-bg-3: #2c5364;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg,
+          var(--dark-bg) 0%,
+          var(--dark-bg-2) 50%,
+          var(--dark-bg-3) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background Decorative Layers */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 50%,
+          rgba(102, 126, 234, 0.15),
+          transparent 50%),
+        radial-gradient(circle at 80% 80%,
+          rgba(118, 75, 162, 0.15),
+          transparent 50%),
+        radial-gradient(circle at 40% 20%,
+          rgba(67, 233, 123, 0.1),
+          transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Navbar */
+    .navbar-custom {
+      background: linear-gradient(180deg,
+          var(--saffron),
+          var(--white) 50%,
+          var(--green));
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      padding: 1.2rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.6rem;
+      color: #000 !important;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .navbar-brand i {
+      font-size: 2rem;
+      background: linear-gradient(135deg, var(--saffron), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: brandPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes brandPulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+      }
+    }
+
+    .navbar-toggler {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    .nav-link {
+      color: #000 !important;
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 0.7rem 1.5rem !important;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--accent) !important;
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .nav-link.active {
+      background: var(--accent);
+      color: #fff !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 128, 0.3);
+    }
+
+    .brand-logo {
+      width: 45px;
+      height: 45px;
+      object-fit: contain;
+      animation: brandPulse 3s ease-in-out infinite;
+    }
+
+
+
+    .main-content {
+      padding: 2rem;
+      min-height: calc(100vh - 80px);
+      position: relative;
+      z-index: 1;
+    }
+
+    @media print {
+
+      .navbar-custom,
+      #loader {
+        display: none !important;
+      }
+    }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='logo1.png') }}" alt="Army Logo" class="brand-logo" />
+        <span>Army Personnel System</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="/">
+              <i class="fas fa-home me-2"></i>Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.endpoint == 'add_personnel_page' %}active{% endif %}"
+              href="/personnel_information/add-personnel">
+              <i class="fas fa-user-plus me-2"></i>Add Personnel
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/personnel_information/update-personnel">
+              <i class="fas fa-user-edit me-2"></i>Update Personnel
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/personnel_information/delete-personnel">
+              <i class="fas fa-user-minus me-2"></i>Delete Personnel
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">{% block content %}{% endblock %}</div>
+
+  <!-- Scripts -->
+
+  <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+
+  <script>
+
+
+
+    // Auto-collapse navbar on mobile after clicking link
+    const navLinks = document.querySelectorAll(".nav-link");
+    const navbarCollapse = document.querySelector(".navbar-collapse");
+    navLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth < 992 && navbarCollapse.classList.contains("show")) {
+          new bootstrap.Collapse(navbarCollapse).hide();
+        }
+      });
+    });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

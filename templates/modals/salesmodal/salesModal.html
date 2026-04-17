@@ -1,0 +1,60 @@
+
+<!-- Modal -->
+<div class="modal fade" id="salesModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sales Analytics</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="btn-group mb-3" role="group">
+          <button class="btn btn-outline-primary" onclick="loadData('daily')">Daily</button>
+          <button class="btn btn-outline-primary" onclick="loadData('monthly')">Monthly</button>
+          <button class="btn btn-outline-primary" onclick="loadData('yearly')">Yearly</button>
+        </div>
+
+        <canvas id="salesChart" height="120"></canvas>
+
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/static/Chart.umd.min.js"></script>
+<script>
+let chart;
+
+function renderChart(labels, liquor, grocery) {
+    const data = {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Liquor Sales',
+                data: liquor,
+            },
+            {
+                label: 'Grocery Sales',
+                data: grocery,
+            }
+        ]
+    };
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: data,
+    });
+}
+
+async function loadData(type) {
+    const response = await fetch(`/get_sales_data?type=${type}`);
+    const result = await response.json();
+    renderChart(result.labels, result.liquor, result.grocery);
+}
+</script>
+
+
+<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+

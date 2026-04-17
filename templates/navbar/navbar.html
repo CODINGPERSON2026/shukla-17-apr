@@ -1,0 +1,113 @@
+<!-- ================= HEADER WITH LEFT & RIGHT LOGO ================= -->
+
+<style>
+    /* ================= LIGHT THEME (UNCHANGED) ================= */
+    .page-title {
+        height: 130px;
+        background: linear-gradient(135deg, #3c425c 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        transition: all 0.3s ease;
+    }
+
+    /* ================= DARK ================= */
+    [data-theme="dark"] .page-title {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6);
+    }
+
+    /* ================= MILITARY ================= */
+    [data-theme="military"] .page-title {
+        background: linear-gradient(135deg, #2f4f3e 0%, #4a7c59 100%);
+        box-shadow: 0 10px 30px rgba(47, 79, 62, 0.45);
+    }
+
+    /* ================= OCEAN ================= */
+    [data-theme="ocean"] .page-title {
+        background: linear-gradient(135deg, #0f4c5c 0%, #1b7288 100%);
+        box-shadow: 0 10px 30px rgba(15, 76, 92, 0.45);
+    }
+
+    /* ================= SUNSET ================= */
+    [data-theme="sunset"] .page-title {
+        background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+        box-shadow: 0 10px 30px rgba(146, 64, 14, 0.45);
+    }
+
+    /* ================= PURPLE ================= */
+    [data-theme="purple"] .page-title {
+        background: linear-gradient(135deg, #4c1d95 0%, #7e22ce 100%);
+        box-shadow: 0 10px 30px rgba(76, 29, 149, 0.45);
+    }
+
+    .title-section {
+        text-align: center;
+        flex: 1;
+    }
+
+    .page-title h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    .page-title p {
+        margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .org-logo {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        border-radius: 20%;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(6px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .org-logo:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 768px) {
+        .page-title {
+            flex-direction: column;
+            height: auto;
+            text-align: center;
+        }
+
+        .org-logo {
+            width: 90px;
+            height: 90px;
+        }
+
+        .title-section {
+            order: 2;
+        }
+    }
+</style>
+
+<div class="page-title">
+    <img src="/static/image_for_login_page/rt.jpg" class="org-logo" alt="Left Logo">
+
+    <div class="title-section">
+        <h3 class="fw-bold">{{ header }}</h3>
+        <p id="para">{{ subscript }}</p>
+    </div>
+
+    <img src="/static/image_for_login_page/chinar.jpg" class="org-logo" alt="Right Logo">
+</div>

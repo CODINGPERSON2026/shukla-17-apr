@@ -1,0 +1,600 @@
+<style>
+  .leave-modal-wide {
+    min-height: 40%;
+  }
+</style>
+
+<!-- Leave Requests Modal -->
+<div class="modal fade" id="leaveRequestsModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Leave Requests</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab"
+              data-bs-target="#pending">Pending</button>
+          </li>
+          {%if role != 'CO' %}
+          <li class="nav-item">
+            <button class="nav-link" id="recommended-tab" data-bs-toggle="tab"
+              data-bs-target="#recommended">Approved</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected">Rejected</button>
+          </li>
+          {% endif %}
+        </ul>
+
+        <div class="tab-content">
+          <!-- Pending Tab -->
+          <div class="tab-pane fade show active" id="pending">
+            <div id="leaveRequestsSpinner" class="text-center my-3">
+              <div class="spinner-border text-primary"></div>
+            </div>
+            <table class="table table-striped d-none" id="leaveRequestsTable">
+              <thead>
+                <tr>
+                  <th>Army Number</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Leave Type</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leaveRequestsTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Recommended Tab -->
+          <div class="tab-pane fade" id="recommended">
+            <div id="recommendedSpinner" class="text-center my-3">
+              <div class="spinner-border text-success"></div>
+            </div>
+            <table class="table table-striped d-none" id="recommendedTable">
+              <thead>
+                <tr>
+                  <th>Army Number</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Leave Type</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recommendedTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Rejected Tab - Reason column removed -->
+          <div class="tab-pane fade" id="rejected">
+            <div id="rejectedSpinner" class="text-center my-3">
+              <div class="spinner-border text-danger"></div>
+            </div>
+            <table class="table table-striped d-none" id="rejectedTable">
+              <thead>
+                <tr>
+                  <th>Army Number</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Leave Type</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rejectedTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Leave Modal - Added Rejection Reason field -->
+<div class="modal fade" id="viewLeaveModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable leave-modal-wide">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Leave Request Details</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="viewLeaveSpinner" class="text-center my-4">
+          <div class="spinner-border text-primary"></div>
+        </div>
+
+        <div id="viewLeaveContent" class="d-none">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="fw-bold">Army Number</label>
+              <div class="form-control bg-light" id="v_army_number"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Rank</label>
+              <div class="form-control bg-light" id="v_rank"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Name</label>
+              <div class="form-control bg-light" id="name"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Company</label>
+              <div class="form-control bg-light" id="v_company"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Leave Days</label>
+              <div class="form-control bg-light" id="v_leave_days"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Leave Type</label>
+              <div class="form-control bg-light" id="v_leave_type"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">From Date</label>
+              <div class="form-control bg-light" id="v_from_date"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">To Date</label>
+              <div class="form-control bg-light" id="v_to_date"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Prefix Date</label>
+              <div class="form-control bg-light" id="v_prefix_date"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Suffix Date</label>
+              <div class="form-control bg-light" id="v_suffix_date"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Prefix Days</label>
+              <div class="form-control bg-light" id="v_prefix_days"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="fw-bold">Suffix Days</label>
+              <div class="form-control bg-light" id="v_suffix_days"></div>
+            </div>
+            <div class="col-12">
+              <label class="fw-bold">Reason</label>
+              <div class="form-control bg-light" style="min-height:80px" id="v_reason"></div>
+            </div>
+
+            <!-- Rejection Reason - Shown only for Rejected leaves -->
+            <div class="col-12 d-none" id="rejectionReasonContainer">
+              <label class="fw-bold text-danger">Rejection Reason</label>
+              <div class="form-control bg-light text-danger" style="min-height:80px" id="v_reject_reason"></div>
+            </div>
+
+            <div class="col-12">
+              <label class="fw-bold">Status</label>
+              <span class="badge fs-6" id="v_status"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button id="recommend-button" class="btn btn-success">Recommend</button>
+        <button id="reject-button" class="btn btn-danger">Reject</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Reason Modal -->
+<div class="modal fade" id="rejectReasonModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title">Reject Leave</h6>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="fw-bold mb-1">Rejection Reason</label>
+        <textarea id="rejectReason" class="form-control" rows="3" placeholder="Enter reason..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="submitRejectBtn">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global variables
+  let currentLeaveId = null;
+  let rejectLeaveId = null;
+
+  // Helper to hide/show rejection reason
+  function toggleRejectionReason(show, reason = '') {
+    const container = document.getElementById("rejectionReasonContainer");
+    const field = document.getElementById("v_reject_reason");
+    if (show) {
+      container.classList.remove("d-none");
+      field.innerText = reason || "No reason provided";
+    } else {
+      container.classList.add("d-none");
+    }
+  }
+
+  // Reject functions
+  document.getElementById("reject-button").addEventListener("click", () => {
+    if (!currentLeaveId) return alert("Leave ID missing");
+    rejectLeaveId = currentLeaveId;
+    document.getElementById("rejectReason").value = "";
+    new bootstrap.Modal(document.getElementById("rejectReasonModal")).show();
+  });
+
+  document.getElementById("submitRejectBtn").addEventListener("click", async () => {
+    const reason = document.getElementById("rejectReason").value.trim();
+    if (!reason) return alert("Please enter rejection reason");
+
+    try {
+      const res = await fetch("/apply_leave/reject_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leave_id: rejectLeaveId, reason })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed");
+
+      alert("Leave rejected successfully");
+      bootstrap.Modal.getInstance(document.getElementById("rejectReasonModal")).hide();
+      bootstrap.Modal.getInstance(document.getElementById("viewLeaveModal")).hide();
+
+      loadLeaveRequests();
+      loadRejectedLeaves();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Server error");
+    }
+  });
+
+  // View Leave (Pending)
+  async function viewLeaveRequest(id) {
+    currentLeaveId = id;
+    const modal = new bootstrap.Modal(document.getElementById("viewLeaveModal"));
+    modal.show();
+
+    document.getElementById("viewLeaveSpinner").classList.remove("d-none");
+    document.getElementById("viewLeaveContent").classList.add("d-none");
+    toggleRejectionReason(false);
+
+    try {
+      const res = await fetch(`/apply_leave/get_leave_request/${id}`);
+      const { data } = await res.json();
+      document.getElementById("v_prefix_date").innerText = data.prefix_date || "NIL";
+      document.getElementById("v_suffix_date").innerText = data.suffix_date || "NIL";
+      document.getElementById("v_prefix_days").innerText = data.prefix_days || 0;
+      document.getElementById("v_suffix_days").innerText = data.suffix_days || 0;
+      document.getElementById("v_army_number").innerText = data.army_number;
+      document.getElementById("v_rank").innerText = data.rank || "NIL";
+      document.getElementById("name").innerText = data.name;
+      document.getElementById("v_company").innerText = data.company || "NIL";
+      document.getElementById("v_leave_days").innerText = data.leave_days;
+      document.getElementById("v_leave_type").innerText = data.leave_type;
+      document.getElementById("v_from_date").innerText = data.from_date;
+      document.getElementById("v_to_date").innerText = data.to_date;
+      document.getElementById("v_reason").innerText = data.leave_reason;
+
+      const badge = document.getElementById("v_status");
+      badge.innerText = data.request_status || "Pending";
+      badge.className = "badge fs-6 bg-warning";
+
+      document.getElementById("recommend-button").classList.remove("d-none");
+      if (
+        data.leave_request_type === 'OR' &&
+        data.rank !== 'Subedar' &&
+        data.rank !== 'Naib Subedar' &&
+        data.rank !== 'Subedar Major'
+
+      ) {
+        document.getElementById('recommend-button').innerText = 'Sanction Leave';
+      } else if (
+        data.leave_request_type === 'OFFICER') {
+        document.getElementById('recommend-button').innerText = 'Sanction Leave';
+      } else {
+        document.getElementById('recommend-button').innerText = 'Recommend';
+      }
+
+      document.getElementById("reject-button").classList.remove("d-none");
+    } catch (err) {
+      alert("Failed to load details");
+    }
+
+    document.getElementById("viewLeaveSpinner").classList.add("d-none");
+    document.getElementById("viewLeaveContent").classList.remove("d-none");
+  }
+
+  // View Recommended Leave
+  async function viewRecommendedLeave(id) {
+    currentLeaveId = id;
+    const modal = new bootstrap.Modal(document.getElementById("viewLeaveModal"));
+    modal.show();
+
+    document.getElementById("viewLeaveSpinner").classList.remove("d-none");
+    document.getElementById("viewLeaveContent").classList.add("d-none");
+    toggleRejectionReason(false);
+
+    try {
+      const res = await fetch(`/apply_leave/get_leave_history/${id}`);
+      const data = await res.json();
+
+      document.getElementById("v_army_number").innerText = data.data.army_number;
+      document.getElementById("v_rank").innerText = data.data.rank || "NIL";
+      document.getElementById("name").innerText = data.data.name;
+      document.getElementById("v_company").innerText = data.data.company || "NIL";
+      document.getElementById("v_leave_days").innerText = data.data.leave_days;
+      document.getElementById("v_leave_type").innerText = data.data.leave_type;
+      document.getElementById("v_from_date").innerText = data.data.from_date;
+      document.getElementById("v_to_date").innerText = data.data.to_date;
+      document.getElementById("v_prefix_date").innerText = data.data.prefix_date || "NIL";
+      document.getElementById("v_suffix_date").innerText = data.data.suffix_date || "NIL";
+      document.getElementById("v_prefix_days").innerText = data.data.prefix_days || 0;
+      document.getElementById("v_suffix_days").innerText = data.data.suffix_days || 0;
+      document.getElementById("v_reason").innerText = data.data.leave_reason;
+
+      const badge = document.getElementById("v_status");
+      if (data.user_data.leave_request_type == 'OR') {
+        badge.innerText = "Leave has been Sanctioned";
+        badge.className = "badge fs-6 bg-success";
+      } else {
+        badge.innerText = data.data.request_status;
+        badge.className = "badge fs-6 bg-success";
+      }
+
+      document.getElementById("recommend-button").classList.add("d-none");
+      document.getElementById("reject-button").classList.add("d-none");
+    } catch (err) {
+      alert("Unable to load leave details");
+    }
+
+    document.getElementById("viewLeaveSpinner").classList.add("d-none");
+    document.getElementById("viewLeaveContent").classList.remove("d-none");
+  }
+
+  // View Rejected Leave - Shows rejection reason in modal
+  async function viewRejectedLeave(id) {
+    currentLeaveId = id;
+    const modal = new bootstrap.Modal(document.getElementById("viewLeaveModal"));
+    modal.show();
+
+    document.getElementById("viewLeaveSpinner").classList.remove("d-none");
+    document.getElementById("viewLeaveContent").classList.add("d-none");
+    toggleRejectionReason(false); // default hide
+
+    try {
+      const res = await fetch(`/apply_leave/get_leave_request/${id}`);
+      const { data } = await res.json();
+      document.getElementById("v_prefix_date").innerText = data.prefix_date || "NIL";
+      document.getElementById("v_suffix_date").innerText = data.suffix_date || "NIL";
+      document.getElementById("v_prefix_days").innerText = data.prefix_days || 0;
+      document.getElementById("v_suffix_days").innerText = data.suffix_days || 0;
+
+      document.getElementById("v_army_number").innerText = data.army_number;
+      document.getElementById("v_rank").innerText = data.rank || "NIL";
+      document.getElementById("name").innerText = data.name;
+      document.getElementById("v_company").innerText = data.company || "NIL";
+      document.getElementById("v_leave_days").innerText = data.leave_days;
+      document.getElementById("v_leave_type").innerText = data.leave_type;
+      document.getElementById("v_from_date").innerText = data.from_date;
+      document.getElementById("v_to_date").innerText = data.to_date;
+      document.getElementById("v_reason").innerText = data.leave_reason;
+
+      const badge = document.getElementById("v_status");
+      badge.innerText = data.request_status;
+      badge.className = "badge fs-6 bg-danger";
+
+      // Show rejection reason
+      toggleRejectionReason(true, data.reject_reason);
+
+      // Hide action buttons
+      document.getElementById("recommend-button").classList.add("d-none");
+      document.getElementById("reject-button").classList.add("d-none");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load rejected leave details");
+    }
+
+    document.getElementById("viewLeaveSpinner").classList.add("d-none");
+    document.getElementById("viewLeaveContent").classList.remove("d-none");
+  }
+
+  // Recommend button
+  document.getElementById("recommend-button").addEventListener("click", async () => {
+    if (!currentLeaveId) return alert("Leave ID missing");
+    if (!confirm("Are you sure you want to recommend this leave?")) return;
+
+    try {
+      const res = await fetch("/apply_leave/recommend_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leave_id: currentLeaveId })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed");
+
+      alert("Leave recommended successfully");
+      bootstrap.Modal.getInstance(document.getElementById("viewLeaveModal")).hide();
+      loadLeaveRequests();
+      loadRecommendedLeaves();
+    } catch (err) {
+      alert(err.message || "Server error");
+    }
+  });
+
+  // Load Pending
+  async function loadLeaveRequests() {
+    const spinner = document.getElementById("leaveRequestsSpinner");
+    const table = document.getElementById("leaveRequestsTable");
+    const tbody = document.getElementById("leaveRequestsTableBody");
+
+    spinner.classList.remove("d-none");
+    table.classList.add("d-none");
+    tbody.innerHTML = "";
+
+    try {
+      const res = await fetch("/apply_leave/get_leave_requests");
+      const { data } = await res.json();
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No leave requests found</td></tr>`;
+      } else {
+        data.forEach(row => {
+          tbody.innerHTML += `
+          <tr>
+            <td>${row.army_number}</td>
+            <td>${row.rank}</td>
+            <td>${row.name}</td>
+            <td>${row.company}</td>
+            <td>${row.leave_type}</td>
+            <td>${row.leave_days}</td>
+            <td><button class="btn btn-sm btn-primary" onclick="viewLeaveRequest(${row.id})">View</button></td>
+          </tr>`;
+        });
+      }
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>`;
+    }
+
+    spinner.classList.add("d-none");
+    table.classList.remove("d-none");
+  }
+
+  // Load Recommended
+  async function loadRecommendedLeaves() {
+    const spinner = document.getElementById("recommendedSpinner");
+    const table = document.getElementById("recommendedTable");
+    const tbody = document.getElementById("recommendedTableBody");
+
+    spinner.classList.remove("d-none");
+    table.classList.add("d-none");
+    tbody.innerHTML = "";
+
+    try {
+      const res = await fetch("/apply_leave/get_recommended_requests");
+      const data = await res.json();
+
+      if (!data.data || data.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No recommended leaves found</td></tr>`;
+      } else {
+        data.data.forEach(row => {
+          tbody.innerHTML += `
+          <tr>
+            <td>${row.army_number}</td>
+            <td>${row.rank}</td>
+            <td>${row.name}</td>
+            <td>${row.company}</td>
+            <td>${row.leave_type}</td>
+            <td>${row.leave_days}</td>
+            <td><button class="btn btn-sm btn-info" onclick="viewRecommendedLeave(${row.id})">View</button></td>
+          </tr>`;
+        });
+      }
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>`;
+    }
+
+    spinner.classList.add("d-none");
+    table.classList.remove("d-none");
+  }
+
+  // Load Rejected - No reason in table
+  async function loadRejectedLeaves() {
+    const spinner = document.getElementById("rejectedSpinner");
+    const table = document.getElementById("rejectedTable");
+    const tbody = document.getElementById("rejectedTableBody");
+
+    spinner.classList.remove("d-none");
+    table.classList.add("d-none");
+    tbody.innerHTML = "";
+
+    try {
+      const res = await fetch("/apply_leave/get_rejected_requests");
+      const { data } = await res.json();
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No rejected leaves found</td></tr>`;
+      } else {
+        data.forEach(row => {
+          tbody.innerHTML += `
+          <tr>
+            <td>${row.army_number}</td>
+            <td>${row.rank}</td>
+            <td>${row.name}</td>
+            <td>${row.company}</td>
+            <td>${row.leave_type}</td>
+            <td>${row.leave_days}</td>
+            <td>
+              <button class="btn btn-sm btn-danger me-1" onclick="viewRejectedLeave(${row.id})">View</button>
+              <button class="btn btn-sm btn-warning" onclick="undoReject(${row.id})">Undo</button>
+            </td>
+          </tr>`;
+        });
+      }
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>`;
+    }
+
+    spinner.classList.add("d-none");
+    table.classList.remove("d-none");
+  }
+
+  // Open modal and load active tab
+  document.getElementById("leaveRequestsBtn").addEventListener("click", () => {
+    const modal = new bootstrap.Modal(document.getElementById("leaveRequestsModal"));
+    modal.show();
+
+    const activeTab = document.querySelector("#leaveRequestsModal .nav-link.active");
+    if (activeTab.id === "pending-tab") loadLeaveRequests();
+    else if (activeTab.id === "recommended-tab") loadRecommendedLeaves();
+    else if (activeTab.id === "rejected-tab") loadRejectedLeaves();
+  });
+
+
+
+  async function undoReject(leaveId) {
+    alert(leaveId)
+    if (!confirm("Undo rejection and move back to pending?")) return;
+
+    try {
+      const res = await fetch("/apply_leave/undo_rejected_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leave_id: leaveId })
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed");
+
+      alert("Leave moved back to pending");
+      loadRejectedLeaves();
+      loadLeaveRequests();
+
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Server error");
+    }
+  }
+
+
+
+
+  // Load data when switching tabs
+  document.getElementById("pending-tab").addEventListener("shown.bs.tab", loadLeaveRequests);
+  document.getElementById("recommended-tab").addEventListener("shown.bs.tab", loadRecommendedLeaves);
+  document.getElementById("rejected-tab").addEventListener("shown.bs.tab", loadRejectedLeaves);
+</script>

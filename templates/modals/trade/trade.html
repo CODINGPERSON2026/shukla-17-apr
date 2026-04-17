@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Wise Manpower State</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #888; }
+    ::-webkit-scrollbar-corner { background: #f0f0f0; }
+
+    html, body {
+        height: 100%;
+        background: #f5f5f5;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #1a1a1a;
+    }
+
+    .page-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+        flex-shrink: 0;
+        background: #1a1a1a;
+        color: #fff;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .header h1 {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+    .header p {
+        font-size: 11px;
+        color: #aaa;
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+    }
+    .header-date {
+        margin-left: auto;
+        font-size: 12px;
+        color: #ccc;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    .btn-close-header {
+        background: #e53935;
+        border: none;
+        color: #fff;
+        width: 42px;
+        height: 42px;
+        border-radius: 6px;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, transform 0.1s;
+        flex-shrink: 0;
+        margin-left: 16px;
+    }
+    .btn-close-header:hover { background: #b71c1c; }
+    .btn-close-header:active { transform: scale(0.95); }
+
+    /* Controls */
+    .controls {
+        flex-shrink: 0;
+        background: #fff;
+        border-bottom: 2px solid #1a1a1a;
+        padding: 12px 20px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .control-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .date-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1.5px solid #ccc;
+        padding: 6px 12px;
+        border-radius: 5px;
+        background: #fafafa;
+    }
+    .date-selector label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+    }
+    .date-selector input[type="date"] {
+        border: none;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1a1a1a;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .btn {
+        padding: 7px 16px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.15s;
+        border: 1.5px solid transparent;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .btn-primary:hover:not(:disabled) { background: #333; }
+
+    .btn-outline { background: #fff; color: #1a1a1a; border-color: #1a1a1a; }
+    .btn-outline:hover:not(:disabled) { background: #f0f0f0; }
+
+    .btn-save { background: #fff; color: #1a1a1a; border-color: #1a1a1a; }
+    .btn-save:hover:not(:disabled) { background: #1a1a1a; color: #fff; }
+
+    .mode-badge {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border: 1.5px solid;
+    }
+    .mode-badge.view { border-color: #ccc; color: #666; background: #f9f9f9; }
+    .mode-badge.edit { border-color: #1a1a1a; color: #1a1a1a; background: #f0f0f0; }
+
+    /* Message bar */
+    .message-bar { flex-shrink: 0; height: 0; overflow: hidden; transition: height 0.2s; }
+    .message-bar.visible { height: 36px; }
+    .message-inner {
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .message-inner.success { background: #e8f5e9; color: #2e7d32; border-bottom: 2px solid #4caf50; }
+    .message-inner.error   { background: #fce4ec; color: #c62828; border-bottom: 2px solid #e53935; }
+    .message-inner.info    { background: #e3f2fd; color: #1565c0; border-bottom: 2px solid #1976d2; }
+    .message-inner.warning { background: #fff8e1; color: #e65100; border-bottom: 2px solid #fb8c00; }
+
+    /* Dual-scroll layout */
+    .scroll-container {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background: #f5f5f5;
+    }
+
+    /* Top mirror scrollbar */
+    .scroll-top {
+        flex-shrink: 0;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        height: 10px;
+        background: #e8e8e8;
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* Main area */
+    .table-outer {
+        flex: 1;
+        overflow: auto;
+        padding: 16px;
+    }
+
+    /* Table */
+    .table-wrap {
+        background: #fff;
+        border: 1.5px solid #1a1a1a;
+        border-radius: 6px;
+        overflow: hidden;
+        min-width: 1280px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead { position: sticky; top: 0; z-index: 10; }
+
+    thead tr:first-child th {
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 12px 8px 7px;
+        border-right: 1px solid #333;
+        text-align: center;
+    }
+    thead tr:first-child th:last-child { border-right: none; }
+    thead tr:first-child th[colspan] {
+        background: #333;
+        font-size: 10px;
+        letter-spacing: 2px;
+        border-bottom: 2px solid #555;
+    }
+
+    /* Present STR header — distinct teal accent */
+    thead tr:first-child th.present-header {
+        background: #1b4f4f;
+        border-bottom: 2px solid #2e7d6e;
+    }
+
+    thead tr:nth-child(2) th {
+        background: #2e2e2e;
+        color: #ccc;
+        font-size: 9.5px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 7px 8px 9px;
+        border-right: 1px solid #444;
+        border-bottom: 2px solid #555;
+        text-align: center;
+    }
+    thead tr:nth-child(2) th:last-child { border-right: none; }
+
+    /* Present sub-headers */
+    thead tr:nth-child(2) th.present-subheader {
+        background: #1b4f4f;
+        color: #a8d8d0;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #e8e8e8;
+        transition: background 0.1s;
+    }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    tbody tr:hover:not(.total-row):not(.template-info-row) { background: #f0f0f0; }
+
+    td {
+        padding: 8px 7px;
+        text-align: center;
+        font-size: 12.5px;
+        border-right: 1px solid #e8e8e8;
+        color: #1a1a1a;
+    }
+    td:last-child { border-right: none; }
+
+    td.sr-no {
+        font-size: 11px;
+        font-weight: 700;
+        color: #888;
+        background: #f7f7f7;
+        width: 42px;
+    }
+    td.trade-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        text-align: left;
+        padding-left: 14px;
+        background: #f7f7f7;
+        color: #111;
+        min-width: 105px;
+        letter-spacing: 0.3px;
+    }
+
+    td input[type="number"] {
+        width: 56px;
+        padding: 5px 4px;
+        border: 1.5px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        background: #fff;
+        color: #1a1a1a;
+        transition: border-color 0.15s;
+        -moz-appearance: textfield;
+    }
+    td input[type="number"]::-webkit-outer-spin-button,
+    td input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    td input[type="number"]:focus {
+        outline: none;
+        border-color: #1a1a1a;
+        background: #fafafa;
+    }
+    td input[type="number"]:disabled {
+        background: #f5f5f5;
+        border-color: #e8e8e8;
+        color: #aaa;
+        cursor: not-allowed;
+    }
+
+    /* Auto-calculated present cells */
+    td.present-calc {
+        font-weight: 700;
+        font-size: 13px;
+        background: #f0faf8;
+        color: #1b5e50;
+        border-right: 1px solid #c8e6e0;
+        min-width: 58px;
+    }
+    td.present-calc.negative {
+        color: #c62828;
+        background: #fff0f0;
+    }
+    td.present-calc:last-child { border-right: none; }
+
+    /* Total row */
+    tbody tr.total-row {
+        background: #f0f0f0;
+        border-top: 2px solid #1a1a1a;
+        border-bottom: none;
+    }
+    tbody tr.total-row td {
+        font-size: 13px;
+        font-weight: 800;
+        color: #1a1a1a;
+        padding: 10px 7px;
+    }
+    tbody tr.total-row td.present-calc {
+        background: #e0f5f0;
+        color: #1b5e50;
+    }
+    tbody tr.total-row:hover { background: #e8e8e8; }
+
+    .template-row { border-left: 3px solid #bbb; }
+    .template-info-row td {
+        background: #f5f5f5;
+        font-size: 11px;
+        font-weight: 600;
+        color: #555;
+        padding: 9px;
+        text-align: center;
+    }
+
+    .loading-overlay {
+        padding: 50px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #888;
+        letter-spacing: 1px;
+    }
+
+    /* Auto-calc legend badge */
+    .calc-legend {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #1b5e50;
+        background: #e0f5f0;
+        border: 1.5px solid #2e7d6e;
+        border-radius: 4px;
+        padding: 4px 9px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Footer */
+    .stat-footer {
+        flex-shrink: 0;
+        background: #fff;
+        border-top: 2px solid #1a1a1a;
+        padding: 7px 20px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        font-size: 11px;
+    }
+    .stat-item { display: flex; align-items: center; gap: 6px; }
+    .stat-sep  { color: #ddd; }
+    .stat-label{ color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .stat-val  { font-weight: 800; color: #1a1a1a; font-size: 12px; }
+    .stat-right{ margin-left: auto; color: #aaa; font-size: 11px; }
+
+    @media (max-width: 900px) {
+        .controls { flex-direction: column; align-items: stretch; }
+        .control-group { justify-content: center; }
+    }
+</style>
+</head>
+<body>
+<div class="page-shell">
+
+    <header class="header">
+        <div>
+            <h1>📊 Trade Wise Manpower State</h1>
+            <p>Daily Strength &amp; Distribution Report</p>
+        </div>
+        <div class="header-date" id="header-date">—</div>
+        <button class="btn-close-header" onclick="closeModal()" title="Close">✕</button>
+    </header>
+
+    <div class="controls">
+        <div class="control-group">
+            <div class="date-selector">
+                <label for="report-date">Date</label>
+                <input type="date" id="report-date" />
+            </div>
+            <button class="btn btn-primary" onclick="loadData()">🔍 Load</button>
+            <button class="btn btn-outline" onclick="toggleEditMode()" id="edit-btn">✏️ Edit</button>
+        </div>
+        <div class="control-group">
+            <span class="calc-legend">⚡ Present = Dist − State (Auto)</span>
+            <div class="mode-badge view" id="mode-indicator">👁 View Mode</div>
+            <button class="btn btn-save" onclick="saveData()" id="save-btn" disabled>💾 Save</button>
+            <button class="btn btn-outline" onclick="exportCSV()" id="export-btn">📥 Export CSV</button>
+        </div>
+    </div>
+
+    <div class="message-bar" id="message-bar">
+        <div class="message-inner" id="message-inner"></div>
+    </div>
+
+    <div class="scroll-container">
+        <div class="scroll-top" id="scroll-top">
+            <div id="scroll-top-inner" style="height:1px"></div>
+        </div>
+        <div class="table-outer" id="table-outer">
+            <div class="table-wrap">
+                <div id="loading-container"></div>
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">SR</th>
+                            <th rowspan="2">TRADE / CAT</th>
+                            <th rowspan="2">AUTH</th>
+                            <th rowspan="2">H/S</th>
+                            <th rowspan="2">HELD</th>
+                            <th rowspan="2">AV</th>
+                            <th colspan="4">COY WISE DISTRIBUTION</th>
+                            <th colspan="4">LVE · COURSE · MH · TD</th>
+                            <th colspan="4" class="present-header">COY WISE PRESENT STR ⚡</th>
+                        </tr>
+                        <tr>
+                            <th>HQ COY</th><th>1 COY</th><th>2 COY</th><th>3 COY</th>
+                            <th>HQ COY</th><th>1 COY</th><th>2 COY</th><th>3 COY</th>
+                            <th class="present-subheader">HQ COY</th>
+                            <th class="present-subheader">1 COY</th>
+                            <th class="present-subheader">2 COY</th>
+                            <th class="present-subheader">3 COY</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-footer">
+        <div class="stat-item">
+            <span class="stat-label">Auth</span>
+            <span class="stat-val" id="footer-auth">—</span>
+        </div>
+        <span class="stat-sep">|</span>
+        <div class="stat-item">
+            <span class="stat-label">Held</span>
+            <span class="stat-val" id="footer-held">—</span>
+        </div>
+        <span class="stat-sep">|</span>
+        <div class="stat-item">
+            <span class="stat-label">AV</span>
+            <span class="stat-val" id="footer-av">—</span>
+        </div>
+        <span class="stat-sep">|</span>
+        <div class="stat-item">
+            <span class="stat-label">Present HQ</span>
+            <span class="stat-val" id="footer-present-hq">—</span>
+        </div>
+        <span class="stat-sep">|</span>
+        <div class="stat-item">
+            <span class="stat-label">Present Total</span>
+            <span class="stat-val" id="footer-present-total">—</span>
+        </div>
+        <span class="stat-right">22 Trades · Present = Dist − State</span>
+    </div>
+
+</div>
+
+<script>
+const TRADE_CATEGORIES = [
+    {sr:1,name:'OP CIPH'},{sr:2,name:'OSS'},{sr:3,name:'OCC'},{sr:4,name:'TTC'},
+    {sr:5,name:'LMN'},{sr:6,name:'EFS'},{sr:7,name:'DVR MT'},{sr:8,name:'DR'},
+    {sr:9,name:'DTMN'},{sr:10,name:'SKT'},{sr:11,name:'ARTSN'},{sr:12,name:'W/MAN'},
+    {sr:13,name:'STEWARD'},{sr:14,name:'DRESSER'},{sr:15,name:'HKEEPER'},
+    {sr:16,name:'MKEEPER'},{sr:17,name:'CHEF MESS'},{sr:18,name:'CHEF COM'},
+    {sr:19,name:'ER'},{sr:20,name:'TLR'},{sr:21,name:'CLK SD'},{sr:22,name:'ERE'}
+];
+
+// Editable fields (user inputs)
+const EDITABLE_FIELDS = [
+    'auth','hs','held','av',
+    'dist_hq','dist_1','dist_2','dist_3',
+    'state_hq','state_1','state_2','state_3'
+];
+
+// Auto-calculated fields: present = dist - state per company
+const PRESENT_FIELDS = ['present_hq','present_1','present_2','present_3'];
+
+// Maps present field → (dist field, state field)
+const PRESENT_CALC_MAP = {
+    present_hq: { dist: 'dist_hq', state: 'state_hq' },
+    present_1:  { dist: 'dist_1',  state: 'state_1'  },
+    present_2:  { dist: 'dist_2',  state: 'state_2'  },
+    present_3:  { dist: 'dist_3',  state: 'state_3'  }
+};
+
+let isEditMode=false, isTemplateMode=false, templateDate=null, currentReportDate=null;
+
+const parsedDate   = s => { const d=new Date(s); d.setHours(0,0,0,0); return d; };
+const todayDate    = ()  => { const d=new Date(); d.setHours(0,0,0,0); return d; };
+const isToday      = s   => parsedDate(s).getTime() === todayDate().getTime();
+const isPastDate   = s   => parsedDate(s) < todayDate();
+const isFutureDate = s   => parsedDate(s) > todayDate();
+const fmtDate      = s   => { if(!s) return '—'; const p=s.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
+
+document.getElementById('report-date').valueAsDate = new Date();
+currentReportDate = document.getElementById('report-date').value;
+document.getElementById('header-date').textContent = fmtDate(currentReportDate);
+
+let msgTimer = null;
+function showMessage(text, type='info') {
+    const bar = document.getElementById('message-bar');
+    const el  = document.getElementById('message-inner');
+    el.className = `message-inner ${type}`;
+    el.textContent = text;
+    bar.classList.add('visible');
+    clearTimeout(msgTimer);
+    if(type==='success' || type==='info')
+        msgTimer = setTimeout(() => bar.classList.remove('visible'), 5000);
+}
+
+function showLoading(show) {
+    document.getElementById('loading-container').innerHTML =
+        show ? '<div class="loading-overlay">Loading data…</div>' : '';
+}
+
+// Dual-scroll sync
+const tableOuter    = document.getElementById('table-outer');
+const scrollTop     = document.getElementById('scroll-top');
+const scrollTopInner= document.getElementById('scroll-top-inner');
+function syncWidth() {
+    const tw = tableOuter.querySelector('.table-wrap');
+    if(tw) scrollTopInner.style.width = tw.scrollWidth + 'px';
+}
+scrollTop.addEventListener('scroll', () => { tableOuter.scrollLeft = scrollTop.scrollLeft; });
+tableOuter.addEventListener('scroll', () => { scrollTop.scrollLeft = tableOuter.scrollLeft; });
+new ResizeObserver(syncWidth).observe(tableOuter);
+
+// ─── CORE: calculate present for a single row ────────────────────────────────
+function calcRowPresent(row) {
+    const getInput = f => parseInt(row.querySelector(`input[data-field="${f}"]`)?.value) || 0;
+
+    for(const [pField, src] of Object.entries(PRESENT_CALC_MAP)) {
+        const val = getInput(src.dist) - getInput(src.state);
+        const td  = row.querySelector(`td.present-calc[data-field="${pField}"]`);
+        if(!td) continue;
+        td.textContent = val;
+        // Visual cue: negative = red
+        td.classList.toggle('negative', val < 0);
+    }
+}
+
+// ─── TOTALS ──────────────────────────────────────────────────────────────────
+function calculateTotals() {
+    // First recalculate every row's present cells
+    document.querySelectorAll('#table-body tr[data-trade]').forEach(calcRowPresent);
+
+    // Sum editable fields
+    EDITABLE_FIELDS.forEach(f => {
+        const total = Array.from(
+            document.querySelectorAll(`#table-body input[data-field="${f}"]`)
+        ).reduce((s, i) => s + (parseInt(i.value) || 0), 0);
+        const el = document.getElementById(`total-${f.replace(/_/g, '-')}`);
+        if(el) el.textContent = total;
+    });
+
+    // Sum present fields from computed <td> cells
+    PRESENT_FIELDS.forEach(f => {
+        const total = Array.from(
+            document.querySelectorAll(`#table-body td.present-calc[data-field="${f}"]`)
+        ).reduce((s, td) => s + (parseInt(td.textContent) || 0), 0);
+        const el = document.getElementById(`total-${f.replace(/_/g, '-')}`);
+        if(el) {
+            el.textContent = total;
+            el.classList.toggle('negative', total < 0);
+        }
+    });
+
+    updateFooter();
+}
+
+function updateFooter() {
+    const txt = id => document.getElementById(id)?.textContent || '—';
+    document.getElementById('footer-auth').textContent        = txt('total-auth');
+    document.getElementById('footer-held').textContent        = txt('total-held');
+    document.getElementById('footer-av').textContent          = txt('total-av');
+    document.getElementById('footer-present-hq').textContent  = txt('total-present-hq');
+
+    // Sum all 4 present columns for a grand present total
+    const presentTotal =
+        (parseInt(txt('total-present-hq')) || 0) +
+        (parseInt(txt('total-present-1'))  || 0) +
+        (parseInt(txt('total-present-2'))  || 0) +
+        (parseInt(txt('total-present-3'))  || 0);
+    document.getElementById('footer-present-total').textContent = presentTotal;
+}
+
+// ─── TOGGLE EDIT MODE ────────────────────────────────────────────────────────
+function toggleEditMode() {
+    const date = document.getElementById('report-date').value;
+    if(!date) { showMessage('Please select a date first', 'error'); return; }
+    if(isPastDate(date) && !isToday(date)) { showMessage('Cannot edit past dates', 'error'); return; }
+    isEditMode = !isEditMode;
+    const ind  = document.getElementById('mode-indicator');
+    const save = document.getElementById('save-btn');
+    const edit = document.getElementById('edit-btn');
+    if(isEditMode) {
+        edit.innerHTML='👁 View'; save.disabled=false;
+        ind.textContent='✏️ Edit Mode'; ind.className='mode-badge edit';
+        document.querySelectorAll('#table-body input').forEach(i => i.disabled=false);
+        showMessage('Edit mode enabled — Present STR auto-calculated', 'warning');
+    } else {
+        edit.innerHTML='✏️ Edit'; save.disabled=true;
+        ind.textContent='👁 View Mode'; ind.className='mode-badge view';
+        document.querySelectorAll('#table-body input').forEach(i => i.disabled=true);
+        showMessage('View mode — read only', 'info');
+    }
+}
+
+// ─── CREATE ROW ──────────────────────────────────────────────────────────────
+function createRow(trade, data=null, isTpl=false) {
+    const row = document.createElement('tr');
+    row.setAttribute('data-trade', trade.name);
+    if(isTpl) row.classList.add('template-row');
+
+    const d = data || {
+        auth:0,hs:0,held:0,av:0,
+        dist_hq:0,dist_1:0,dist_2:0,dist_3:0,
+        state_hq:0,state_1:0,state_2:0,state_3:0,
+        present_hq:0,present_1:0,present_2:0,present_3:0
+    };
+
+    const dis = !isEditMode;
+    const inputCells = EDITABLE_FIELDS.map(f =>
+        `<td><input type="number" min="0" value="${d[f]||0}" data-field="${f}" ${dis?'disabled':''}></td>`
+    ).join('');
+
+    const presentCells = PRESENT_FIELDS.map(f => {
+        const src  = PRESENT_CALC_MAP[f];
+        const val  = (d[src.dist]||0) - (d[src.state]||0);
+        const neg  = val < 0 ? ' negative' : '';
+        return `<td class="present-calc${neg}" data-field="${f}">${val}</td>`;
+    }).join('');
+
+    row.innerHTML =
+        `<td class="sr-no">${trade.sr}</td>` +
+        `<td class="trade-name">${trade.name}</td>` +
+        inputCells +
+        presentCells;
+
+    return row;
+}
+
+// ─── CREATE TOTAL ROW ────────────────────────────────────────────────────────
+function createTotalRow() {
+    const row = document.createElement('tr');
+    row.className = 'total-row';
+    row.id = 'total-row';
+
+    const editableTotals = EDITABLE_FIELDS.map(f =>
+        `<td id="total-${f.replace(/_/g,'-')}">0</td>`
+    ).join('');
+
+    const presentTotals = PRESENT_FIELDS.map(f =>
+        `<td class="present-calc" id="total-${f.replace(/_/g,'-')}">0</td>`
+    ).join('');
+
+    row.innerHTML =
+        `<td colspan="2" style="text-align:left;padding-left:14px;font-weight:800;">TOTAL</td>` +
+        editableTotals +
+        presentTotals;
+
+    return row;
+}
+
+// ─── RENDER TABLE ────────────────────────────────────────────────────────────
+function renderTable(data=[], isTpl=false) {
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+    const map = {};
+    data.forEach(d => map[d.trade] = d);
+
+    TRADE_CATEGORIES.forEach(t => tbody.appendChild(createRow(t, map[t.name], isTpl)));
+
+    if(isTpl && templateDate) {
+        const info = document.createElement('tr');
+        info.className = 'template-info-row';
+        info.innerHTML = `<td colspan="18">Template from ${templateDate} — edit values and save for ${currentReportDate}</td>`;
+        tbody.appendChild(info);
+    }
+
+    tbody.appendChild(createTotalRow());
+    document.querySelectorAll('#table-body input').forEach(input => {
+        input.addEventListener('input', () => {
+            const row = input.closest('tr[data-trade]');
+            if(row) calcRowPresent(row);
+            calculateTotals();
+        });
+    });
+
+    calculateTotals();
+    setTimeout(syncWidth, 50);
+}
+
+// ─── LOAD DATA ───────────────────────────────────────────────────────────────
+async function loadData() {
+    const date = document.getElementById('report-date').value;
+    if(!date) { showMessage('Please select a date', 'error'); return; }
+    currentReportDate = date;
+    document.getElementById('header-date').textContent = fmtDate(date);
+    showLoading(true);
+    if(isEditMode) toggleEditMode();
+    try {
+        const res    = await fetch(`/api/trade-manpower/get/${date}`);
+        const result = await res.json();
+        showLoading(false);
+        if(result.success) {
+            isTemplateMode = result.is_template || false;
+            templateDate   = result.template_date || null;
+            const canEdit  = isToday(date) || isFutureDate(date);
+            if(result.has_data) {
+                renderTable(result.data, false);
+                showMessage(`Data loaded for ${fmtDate(date)}`, 'success');
+                document.getElementById('edit-btn').disabled    = !canEdit;
+                document.getElementById('save-btn').disabled    = true;
+                document.getElementById('export-btn').disabled  = false;
+                if(isToday(date)) setTimeout(() => {
+                    toggleEditMode();
+                    showMessage('Edit mode enabled for today', 'info');
+                }, 700);
+            } else {
+                renderTable(isTemplateMode ? result.data : [], isTemplateMode);
+                showMessage(isTemplateMode
+                    ? `Template from ${templateDate} loaded`
+                    : `No data for ${fmtDate(date)}`, 'info');
+                document.getElementById('edit-btn').disabled   = !canEdit;
+                document.getElementById('save-btn').disabled   = !canEdit;
+                document.getElementById('export-btn').disabled = true;
+                if(canEdit) setTimeout(() => {
+                    toggleEditMode();
+                    showMessage('Edit mode enabled', 'info');
+                }, 700);
+            }
+        } else {
+            showMessage(result.error || 'Failed to load', 'error');
+            renderTable([]);
+            ['edit-btn','save-btn','export-btn'].forEach(id =>
+                document.getElementById(id).disabled = true);
+        }
+    } catch(e) {
+        showLoading(false);
+        showMessage('Error: ' + e.message, 'error');
+        renderTable([]);
+    }
+}
+
+// ─── SAVE DATA ───────────────────────────────────────────────────────────────
+async function saveData() {
+    const date = document.getElementById('report-date').value;
+    if(!date) { showMessage('Please select a date', 'error'); return; }
+    if(isPastDate(date) && !isToday(date))
+        if(!confirm(`Saving for past date (${date}). Continue?`)) return;
+
+    const allZero = Array.from(document.querySelectorAll('#table-body input'))
+        .every(i => (parseInt(i.value)||0) === 0);
+    if(allZero && !confirm(`All values are zero. Save empty record for ${date}?`)) return;
+
+    const trades = TRADE_CATEGORIES.map(t => {
+        const row = document.querySelector(`tr[data-trade="${t.name}"]`);
+        if(!row) return null;
+
+        // Read editable inputs
+        const getInput = f => parseInt(row.querySelector(`input[data-field="${f}"]`)?.value) || 0;
+
+        // Read present from computed <td> cells
+        const getPresent = f => parseInt(row.querySelector(`td.present-calc[data-field="${f}"]`)?.textContent) || 0;
+
+        return {
+            trade:      t.name,
+            auth:       getInput('auth'),
+            hs:         getInput('hs'),
+            held:       getInput('held'),
+            av:         getInput('av'),
+            dist_hq:    getInput('dist_hq'),
+            dist_1:     getInput('dist_1'),
+            dist_2:     getInput('dist_2'),
+            dist_3:     getInput('dist_3'),
+            state_hq:   getInput('state_hq'),
+            state_1:    getInput('state_1'),
+            state_2:    getInput('state_2'),
+            state_3:    getInput('state_3'),
+            present_hq: getPresent('present_hq'),
+            present_1:  getPresent('present_1'),
+            present_2:  getPresent('present_2'),
+            present_3:  getPresent('present_3')
+        };
+    }).filter(Boolean);
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.innerHTML = 'Saving…';
+    showMessage('Saving…', 'info');
+
+    try {
+        const res    = await fetch('/api/trade-manpower/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, trades })
+        });
+        const result = await res.json();
+        if(result.success) {
+            showMessage(result.message || 'Saved successfully', 'success');
+            isTemplateMode = false; templateDate = null;
+            setTimeout(loadData, 1500);
+        } else {
+            showMessage(result.error || 'Save failed', 'error');
+            btn.disabled = false; btn.innerHTML = '💾 Save';
+        }
+    } catch(e) {
+        showMessage('Error: ' + e.message, 'error');
+        btn.disabled = false; btn.innerHTML = '💾 Save';
+    }
+}
+
+// ─── EXPORT CSV ──────────────────────────────────────────────────────────────
+function exportCSV() {
+    const date = document.getElementById('report-date').value;
+    if(!date) { showMessage('Please select a date', 'error'); return; }
+    const a = document.createElement('a');
+    a.href     = `/api/trade-manpower/export-csv/${date}`;
+    a.download = `trade_manpower_${date}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showMessage('Export started', 'success');
+}
+
+// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+document.getElementById('report-date').addEventListener('change', function() {
+    document.getElementById('header-date').textContent = fmtDate(this.value);
+    if(this.value !== currentReportDate) loadData();
+});
+
+document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key==='s') {
+        e.preventDefault();
+        if(!document.getElementById('save-btn').disabled) saveData();
+    }
+    if((e.ctrlKey||e.metaKey) && e.key==='e') { e.preventDefault(); toggleEditMode(); }
+    if(e.key==='Escape' && isEditMode) { e.preventDefault(); toggleEditMode(); }
+});
+
+window.addEventListener('DOMContentLoaded', () => { renderTable([]); loadData(); });
+function closeModal() {
+    const modal = document.querySelector('.modal.show') || document.querySelector('.modal');
+    if(modal) {
+        if(typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const instance = bootstrap.Modal.getInstance(modal);
+            if(instance) { instance.hide(); return; }
+        }
+        if(typeof $ !== 'undefined') { $(modal).modal('hide'); return; }
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if(backdrop) backdrop.remove();
+        document.body.classList.remove('modal-open');
+        return;
+    }
+    window.close();
+    setTimeout(() => { showMessage('Please close this tab manually', 'info'); }, 300);
+}
+</script>
+</body>
+</html>

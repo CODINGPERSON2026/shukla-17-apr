@@ -1,0 +1,726 @@
+{% extends 'baseView.html' %}
+{% block content %}
+
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-accent: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --card-bg: #ffffff;
+    --accent-color: #3b82f6;
+    --grid-gap: 1.25rem;
+    --saffron: #ff9933;
+    --white: #ffffff;
+    --green: #138808;
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+    --card-bg: #1e293b;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15), transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15), transparent 50%),
+      radial-gradient(circle at 40% 20%, rgba(67, 233, 123, 0.1), transparent 40%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .dashboard-container {
+    margin-top: -40px;
+
+    padding: 1.5rem;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+
+    transition: margin-left 0.3s ease;
+  }
+
+  body.sidebar-collapsed .dashboard-container {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+
+  }
+
+  .dashboard-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(248, 250, 252, 0.95);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* Move loader to top */
+    align-items: center;
+    margin-top: 30px;
+    /* Optional: adjust spacing from top */
+    z-index: 1000;
+    border-radius: 12px;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.6s ease;
+  }
+
+  .dashboard-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  [data-theme="dark"] .dashboard-loader {
+    background: rgba(15, 23, 42, 0.97);
+  }
+
+  /* Beautiful Spinner */
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid #e0e7ff;
+    border-top: 5px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+
+  [data-theme="dark"] .spinner {
+    border-color: #1e293b;
+
+  }
+
+  .spinner-text {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    margin: 10px 25px 1.5rem 25px;
+    background-color: lightgray;
+    border-radius: 20px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .header-left img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+  }
+
+  .header-left h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .header-link {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.3);
+    color: #000 !important;
+    text-decoration: none;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .header-link:hover {
+    background: #000080;
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 128, 0.3);
+  }
+
+  .view-btn {
+    padding: 0.5rem 1rem;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: 0.2s;
+  }
+
+  .view-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--grid-gap);
+    margin-bottom: 2rem;
+  }
+
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    transition: 0.2s;
+  }
+
+  .chart-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .chart-title i {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .chart-badge {
+    padding: 0.3rem 0.7rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-color);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    position: relative;
+    transition: 0.15s ease;
+    text-align: center;
+    /* Center everything */
+  }
+
+  .stat-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--bg-accent);
+  }
+
+  .stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem auto;
+    /* Center icon */
+  }
+
+  .stat-icon i {
+    font-size: 0.9rem;
+    color: white;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .stat-value {
+    font-size: 1.7rem;
+    font-weight: 1000;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+  }
+
+  .view-btn {
+    display: block;
+    margin: 0.4rem auto 0;
+    padding: 3px 8px;
+    font-size: 0.65rem;
+    border-radius: 5px;
+    background: var(--bg-accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .view-btn:hover {
+    opacity: 0.9;
+  }
+
+  @media (max-width: 1200px) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-container {
+      margin-left: 0;
+      padding: 1rem;
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .header-right {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .stats-grid,
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+      height: 220px;
+    }
+  }
+</style>
+
+<script src="/static/Chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/fontawesome-free-7.1.0-web/css/all.min.css">
+
+<div class="wrapper">
+  {% set header = "Personnel Management" %}
+  {% set subscript = "Add Personnel → Update Personnel → View Personnel" %}
+  {% include 'navbar/navbar.html' %}
+</br>
+
+{% if role in ['NCO PWR','SEC JCO','Subedar Major','NCO CHQ','NCO IT','NCO OP','NCO PWR','NCO MW','NCO MCCS','NCO
+CHQ','SEC JCO','JCO LINE','S/JCO','OC','NCO CHQ','JCO CHQ','ONCO','NCO RHQ','NCO TM','NCO MT','NCO RP/NA','NCO QM'] %}
+<div class="page-header">
+
+    <div class="header-right ">
+      <a href="/personnel_information" class="header-link">Dashboard</a>
+    </div>
+
+
+    <div class="header-right ">
+
+      <a href="/personnel_information/add-personnel" class="header-link">Add Personnel</a>
+      <a href="/personnel_information/update-personnel" class="header-link">Update Personnel</a>
+      <a href="/personnel_information/delete-personnel" class="header-link">Delete Personnel</a>
+
+    </div>
+    
+  </div>
+  {% endif %}
+</div>
+</br>
+<div class="dashboard-container">
+
+
+  <div class="dashboard-loader" id="dashboardLoader">
+    <div class="spinner"></div>
+    <div class="spinner-text">Loading Dashboard...</div>
+  </div>
+
+
+  <div class="stats-grid">
+    <div class="stat-card" onclick="openPersonnelModal()" style="cursor:pointer;">
+  <div class="stat-icon"><i class="fas fa-users"></i></div>
+  <div class="stat-label">Total Personnel</div>
+  <div class="stat-value" id="totalPersonnelCount">Loading...</div>
+</div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="stat-label">Det Duty</div>
+      <div class="stat-value" id="detDutyCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-medkit"></i></div>
+      <div class="stat-label">LOW MEDICAL</div>
+      <div class="stat-value" id="medical_count">Loading...</div>
+      <button class="view-btn" onclick="window.location.href='/personnel_information/personnel'">View Details</button>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">AGE DISTRIBUTION</h3>
+        <span class="chart-badge">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="ageDonutChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">RANK DISTRIBUTION</h3>
+        <span class="chart-badge">Updated</span>
+      </div>
+      <div class="chart-container"><canvas id="rankChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">STATE WISE DISTRIBUTION</h3>
+        <span class="chart-badge">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="religionChart"></canvas></div>
+    </div>
+    <!-- <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">EMPLOYMENT TYPE</h3>
+        <span class="chart-badge">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="employmentChart"></canvas></div>
+    </div> -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">SPORT DISTRIBUTION</h3>
+        <span class="chart-badge">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="sportsChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Years in Service</h3>
+        <span class="chart-badge">Updated</span>
+      </div>
+      <div class="chart-container"><canvas id="serviceChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">Loan Amounts</h3>
+        <span class="chart-badge">Live</span>
+      </div>
+      <div class="chart-container"><canvas id="loanChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let ageChart, rankChart, religionChart, employmentChart, serviceChart, loanChart, sportsChart;
+
+  async function loadMedicalCases() {
+    const el = document.getElementById('medical_count');
+    el.textContent = 'Loading...';
+    try {
+      const res = await fetch('/personnel_information/get_medical_category_count');
+      const data = await res.json();
+      el.textContent = data.total_medical_category_count || '0';
+    } catch (err) {
+      el.textContent = 'Error';
+    }
+  }
+
+  async function loadTotalPersonal() {
+    const el = document.getElementById('totalPersonnelCount');
+    try {
+      const res = await fetch('/personnel_information/get_total_personnel_count_and_courses', { cache: 'no-cache' });
+      const data = await res.json();
+      el.textContent = data.total_army_personnel || 'N/A';
+    } catch (err) {
+      el.textContent = 'Error';
+    }
+  }
+
+  async function loadDetDutyCount() {
+    const el = document.getElementById('detDutyCount');
+    try {
+      const res = await fetch('/get_dets');
+      const data = await res.json();
+      el.textContent = data.count || '0';
+    } catch (err) {
+      el.textContent = '0';
+    }
+  }
+
+  async function initializeCharts() {
+    [ageChart, rankChart, religionChart, employmentChart, serviceChart, loanChart, sportsChart].forEach(c => c && c.destroy && c.destroy());
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+    const chartColors = [
+      'rgba(99,102,241,0.8)', 'rgba(16,185,129,0.8)', 'rgba(239,68,68,0.8)',
+      'rgba(245,158,11,0.8)', 'rgba(59,130,246,0.8)', 'rgba(168,85,247,0.8)',
+      'rgba(34,197,94,0.8)', 'rgba(236,72,153,0.8)'
+    ];
+    const borderColors = chartColors.map(c => c.replace('0.8', '1'));
+
+    try {
+      const [
+        ageData, rankData, religionData,
+        serviceData, loanData, sportsData
+      ] = await Promise.all([
+        fetch('/personnel_information/age_bar_graph').then(r => r.json()),
+        fetch('/personnel_information/rank_based_bar_graph_').then(r => r.json()),
+        fetch('/personnel_information/state_wise').then(r => r.json()),
+        fetch('/personnel_information/years_in_service_chart').then(r => r.json()),
+        fetch('/personnel_information/loan_amounts_chart').then(r => r.json()),
+        fetch('/personnel_information/sports_distribution_chart').then(r => r.json())
+      ]);
+
+      ageChart = new Chart(document.getElementById('ageDonutChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ageData.age_distribution?.map(i => i.range) || [],
+          datasets: [{ data: ageData.age_distribution?.map(i => i.count) || [], backgroundColor: chartColors, borderColor: borderColors, borderWidth: 2 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 11 } } } }
+        }
+      });
+
+      rankChart = new Chart(document.getElementById('rankChart'), {
+        type: 'bar',
+        data: {
+          labels: rankData.rank_distribution?.map(i => i.rank) || [],
+          datasets: [{
+            data: rankData.rank_distribution?.map(i => i.count) || [],
+            backgroundColor: chartColors[0],
+            borderColor: borderColors[0],
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } }
+        }
+      });
+
+      religionChart = new Chart(document.getElementById('religionChart'), {
+        type: 'doughnut',
+        data: {
+          labels: religionData.data?.map(i => i.home_state) || [],
+          datasets: [{ data: religionData.data?.map(i => i.home_state_count) || [], backgroundColor: chartColors, borderColor: borderColors, borderWidth: 2 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 11 } } } }
+        }
+      });
+
+      /*employmentChart = new Chart(document.getElementById('employmentChart'), {
+        type: 'pie',
+        data: {
+          labels: employmentData.employment_distribution?.map(i => i.type) || [],
+          datasets: [{ data: employmentData.employment_distribution?.map(i => i.count) || [], backgroundColor: [chartColors[0], chartColors[1]], borderColor: [borderColors[0], borderColors[1]], borderWidth: 2 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: textColor, font: { size: 11 } } } }
+        }
+      });
+      */
+
+      serviceChart = new Chart(document.getElementById('serviceChart'), {
+        type: 'bar',
+        data: {
+          labels: serviceData.service_distribution?.map(i => i.range) || [],
+          datasets: [{
+            data: serviceData.service_distribution?.map(i => i.count) || [],
+            backgroundColor: chartColors[4],
+            borderColor: borderColors[4],
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } }
+        }
+      });
+
+      loanChart = new Chart(document.getElementById('loanChart'), {
+        type: 'bar',
+        data: {
+          labels: loanData.loan_distribution?.map(i => i.range) || [],
+          datasets: [{
+            data: loanData.loan_distribution?.map(i => i.count) || [],
+            backgroundColor: chartColors[2],
+            borderColor: borderColors[2],
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: textColor }, grid: { color: gridColor } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } }
+        }
+      });
+
+      sportsChart = new Chart(document.getElementById('sportsChart'), {
+        type: 'bar',
+        data: {
+          labels: sportsData.sports_distribution?.map(i => i.sport) || [],
+          datasets: [{
+            data: sportsData.sports_distribution?.map(i => i.count) || [],
+            backgroundColor: chartColors,
+            borderColor: borderColors,
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: textColor, precision: 0 }, grid: { color: gridColor } }
+          }
+        }
+      });
+
+    } catch (err) {
+      console.error('Chart error:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    const loader = document.getElementById('dashboardLoader');
+    loader.classList.remove('hidden');
+
+    try {
+      await Promise.all([
+        initializeCharts(),
+        loadMedicalCases(),
+        loadTotalPersonal(),
+        loadDetDutyCount()
+      ]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTimeout(() => loader.classList.add('hidden'), 300); // smooth fade
+    }
+
+    const detCard = document.querySelector('#detDutyCount')?.closest('.stat-card');
+    if (detCard) {
+      detCard.style.cursor = 'pointer';
+      detCard.addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('detModal'));
+        modal.show();
+        if (typeof load_det_personnel === 'function') load_det_personnel();
+      });
+    }
+  });
+</script>
+
+{% include 'modals/detachmentModal/detachment.html' %}
+{% include 'modals/view_all_personnel/modal.html' %}
+
+{% endblock %}

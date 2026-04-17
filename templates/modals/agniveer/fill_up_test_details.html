@@ -1,0 +1,291 @@
+{% if role in ["TRGJCO"] %}
+<!-- Modal for Creating Assistant Test Schedule -->
+<div class="modal fade" id="fillupdetailsmodal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+
+      <form id="assistantTestForm">
+
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-person-lines-fill me-2"></i> Fill Assistant Test Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Batch *</label>
+          <select name="batch" class="form-select" required>
+            <option value="" disabled selected>Select Batch</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check2 me-2"></i> Submit
+          </button>
+        </div>
+
+      </form>
+
+      
+      <!-- Card for Updating Assistant Assessments -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-header bg-warning fw-bold">
+    <i class="bi bi-pencil-square me-2"></i> Update Assistant Assessments
+  </div>
+  
+
+  <div class="card-body">
+    <div class="row g-3">
+      <!-- Batch -->
+      <div class="col-md-3">
+        <label class="form-label">Batch</label>
+        <select id="upd_batch" class="form-select">
+          <option value="">Select Batch</option>
+        </select>
+      </div>
+
+      <!-- Test Number -->
+      <div class="col-md-3">
+        <label class="form-label">Assessment</label>
+        <select id="upd_test_no" class="form-select">
+          <option value="">Select Test</option>
+          <option value="1">Assistant Test 1 (12 Months)</option>
+          <option value="2">Assistant Test 2 (18 Months)</option>
+          <option value="3">Assistant Test 3 (30 Months)</option>
+          <option value="4">Assistant Test 4 (42 Months)</option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select id="upd_status" class="form-select">
+          <option value="1">Completed</option>
+          <option value="0">Pending</option>
+        </select>
+      </div>
+
+      <!-- Emergency / Prepone / Postpone Section -->
+      <div class="col-md-6 mt-3" id="emergencySection" style="display:none;">
+        <label class="form-label">Change Assessment Date</label>
+        <div class="input-group">
+          <select id="emergencyType" class="form-select">
+            <option value="" disabled selected>Select Type</option>
+            <option value="prepone">Preponed</option>
+            <option value="postpone">Postponed</option>
+          </select>
+          <input type="date" id="new_test_date" class="form-control">
+        </div>
+      </div>
+
+
+      <!-- Remarks Field -->
+      <div class="col-12 mt-3">
+        <label class="form-label">Remarks </label>
+        <textarea id="remarks" class="form-control" rows="3" placeholder="Enter remarks..."></textarea>
+      </div>
+
+      <!-- Update Button at the end -->
+      <div class="col-12 d-flex justify-content-end mt-3">
+        <button class="btn btn-success" onclick="updateAssessment()">
+          <i class="bi bi-save me-2"></i> Update
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card for Deleting Emergency Tests and Remarks -->
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-danger text-white fw-bold">
+    <i class="bi bi-trash-fill me-2"></i> Delete Emergency Test / Remarks
+  </div>
+  
+  <div class="card-body">
+    <div class="row g-3">
+      <!-- Batch -->
+      <div class="col-md-4">
+        <label class="form-label">Batch *</label>
+        <select id="del_batch" class="form-select">
+          <option value="">Select Batch</option>
+        </select>
+      </div>
+
+      <!-- Test Number to Delete -->
+      <div class="col-md-4">
+        <label class="form-label">Emergency Test to Delete *</label>
+        <select id="del_test_no" class="form-select">
+          <option value="">Select Test</option>
+          <option value="1">Emergency Test 1</option>
+          <option value="2">Emergency Test 2</option>
+          <option value="3">Emergency Test 3</option>
+          <option value="4">Emergency Test 4</option>
+        </select>
+      </div>
+
+      <!-- Delete Type -->
+      <div class="col-md-4">
+        <label class="form-label">What to Delete *</label>
+        <select id="del_type" class="form-select">
+          <option value="">Select Type</option>
+          <option value="emergency_date">Emergency Date Only</option>
+          <option value="emergency_type">Emergency Type Only</option>
+          <option value="both">Both Date & Type</option>
+          <option value="remarks">Remarks Only</option>
+          <option value="all">Everything (Date, Type & Remarks)</option>
+        </select>
+      </div>
+
+      <!-- Confirmation Section -->
+      <div class="col-12 mt-3">
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          <div>
+            <strong>Warning:</strong> This action will permanently delete the selected data. Please review your selection carefully.
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Button -->
+      <div class="col-12 d-flex justify-content-end mt-3">
+        <button class="btn btn-danger" onclick="deleteAssessmentData()">
+          <i class="bi bi-trash-fill me-2"></i> Delete Selected Data
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+{% endif %}
+
+<script>
+  // Load batches dynamically for all dropdowns
+  function loadBatches() {
+    fetch('/agni/get_batches')
+      .then(res => res.json())
+      .then(batches => {
+        // Modal Select
+        const modalSelect = document.querySelector('select[name="batch"]');
+        // Update Card Select
+        const cardSelect = document.getElementById('upd_batch');
+        // Delete Card Select
+        const delSelect = document.getElementById('del_batch');
+
+        const options = `<option value="" disabled selected>Select Batch</option>` +
+          batches.map(b => `<option value="${b}">${b}</option>`).join('');
+
+        if (modalSelect) modalSelect.innerHTML = options;
+        if (cardSelect) cardSelect.innerHTML = options;
+        if (delSelect) delSelect.innerHTML = options;
+      })
+      .catch(err => console.error("Error loading batches:", err));
+  }
+
+  document.addEventListener('DOMContentLoaded', loadBatches);
+
+  // Form submission for creating assistant test schedule
+  const assistantTestForm = document.getElementById('assistantTestForm');
+  if (assistantTestForm) {
+    assistantTestForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const batch = this.batch.value;
+
+      if (!batch) return alert("Please select a batch");
+
+      fetch('/agni/api/assistant-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batch })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message || "Template generated successfully!");
+            location.reload();
+          } else {
+            alert(data.error || "Execution failed");
+          }
+        })
+        .catch(err => alert("Server error: " + err));
+    });
+  }
+
+  // Show emergency section when a test is chosen
+  document.getElementById("upd_test_no").addEventListener("change", function () {
+    const emergencySection = document.getElementById("emergencySection");
+    if (emergencySection) emergencySection.style.display = this.value ? "block" : "none";
+  });
+
+  // Unified Update Function
+  function updateAssessment() {
+    const batch = document.getElementById("upd_batch").value;
+    const test_no = parseInt(document.getElementById("upd_test_no").value);
+    const status = parseInt(document.getElementById("upd_status").value);
+    const emergency_type = document.getElementById("emergencyType").value;
+    const new_date = document.getElementById("new_test_date").value;
+    const remarks = document.getElementById("remarks").value.trim();
+
+    if (!batch || !test_no) return alert("Please select batch and test");
+
+    fetch("/agni/update-assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ batch, test_no, status, emergency_type, new_date, remarks })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Assessment updated successfully!");
+          // Reset fields
+          document.getElementById("emergencyType").value = "";
+          document.getElementById("new_test_date").value = "";
+          document.getElementById("remarks").value = "";
+          // If in a modal environment or need table refresh, could trigger it here
+        } else {
+          alert(data.error || "Update failed");
+        }
+      })
+      .catch((err) => alert("Server error: " + err));
+  }
+
+  // Delete Assessment Data Function
+  function deleteAssessmentData() {
+    const batch = document.getElementById("del_batch").value;
+    const test_no = document.getElementById("del_test_no").value;
+    const del_type = document.getElementById("del_type").value;
+
+    if (!batch || !test_no || !del_type) {
+      return alert("Please select batch, test number, and deletion type");
+    }
+
+    // Confirmation dialog
+    const confirmMsg = `Are you sure you want to delete ${del_type} for Emergency Test ${test_no} of Batch ${batch}?\n\nThis action cannot be undone.`;
+    if (!confirm(confirmMsg)) return;
+
+    fetch("/agni/delete-assistant-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ batch, test_no, del_type })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Data deleted successfully!");
+          // Reset fields
+          document.getElementById("del_batch").value = "";
+          document.getElementById("del_test_no").value = "";
+          document.getElementById("del_type").value = "";
+        } else {
+          alert(data.error || "Delete failed");
+        }
+      })
+      .catch((err) => alert("Server error: " + err));
+  }
+</script>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm 1.8cm;
+        }
+
+        body {
+            font-family: "Times New Roman", serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            text-align: center;
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 18pt;
+            font-weight: bold;
+            text-decoration: underline;
+            letter-spacing: 1px;
+        }
+
+        .sub-header {
+            font-size: 12pt;
+            margin-top: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .info-header {
+            margin: 15px 0 20px 0;
+            font-size: 11pt;
+        }
+
+        .cert-body {
+            margin-top: 20px;
+            text-align: justify;
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+
+        .details-table {
+            margin-top: 15px;
+        }
+
+        .details-table td {
+            padding: 5px 4px;
+            vertical-align: top;
+        }
+
+        .label {
+            font-weight: bold;
+            width: 160px;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            margin: 15px 0;
+            border: 1px solid #000;
+        }
+
+        .breakdown-table th {
+            background: #f0f0f0;
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #000;
+            font-size: 10pt;
+        }
+
+        .breakdown-table td {
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #000;
+            font-size: 10pt;
+        }
+
+        .transport-section {
+            margin: 12px 0;
+            font-size: 10pt;
+        }
+
+        .transport-table {
+            width: 100%;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .transport-table td {
+            padding: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .signature-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .seal-box {
+            border: 3px solid #c00;
+            color: #c00;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+
+        .digital-sig {
+            border: 1px solid #000;
+            padding: 8px;
+            font-size: 9pt;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+
+        .report-line {
+            margin-top: 15px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-left: 3px solid #c00;
+            font-weight: bold;
+        }
+
+        .reason-box {
+            margin: 12px 0;
+            padding: 6px;
+            background: #f5f5f5;
+            font-style: italic;
+            border-left: 3px solid #0066cc;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Header -->
+        <table class="header-table">
+            <tr>
+                <td>
+                    <h2>LEAVE CERTIFICATE</h2>
+                    <div class="sub-header">
+                        OFFICE OF THE 15 CORPS ENGG SIG REGT
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Info Header -->
+        <table class="info-header">
+            <tr>
+                <td align="left"><strong>Certificate No:</strong> {{ leave.certificate_number }}</td>
+                <td align="right"><strong>Leave Approved On:</strong> {{ leave.issue_date.strftime('%d %b %Y') }}</td>
+            </tr>
+        </table>
+
+        <!-- Main Body -->
+        <div class="cert-body">
+            <strong>CERTIFIED</strong> that <strong>{{ applicant.rank }} {{ applicant.name }}</strong> 
+            (Army No <strong>{{ applicant.army_number }}</strong>), 
+            Trade: <strong>{{ applicant.trade }}</strong> of 
+            <strong>{{ applicant.company_name }}, {{ applicant.section_name }}</strong> Section,
+            is hereby granted <strong>{{ leave.leave_type }}</strong> leave 
+            for a period of <strong>{{ leave.total_days }} days</strong> 
+            w.e.f <strong>{{ leave.start_date.strftime('%d-%m-%Y') }}</strong> 
+            to <strong>{{ leave.end_date.strftime('%d-%m-%Y') }}</strong>.
+        </div>
+
+      
+
+        <!-- Combined Leave Breakdown -->
+        {% if leave.leave_details and leave.leave_details|length > 0 %}
+        <table class="breakdown-table">
+            <thead>
+                <tr>
+                    <th>Leave Type</th>
+                    <th>Days</th>
+                    <th>From Date</th>
+                    <th>To Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in leave.leave_details %}
+                <tr>
+                    <td><strong>{{ item.type }}</strong></td>
+                    <td>{{ item.days }}</td>
+                    <td>{{ item.from_date }}</td>
+                    <td>{{ item.to_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Other Details -->
+        <table class="details-table">
+            <tr>
+                <td class="label">Prefix Details:</td>
+                <td>{{ leave.prefix_details }}</td>
+                <td class="label">Suffix Details:</td>
+                <td>{{ leave.suffix_details }}</td>
+            </tr>
+            <tr>
+                <td class="label">Contact No:</td>
+                <td>{{ applicant.contact }}</td>
+                <td class="label">Mobile (on leave):</td>
+                <td>{{ leave.address_during_leave.mobile }}</td>
+            </tr>
+            <tr>
+                <td class="label">Address during leave:</td>
+                <td colspan="3">
+                    {{ leave.address_during_leave.full_address }}
+                    {% if leave.address_during_leave.alternate_contact and leave.address_during_leave.alternate_contact != 'N/A' and leave.address_during_leave.alternate_contact != 'None' %}
+                        <br><strong>Alt Contact:</strong> {{ leave.address_during_leave.alternate_contact }}
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <!-- Transport Details -->
+        {% if leave.transport.onward.mode != 'Not Specified' or leave.transport.return.mode != 'Not Specified' %}
+        <div class="transport-section">
+            <strong>Transport Details:</strong>
+            <table class="transport-table">
+                <tr style="background:#f0f0f0;">
+                    <td width="15%"><strong>Journey</strong></td>
+                    <td width="20%"><strong>Mode</strong></td>
+                    <td width="20%"><strong>Type</strong></td>
+                    <td width="45%"><strong>Route</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Onward</strong></td>
+                    <td>{{ leave.transport.onward.mode }}</td>
+                    <td>{% if leave.transport.onward.type and leave.transport.onward.type != 'None' %}{{ leave.transport.onward.type }}{% else %}-{% endif %}</td>
+                    <td>{{ leave.transport.onward.full_route }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Return</strong></td>
+                    <td>{{ leave.transport.return.mode }}</td>
+                    <td>{% if leave.transport.return.type and leave.transport.return.type != 'None' %}{{ leave.transport.return.type }}{% else %}-{% endif %}</td>
+                    <td>{{ leave.transport.return.full_route }}</td>
+                </tr>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Reporting Instruction -->
+        <div class="report-line">
+            ⚡ DIRECTIVE: The individual is directed to report back to the unit on expiry of leave by 
+            <strong>{{ leave.reporting_date }}</strong> (1800 hrs). 
+            Any extension requires prior approval through proper channel.
+        </div>
+
+        <!-- Signature Section -->
+        <table class="signature-table">
+            <tr>
+                <td width="33%" style="vertical-align: bottom;">
+                    <br><br><br><br>
+                    ________________________<br>
+                    <strong>Signature of Applicant</strong><br>
+                    <span style="font-size:9pt;">(with date)</span>
+                </td>
+                <td width="34%" align="center" style="vertical-align: bottom;">
+                    <div class="seal-box">
+                        UNIT<br>SEAL
+                    </div>
+                </td>
+                <td width="33%" style="vertical-align: bottom;">
+                    <div class="digital-sig">
+                        <strong style="color: #c00;">✓ DIGITALLY SIGNED</strong><br>
+                        <strong>By:</strong> Commanding Officer<br>
+                        <strong>Date:</strong> {{ leave.issue_date.strftime('%d-%m-%Y') }}
+                    </div>
+                    <strong>Approving Authority</strong><br>
+                    (Signature, Rank & Date)
+                </td>
+            </tr>
+        </table>
+
+        <!-- Footer -->
+        <div class="footer">
+            15 CORPS ENGG SIG REGT • Subedar Major: 95555555555 • Adjt: 9555898989
+        </div>
+
+    </div>
+
+</body>
+</html>

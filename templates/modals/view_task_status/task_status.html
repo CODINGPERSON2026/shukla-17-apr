@@ -1,0 +1,340 @@
+
+  
+  <style>
+    .readonly-slider {
+      pointer-events: none;
+      height: 8px;
+    }
+
+    .modal-content {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+      border-radius: 16px 16px 0 0;
+      padding: 1.0rem;
+      border: none;
+    }
+    
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 1.5rem;
+    }
+
+    .modal-body {
+      padding: 2rem;
+    }
+
+    .info-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 0.25rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #667eea;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #6c757d;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: #212529;
+      font-weight: 500;
+    }
+
+    .description-scroll {
+      max-height: 80px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .description-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .description-scroll::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .description-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+    }
+
+    .description-scroll::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    .priority-badge {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .priority-high {
+      background: #fee;
+      color: #dc3545;
+    }
+
+    .priority-medium {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .priority-low {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .progress-section {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .progress-label {
+      font-weight: 600;
+      color: #495057;
+      font-size: 1rem;
+    }
+
+    .progress-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .form-range {
+      background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+    }
+
+    .form-range::-webkit-slider-thumb {
+      background: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    }
+
+    .form-range::-moz-range-thumb {
+      background: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    }
+
+    .modal-footer {
+      border: none;
+      padding: 1.5rem 2rem;
+      background: #f8f9fa;
+      border-radius: 0 0 16px 16px;
+    }
+   
+    
+   
+
+    .btn-close-custom {
+      background: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #495057;
+      transition: all 0.3s;
+    }
+
+    .btn-close-custom:hover {
+      background: #e9ecef;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-size {
+      max-width: 800px;
+      width: 85%;
+    }
+    .custom-position{
+        position: absolute;
+        top:0px;    
+        left: 250px;
+    
+    }
+    .modal-dialog{
+        margin-top: 2px;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+<!-- Task Details Modal -->
+<div class="modal fade" id="taskDetailModal" tabindex="-1">
+  <div class="modal-dialog custom-size custom-position">
+    <div class="modal-content">
+      
+      <div class="modal-header text-white">
+        <h5 class="modal-title" id="taskModalTitle">Task Details</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Description -->
+        <div class="info-card">
+          <div class="info-row">
+            <div class="info-content">
+              <div class="info-label">Description</div>
+              <div class="info-value description-scroll" id="taskDescription"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assigned To | Priority | Due Date -->
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="info-card">
+              <div class="info-row">
+                <div class="info-content">
+                  <div class="info-label">Assigned To</div>
+                  <div class="info-value" id="taskAssignedTo"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-card">
+              <div class="info-row">
+                <div class="info-content">
+                  <div class="info-label">Priority</div>
+                  <div class="info-value"><span id="taskPriority" class="priority-badge"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="info-card">
+              <div class="info-row">
+                <div class="info-content">
+                  <div class="info-label">Due Date & Time</div>
+                  <div class="info-value" id="taskDueDate"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Slider -->
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label"><i class="fas fa-tasks me-2"></i>Task Progress</span>
+            <span id="sliderValue" class="progress-badge">0%</span>
+          </div>
+          <input id="taskProgress" type="range" min="0" max="100" value="0" class="form-range readonly-slider">
+        </div>
+
+        <!-- Remarks -->
+        <h5 class="mt-4 mb-3" style="color: #495057; font-weight: 600;"><i class="fas fa-sticky-note me-2"></i>Latest Remarks</h5>
+        <div class="info-card mt-3">
+          <div class="info-row">
+            <div class="info-content">
+              <div class="info-label">Remarks</div>
+              <div class="info-value" id="taskRemarks"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-close-custom" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+   async function  viewModal(taskid){
+        console.log("in this function ", taskid)
+
+       
+    
+  
+    const taskId = taskid
+  
+    const res = await fetch(`/task_manager/get_task/${taskId}`);
+    const task = await res.json();
+    console.log(task,'task detais')
+  
+    document.getElementById("taskModalTitle").innerText = task.task_name;
+    document.getElementById("taskDescription").innerText = task.description;
+    
+    const priorityElement = document.getElementById("taskPriority");
+    priorityElement.innerText = task.priority;
+    priorityElement.className = `priority-badge priority-${task.priority.toLowerCase()}`;
+    
+    document.getElementById("taskAssignedTo").innerText = task.assigned_to;
+    
+    // Format date and time
+    const dueDate = task.due_date;
+const dateOnly = new Date(dueDate).toISOString().split('T')[0];
+console.log(dateOnly); // "2025-12-02"
+
+ 
+    document.getElementById("taskDueDate").innerText = dateOnly;
+    
+    document.getElementById("taskRemarks").innerText = task.remarks || "No Remarks";
+  
+    const slider = document.getElementById("taskProgress");
+    slider.value = task.range_status || 0;
+  
+    document.getElementById("sliderValue").innerText = `${slider.value}%`;
+  
+    new bootstrap.Modal(document.getElementById("taskDetailModal")).show();
+  };
+
+    
+</script>
+

@@ -1,0 +1,656 @@
+<style>
+    /* ── SUCCESS CARD (Crystal Style) ── */
+  .sc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 99999;
+  }
+  .sc-overlay.show { opacity: 1; pointer-events: all; }
+
+  .sc-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border-radius: 28px;
+    padding: 48px 40px 40px;
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255,255,255,0.6);
+    transform: scale(0.75) translateY(40px);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sc-overlay.show .sc-card {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  .sc-circle-wrap {
+    width: 92px; height: 92px;
+    margin: 0 auto 28px;
+    position: relative;
+  }
+
+  .sc-circle-bg {
+    width: 92px; height: 92px;
+    background: #e6f9f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s;
+  }
+  .sc-overlay.show .sc-circle-bg { transform: scale(1); }
+
+  .sc-check-svg { width: 48px; height: 48px; }
+  .sc-check-path {
+    stroke: #1a9c5b;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    transition: stroke-dashoffset 0.6s ease 0.4s;
+  }
+  .sc-overlay.show .sc-check-path { stroke-dashoffset: 0; }
+
+  .sc-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 8px;
+  }
+
+  .sc-msg {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .sc-done-btn {
+    margin-top: 32px;
+    padding: 12px 40px;
+    border-radius: 50px;
+    background: #1a9c5b;
+    color: white;
+    font-weight: 600;
+    border: none;
+    box-shadow: 0 6px 20px rgba(26, 156, 91, 0.3);
+  }
+  .sc-done-btn:hover {
+    background: #148a4e;
+    transform: translateY(-2px);
+  }
+
+  /* ── CONFIRM DIALOG ── */
+  .cf-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 99998;
+  }
+  .cf-overlay.show { opacity: 1; pointer-events: all; }
+
+  .cf-card {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(16px);
+    border-radius: 24px;
+    padding: 40px 32px 32px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255,255,255,0.7);
+    transform: scale(0.8) translateY(30px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .cf-overlay.show .cf-card {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  .cf-icon {
+    width: 68px; height: 68px;
+    background: #fff3cd;
+    color: #f59e0b;
+    font-size: 32px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cf-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+  }
+
+  .cf-subtitle {
+    color: #777;
+    font-size: 14px;
+  }
+
+  .cf-detail-box {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 24px 0;
+    text-align: left;
+    border: 1px solid #e9ecef;
+  }
+
+  .cf-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14.5px;
+  }
+  .cf-detail-row + .cf-detail-row {
+    border-top: 1px solid #e9ecef;
+  }
+  .cf-detail-label { color: #666; }
+  .cf-detail-value { font-weight: 600; color: #111; }
+
+  .cf-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .cf-cancel-btn, .cf-confirm-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .cf-cancel-btn {
+    border: 1px solid #ddd;
+    background: white;
+  }
+  .cf-cancel-btn:hover {
+    background: #f8f9fa;
+  }
+
+  .cf-confirm-btn {
+    background: #0d6efd;
+    color: white;
+    border: none;
+  }
+  .cf-confirm-btn:hover {
+    background: #0b5ed7;
+  }
+</style>
+
+<!-- ================= INTERVIEW PENDING MODAL ================= -->
+<div class="modal fade" id="view_company_interview_pending" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Interview Pending – Company Personnel</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <select id="companyFilter" class="form-select form-select-lg">
+              <option value="">All Companies</option>
+              <option value="1 company">1 Company</option>
+              <option value="2 company">2 Company</option>
+              <option value="3 company">3 Company</option>
+              <option value="HQ company">HQ Company</option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-center">
+            <input type="checkbox" id="noJcoOnly" class="form-check-input me-2">
+            <label for="noJcoOnly" class="form-check-label fw-medium">Show Only No JCO</label>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="pendingTable">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Home State</th>
+                <th>JCO Assigned</th>
+              </tr>
+            </thead>
+            <tbody id="pendingInterviewTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= JCO ASSIGN MODAL ================= -->
+<div class="modal fade" id="assignJcoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold">Available JCOs</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="assignHomeState">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Home State</th>
+                <th width="100">Action</th>
+              </tr>
+            </thead>
+            <tbody id="jcoListTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SUCCESS CARD ================= -->
+<div class="sc-overlay" id="sc-overlay" onclick="handleScOverlayClick(event)">
+  <div class="sc-card">
+    <div class="sc-circle-wrap">
+      <div class="sc-ripple"></div>
+      <div class="sc-circle-bg">
+        <svg class="sc-check-svg" viewBox="0 0 40 40">
+          <polyline class="sc-check-path" points="8,21 16,30 32,12"/>
+        </svg>
+      </div>
+    </div>
+    <p class="sc-title">Assignment Successful!</p>
+    <p class="sc-msg" id="sc-msg"></p>
+    <button class="sc-done-btn" onclick="hideSuccess()">Done</button>
+  </div>
+</div>
+
+<!-- ================= CONFIRM DIALOG ================= -->
+<div class="cf-overlay" id="cf-overlay">
+  <div class="cf-card">
+    <div class="cf-icon">✓</div>
+    <p class="cf-title">Confirm JCO Assignment</p>
+    <p class="cf-subtitle">Please verify the details below</p>
+
+    <div class="cf-detail-box" id="cf-detail-box"></div>
+
+    <div class="cf-actions">
+      <button class="cf-cancel-btn" onclick="hideConfirm()">Cancel</button>
+      <button class="cf-confirm-btn" id="cf-confirm-btn">Yes, Assign JCO</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const companyModalEl   = document.getElementById('view_company_interview_pending');
+const assignJcoModalEl = document.getElementById('assignJcoModal');
+
+const companyModal   = new bootstrap.Modal(companyModalEl);
+const assignJcoModal = new bootstrap.Modal(assignJcoModalEl);
+
+let fullData = [];
+
+/* ================= XSS SAFE ================= */
+function escapeHTML(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+}
+
+/* ================= SUCCESS CARD ================= */
+function showSuccess(message) {
+  document.getElementById('sc-msg').textContent = message || 'Success!';
+  document.getElementById('sc-overlay').classList.add('show');
+}
+
+function hideSuccess() {
+  document.getElementById('sc-overlay').classList.remove('show');
+}
+
+function handleScOverlayClick(e) {
+  if (e.target === document.getElementById('sc-overlay')) hideSuccess();
+}
+
+/* ================= CONFIRM DIALOG ================= */
+let _confirmCallback = null;
+
+/*
+  showConfirm(details, onConfirm)
+  details = array of { label, value } shown as rows
+*/
+function showConfirm(details, onConfirm) {
+  const box = document.getElementById('cf-detail-box');
+
+  box.innerHTML = details.map(d => `
+    <div class="cf-detail-row">
+      <span class="cf-detail-label">${escapeHTML(d.label)}</span>
+      <span class="cf-detail-value">${escapeHTML(d.value)}</span>
+    </div>
+  `).join('');
+
+  _confirmCallback = onConfirm;
+
+  const btn = document.getElementById('cf-confirm-btn');
+  btn.disabled    = false;
+  btn.textContent = 'Yes, Assign';
+
+  document.getElementById('cf-overlay').classList.add('show');
+}
+
+function hideConfirm() {
+  document.getElementById('cf-overlay').classList.remove('show');
+  _confirmCallback = null;
+}
+
+document.getElementById('cf-confirm-btn').addEventListener('click', function () {
+  if (typeof _confirmCallback === 'function') {
+    _confirmCallback(this);
+  }
+});
+
+/* ================= FETCH ================= */
+companyModalEl.addEventListener('shown.bs.modal', function fetchOnShown() {
+  console.log('=== Modal SHOWN event fired ===');   // ← Add this line
+  
+  fetchInterviewPending();
+});
+let isFetching = false;
+let fetchTimeout = null;
+
+function fetchInterviewPending() {
+    if (isFetching) return;                    // ← Prevent overlapping calls
+    if (fetchTimeout) clearTimeout(fetchTimeout);
+
+    fetchTimeout = setTimeout(() => {
+        isFetching = true;
+
+        const tableBody = document.getElementById("pendingInterviewTable");
+
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">
+                    <div class="spinner-border text-primary"></div>
+                </td>
+            </tr>
+        `;
+
+        fetch("/interview_update/jco-availabilty")
+            .then(res => res.json())
+            .then(response => {
+                fullData = response.pending_interviews || [];
+                applyFilters();
+            })
+            .catch(() => {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-danger">
+                            Failed to load data
+                        </td>
+                    </tr>
+                `;
+            })
+            .finally(() => {
+                isFetching = false;
+            });
+    }, 50);
+}
+
+
+/* ================= FILTER LOGIC ================= */
+document.getElementById("companyFilter").addEventListener("change", applyFilters);
+document.getElementById("noJcoOnly").addEventListener("change", applyFilters);
+
+function applyFilters() {
+  let filtered = [...fullData];
+
+  const company   = document.getElementById("companyFilter").value;
+  const noJcoOnly = document.getElementById("noJcoOnly").checked;
+
+  if (company) {
+    filtered = filtered.filter(row =>
+      (row.company || "").toLowerCase() === company.toLowerCase()
+    );
+  }
+
+  if (noJcoOnly) {
+    filtered = filtered.filter(row =>
+      !row.jco_name || row.jco_name.trim() === ""
+    );
+  }
+
+  renderTable(filtered);
+}
+
+/* ================= RENDER ================= */
+function renderTable(data) {
+  const tableBody = document.getElementById("pendingInterviewTable");
+
+  if (data.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center text-danger">
+          No interview pending records
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const grouped = {};
+  data.forEach(row => {
+    if (!grouped[row.home_state]) grouped[row.home_state] = [];
+    grouped[row.home_state].push(row);
+  });
+
+  let html = "";
+  let srNo = 1;
+
+  Object.entries(grouped).forEach(([state, rows]) => {
+
+    html += `
+      <tr class="table-secondary">
+        <td colspan="7" class="fw-bold">${escapeHTML(state)}</td>
+      </tr>
+    `;
+
+    const hasJCO = rows.some(r => r.jco_name && r.jco_name.trim() !== "");
+
+    rows.forEach(row => {
+      html += `
+        <tr>
+          <td>${srNo++}</td>
+          <td>${escapeHTML(row.army_number)}</td>
+          <td>${escapeHTML(row.rank)}</td>
+          <td>${escapeHTML(row.name)}</td>
+          <td>${escapeHTML(row.company)}</td>
+          <td>${escapeHTML(row.home_state)}</td>
+          <td>
+            ${
+              row.jco_name
+                ? `<span class="text-success fw-semibold">${escapeHTML(row.jco_name)}</span>`
+                : `<span class="text-muted">NO JCO</span>`
+            }
+          </td>
+        </tr>
+      `;
+    });
+
+    if (!hasJCO) {
+      html += `
+        <tr class="table-warning">
+          <td colspan="6" class="text-center fw-semibold">
+            No JCO assigned for ${escapeHTML(state)}
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-primary"
+              onclick="openAssignJco('${escapeHTML(state)}')">
+              Assign JCO
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+  });
+
+  tableBody.innerHTML = html;
+}
+
+/* ================= MODAL SWITCH ================= */
+function openAssignJco(homeState) {
+  document.getElementById("assignHomeState").value = homeState;
+
+  companyModal.hide();
+
+  setTimeout(() => {
+    loadJcos(homeState);
+    assignJcoModal.show();
+  }, 400);
+}
+
+/* ================= LOAD JCO ================= */
+function loadJcos(homeState) {
+  const tableBody = document.getElementById("jcoListTable");
+
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="6" class="text-center">
+        <div class="spinner-border text-success"></div>
+      </td>
+    </tr>
+  `;
+
+  fetch(`/interview_update/get-available-jcos?home_state=${encodeURIComponent(homeState)}`)
+    .then(res => res.json())
+    .then(response => {
+      const jcos = response.jcos || [];
+
+      if (jcos.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-danger">
+              No eligible JCO available
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = "";
+
+      jcos.forEach((jco, index) => {
+        html += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHTML(jco.army_number)}</td>
+            <td>${escapeHTML(jco.rank)}</td>
+            <td>${escapeHTML(jco.name)}</td>
+            <td>${escapeHTML(jco.home_state)}</td>
+            <td>
+              <button class="btn btn-sm btn-success"
+                onclick="confirmAssignJco(this,'${escapeHTML(jco.army_number)}','${escapeHTML(jco.name)}','${escapeHTML(jco.rank)}','${escapeHTML(homeState)}')">
+                Assign
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tableBody.innerHTML = html;
+    });
+}
+
+/* ================= BACK ================= */
+assignJcoModalEl.addEventListener('hidden.bs.modal', () => {
+  companyModal.show();
+});
+
+/* ================= ASSIGN ================= */
+function confirmAssignJco(btn, armyNumber, jcoName, jcoRank, homeState) {
+
+  showConfirm(
+    [
+      { label: '👤 JCO Name',      value: jcoName       },
+      { label: '🎖️ Rank',          value: jcoRank       },
+      { label: '🪪 Army No',        value: armyNumber    },
+      { label: '📍 Assigning To',   value: homeState     }
+    ],
+    function (confirmBtn) {
+
+      confirmBtn.disabled    = true;
+      confirmBtn.textContent = 'Assigning...';
+      btn.disabled           = true;
+      btn.innerText          = 'Assigning...';
+
+      fetch('/interview_update/assign_jco', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content
+        },
+        body: JSON.stringify({
+          army_number: armyNumber,
+          additional_assigned_home_state: homeState
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        hideConfirm();
+
+        if (data.success) {
+          assignJcoModal.hide();
+          showSuccess(`${jcoRank} ${jcoName} assigned to ${homeState}`);
+          fetchInterviewPending();
+        } else {
+          alert(data.message || "Assignment failed");
+          btn.disabled  = false;
+          btn.innerText = "Assign";
+        }
+      })
+      .catch(() => {
+        hideConfirm();
+        alert("Server error");
+        btn.disabled  = false;
+        btn.innerText = "Assign";
+      });
+    }
+  );
+}
+</script>

@@ -1,0 +1,594 @@
+{% extends "baseView.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Boards — Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- Bootstrap -->
+  
+
+  <style>
+    body { background: #f4f6f9; }
+    .card-soft { border-radius: 12px; box-shadow: 0 6px 18px rgba(18,38,63,0.06); }
+    .badge-member { background: #0d6efd; color: white; padding: 4px 8px; border-radius: 6px; margin: 2px; display:inline-block; font-size:13px; }
+    th { user-select: none; }
+    .small-muted { color:#6c757d; font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-0">📋 Board Details</h3>
+      <div class="small-muted">Manage boards and members</div>
+    </div>
+
+    <div>
+      <button class="btn btn-primary" id="btnAddBoard">➕ Add Board</button>
+      <button class="btn btn-outline-secondary ms-2" id="btnReload">🔁 Reload</button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <input id="searchBox" class="form-control" placeholder="Search by order no, subject, authority, presiding officer...">
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card card-soft p-3 mb-5">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" id="boardsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Order No</th>
+            <th>Entry Date</th>
+            <th>Authority</th>
+            <th>Subject</th>
+            <th>Presiding Officer</th>
+            <th>Members</th>
+            <th>Completion Date</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- --------------------
+     Add / Edit Board Modal
+     -------------------- -->
+<div class="modal fade" id="boardModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="boardForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="boardModalTitle">Add Board</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="board_id" id="board_id">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Order No</label>
+              <input name="order_no" id="order_no" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Entry Date</label>
+              <input type="date" name="entry_date" id="entry_date" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Authority</label>
+              <input name="authority" id="authority" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Subject</label>
+              <input name="subject" id="subject" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Presiding Officer</label>
+              <input name="presiding_officer" id="presiding_officer" class="form-control">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Completion Date</label>
+              <input type="date" name="completion_date" id="completion_date" class="form-control">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Remarks</label>
+              <textarea name="remarks" id="remarks" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit" id="boardSaveBtn">Save</button>
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- --------------------
+     Members Modal (view/add/edit members)
+     -------------------- -->
+<div class="modal fade" id="membersModal" tabindex="-1">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Members for <span id="membersModalOrderNo"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="members_board_id">
+
+        <div class="mb-3">
+          <form id="addMemberForm" class="row g-2">
+            <div class="col-6">
+              <input id="new_member_name" class="form-control" placeholder="Member name" required>
+            </div>
+            <div class="col-4">
+              <input id="new_member_army" class="form-control" placeholder="Army number">
+            </div>
+            <div class="col-2">
+              <button class="btn btn-success w-100" type="submit">Add</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="membersList" class="list-group">
+          <!-- dynamic member rows -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="modal fade" id="editMemberModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form id="editMemberForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Member</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="edit_member_id">
+          <div class="mb-2">
+            <label class="form-label">Name</label>
+            <input id="edit_member_name" class="form-control" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Army No</label>
+            <input id="edit_member_army" class="form-control">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" type="submit">Save</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+
+<script>
+(function () {
+  // Elements / state
+  const boardsTableBody = document.querySelector("#boardsTable tbody");
+  const searchBox = document.getElementById("searchBox");
+  const btnAddBoard = document.getElementById("btnAddBoard");
+  const btnReload = document.getElementById("btnReload");
+
+  const boardModalEl = document.getElementById("boardModal");
+  const boardModal = new bootstrap.Modal(boardModalEl);
+  const boardForm = document.getElementById("boardForm");
+  const boardModalTitle = document.getElementById("boardModalTitle");
+  const boardSaveBtn = document.getElementById("boardSaveBtn");
+
+  const membersModalEl = document.getElementById("membersModal");
+  const membersModal = new bootstrap.Modal(membersModalEl);
+  const membersList = document.getElementById("membersList");
+  const membersModalOrderNo = document.getElementById("membersModalOrderNo");
+  const members_board_id = document.getElementById("members_board_id");
+  const addMemberForm = document.getElementById("addMemberForm");
+
+  const editMemberModalEl = document.getElementById("editMemberModal");
+  const editMemberModal = new bootstrap.Modal(editMemberModalEl);
+  const editMemberForm = document.getElementById("editMemberForm");
+
+  let boards = []; // cached boards list
+
+  // ---------- load boards ----------
+  async function loadBoards() {
+    try {
+      const res = await fetch("/get_boards");
+      const data = await res.json();
+      boards = Array.isArray(data) ? data : [];
+      renderTable();
+    } catch (err) {
+      console.error("Failed to load boards", err);
+      alert("Failed to load boards (see console).");
+    }
+  }
+
+  // ---------- render table ----------
+  function renderTable() {
+    const q = (searchBox.value || "").trim().toLowerCase();
+    const filtered = boards.filter(b => {
+      if (!b) return false;
+      return (
+        (b[1] && b[1].toString().toLowerCase().includes(q)) ||
+        (b[4] && b[4].toString().toLowerCase().includes(q)) ||
+        (b[3] && b[3].toString().toLowerCase().includes(q)) ||
+        (b[5] && b[5].toString().toLowerCase().includes(q))
+      );
+    });
+
+    boardsTableBody.innerHTML = "";
+
+    filtered.forEach((board, idx) => {
+      const tr = document.createElement("tr");
+
+      // sanitize displayed values (fallback "")
+      
+      console.log("boardsss", board);
+      console.log("board members ", board);
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${escapeHtml(board[1] || "")}</td>
+        <td>${escapeHtml(formatDate(board[2]))}</td>
+        <td>${escapeHtml(board[3] || "")}</td>
+        <td>${escapeHtml(board[4] || "")}</td>
+        <td>${escapeHtml(board[5] || "")}</td>
+        <td id="members-cell-${board[1]}"><span class="small-muted">loading...</span></td>
+        <td>${escapeHtml(formatDate(board[6]))}</td>
+        <td>${escapeHtml(board[7] || "")}</td>
+        <td>
+          <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-primary" data-action="view-members" data-id="${board[0]}" data-orderno="${escapeHtmlAttr(board[1] || '')}">Members</button>
+            <button class="btn btn-sm btn-outline-secondary" data-action="edit" data-id="${board[0]}">Edit</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${board[0]}">Delete</button>
+          </div>
+        </td>
+      `;
+
+      boardsTableBody.appendChild(tr);
+
+      // load members preview for row
+      loadMembersPreview(board);
+    });
+  }
+
+  // ---------- load members preview (first 3 names as badges) ----------
+  async function loadMembersPreview(board) {
+    
+    const cell = document.getElementById(`members-cell-${board[1]}`);
+    if (!cell) return;
+    try {
+      const res = await fetch(`/get_board_members/${board[1]}`);
+      const members = await res.json();
+      if (!Array.isArray(members) || members.length === 0) {
+        cell.innerHTML = `<span class="small-muted">—</span>`;
+        return;
+      }
+      // show up to 3 badges
+      const membercount =` <span class="small-muted">${members.length}</span>`;
+      cell.innerHTML = membercount;
+    } catch (err) {
+      console.error("members preview failed", err);
+      cell.innerHTML = `<span class="small-muted">—</span>`;
+    }
+  }
+
+  // ---------- helpers ----------
+  function escapeHtml(str) {
+    if (!str && str !== 0) return "";
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+  function escapeHtmlAttr(str) { return escapeHtml(str).replaceAll('"','&quot;'); }
+
+  function formatDate(d) {
+    if (!d) return "";
+    // If date is already YYYY-MM-DD, return as is.
+    // If server returns "Tue, 25 Nov 2025 00:00:00 GMT" or similar, try Date parse.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    const yyyy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // ---------- open add modal ----------
+  btnAddBoard.addEventListener("click", () => {
+    boardModalTitle.textContent = "Add Board";
+    boardForm.reset();
+    document.getElementById("board_id").value = "";
+    boardSaveBtn.textContent = "Save";
+    boardModal.show();
+  });
+
+  // ---------- reload ----------
+  btnReload.addEventListener("click", loadBoards);
+
+  // ---------- search ----------
+  searchBox.addEventListener("input", renderTable);
+
+  // ---------- row actions (view/edit/delete) ----------
+  boardsTableBody.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button");
+    if (!btn) return;
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    if (action === "view-members") {
+      const orderNo = btn.getAttribute("data-orderno") || "";
+      openMembersModal(id, orderNo);
+    } else if (action === "edit") {
+      openEditBoard(id);
+    } else if (action === "delete") {
+      deleteBoard(id);
+    }
+  });
+
+  // ---------- submit add/edit board ----------
+  boardForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    boardSaveBtn.disabled = true;
+    boardSaveBtn.textContent = "Saving...";
+
+    const formData = new FormData(boardForm);
+    const boardId = formData.get("board_id");
+
+    try {
+      // choose endpoint
+      const url = boardId ? `/edit_board/${boardId}` : "/add_board";
+      // both endpoints accept form-data POST
+      const res = await fetch(url, { method: "POST", body: formData });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        boardModal.hide();
+        await loadBoards();
+      } else {
+        alert("Failed to save board: " + (json.message || JSON.stringify(json)));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Unexpected error saving board (see console).");
+    } finally {
+      boardSaveBtn.disabled = false;
+      boardSaveBtn.textContent = "Save";
+    }
+  });
+
+  // ---------- open edit board ----------
+  async function openEditBoard(board_id) {
+    console.log("edit board",boards);
+    const b = boards.find(x => String(x[0]) === String(board_id));
+    if (!b) {
+      alert("Board not found.");
+      return;
+    }
+    boardModalTitle.textContent = "Edit Board";
+    document.getElementById("board_id").value = b[0];
+    document.getElementById("order_no").value = b[1] || "";
+    document.getElementById("entry_date").value = formatDate(b[2]) || "";
+    document.getElementById("authority").value = b[3] || "";
+    document.getElementById("subject").value = b[4] || "";
+    document.getElementById("presiding_officer").value = b[5] || "";
+    document.getElementById("completion_date").value = formatDate(b[6]) || "";
+    document.getElementById("remarks").value = b[7] || "";
+    boardSaveBtn.textContent = "Update";
+    boardModal.show();
+  }
+
+  // ---------- delete board ----------
+  async function deleteBoard(boardId) {
+    if (!confirm("Delete this board? This will also delete its members.")) return;
+    try {
+      const res = await fetch(`/delete_board/${boardId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        await loadBoards();
+      } else {
+        alert("Failed to delete board.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting board (see console).");
+    }
+  }
+
+  // ---------- MEMBERS modal / actions ----------
+  async function openMembersModal(boardId, orderNo) {
+    console.log('board id', boardId, orderNo);
+    membersModalOrderNo.value = orderNo;
+    membersModalOrderNo.textContent = orderNo || "";
+    members_board_id.value = boardId;
+    membersList.innerHTML = "<div class='small-muted'>Loading...</div>";
+    membersModal.show();
+    await loadMembers(orderNo);
+  }
+
+  async function loadMembers(orderNo) {
+    try {
+      
+    
+      const res = await fetch(`/get_board_members/${orderNo}`);
+      
+      const members = await res.json();
+      
+      renderMembersList(members || []);
+    } catch (err) {
+      console.error("loadMembers error", err);
+      membersList.innerHTML = "<div class='small-muted'>Failed to load members.</div>";
+    }
+  }
+
+  function renderMembersList(members) {
+    if (!Array.isArray(members) || members.length === 0) {
+      membersList.innerHTML = `<div class="small-muted">No members yet.</div>`;
+      return;
+    }
+    membersList.innerHTML = "";
+    console.log("memberssssss", members);
+    members.forEach(m => {
+      const item = document.createElement("div");
+      item.className = "list-group-item d-flex justify-content-between align-items-center";
+      item.innerHTML = `
+        <div>
+          <div><strong>${escapeHtml(m[2] || "")}</strong> <span class="small-muted">(${escapeHtml(m[3] || "")})</span></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary" data-action="edit-member" data-id="${m[0]}" data-name="${escapeHtmlAttr(m[2] || '')}" data-army="${escapeHtmlAttr(m[3] || '')}">Edit</button>
+          <button class="btn btn-sm btn-outline-danger" data-action="del-member" data-id="${m[0]}">Delete</button>
+        </div>
+      `;
+      membersList.appendChild(item);
+    });
+  }
+
+  // Add member form submit
+  addMemberForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const orderNo = membersModalOrderNo.value;
+    console.log("order no", orderNo);
+    const name = document.getElementById("new_member_name").value.trim();
+    const army = document.getElementById("new_member_army").value.trim();
+    if (!name) { alert("Enter member name."); return; }
+
+    const fd = new FormData();
+    fd.append("order_no", orderNo);
+    fd.append("member_name", name);
+    fd.append("army_number", army);
+
+    try {
+      const res = await fetch("/add_member", { method: "POST", body: fd });
+      console.log("response", res);
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        document.getElementById("new_member_name").value = "";
+        document.getElementById("new_member_army").value = "";
+        await loadMembers(orderNo);
+        await loadBoards(); // update preview badges
+      } else {
+        alert("Failed to add member.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error adding member.");
+    }
+  });
+
+  // member list actions (edit/delete)
+  membersList.addEventListener("click", (ev) => {
+    console.log("edit clicked");
+    const btn = ev.target.closest("button");
+    if (!btn) return;
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    if (action === "edit-member") {
+      // prefill edit modal
+      document.getElementById("edit_member_id").value = id;
+      document.getElementById("edit_member_name").value = btn.getAttribute("data-name") || "";
+      document.getElementById("edit_member_army").value = btn.getAttribute("data-army") || "";
+      editMemberModal.show();
+    } else if (action === "del-member") {
+      if (!confirm("Delete this member?")) return;
+      deleteMember(id);
+    }
+  });
+
+  // submit edit member
+  editMemberForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = document.getElementById("edit_member_id").value;
+    const name = document.getElementById("edit_member_name").value.trim();
+    const army = document.getElementById("edit_member_army").value.trim();
+    if (!name) { alert("Member name required."); return; }
+
+    const fd = new FormData();
+    fd.append("member_name", name);
+    fd.append("army_number", army);
+
+    try {
+      const res = await fetch(`/edit_member/${id}`, { method: "POST", body: fd });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        editMemberModal.hide();
+        await loadMembers(membersModalOrderNo.value);
+        await loadBoards();
+      } else {
+        alert("Failed to update member.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating member.");
+    }
+  });
+
+  async function deleteMember(memberId) {
+    try {
+      const res = await fetch(`/delete_member/${memberId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (res.ok && json.status === "success") {
+        await loadMembers(members_board_id.value);
+        await loadBoards();
+      } else {
+        alert("Failed to delete member.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting member.");
+    }
+  }
+
+  // initial load
+  loadBoards();
+
+  // Expose for debugging if needed
+  window._boards_ui = { loadBoards };
+
+})();
+</script>
+</body>
+</html>
+
+
+{% endblock %}

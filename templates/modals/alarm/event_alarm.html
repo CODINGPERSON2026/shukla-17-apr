@@ -1,0 +1,78 @@
+<style>
+    .alert-gradient {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0d67dd, #09c2a3);
+        color: #fff;
+        padding: 2px 18px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    /* Shine Effect */
+    .alert-gradient::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -60%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(120deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.45) 50%,
+                rgba(255, 255, 255, 0) 100%);
+        transform: skewX(-25deg);
+        animation: shine 2.5s infinite;
+    }
+
+    @keyframes shine {
+        0% {
+            left: -60%;
+        }
+
+        100% {
+            left: 120%;
+        }
+    }
+</style>
+
+
+<!-- Event Alarm Badge -->
+<span id="eventAlarm" class="alert-gradient d-none" style="cursor:pointer;">
+    🔔 You have Event alarms!
+</span>
+
+<script>
+    async function showTodayEventAlarms() {
+        try {
+            const res = await fetch('/api/today_event_alarm');
+            if (!res.ok) throw new Error("Network error");
+            const result = await res.json();
+
+            const alarm = document.getElementById("eventAlarm");
+
+            if (result.rows && result.rows.length > 0) {
+                alarm.classList.remove("d-none");
+                alarm.classList.add("alert-pulse");
+                alarm.innerText = `🔔 ${result.rows.length} Event(s) Today`;
+            } else {
+                alarm.classList.add("d-none");
+                alarm.classList.remove("alert-pulse");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', showTodayEventAlarms);
+
+    document.getElementById("eventAlarm").addEventListener("click", function () {
+        const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+        modal.show();
+        loadTodayEvents();
+    });
+</script>

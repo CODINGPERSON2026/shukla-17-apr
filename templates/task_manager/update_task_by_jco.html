@@ -1,0 +1,203 @@
+<!-- Main Tasks List Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-gradient-primary text-white">
+          <h5 class="modal-title fw-bold" id="taskModalLabel">
+            <i class="bi bi-list-task me-2"></i>My Assigned Tasks
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-primary">
+                <tr>
+                  <th class="fw-semibold">Task Name</th>
+                  <th class="fw-semibold">Description</th>
+                  <th class="fw-semibold">Priority</th>
+                  <th class="fw-semibold">Due Date</th>
+                  <th class="fw-semibold text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="taskModalBody"></tbody>
+            </table>
+          </div>
+          <div class="text-center text-muted mt-3" id="noTasksMessage" style="display: none;">
+            <em>No tasks assigned yet.</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Edit Task Modal -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title fw-bold" id="editTaskModalLabel">Update Task</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Task Status</label>
+              <select class="form-select" id="editTaskStatus">
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+  
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Remarks</label>
+              <textarea class="form-control" id="editRemarks" rows="3" placeholder="Add your remarks..."></textarea>
+            </div>
+  
+            <div class="mb-4">
+              <label class="form-label fw-semibold d-block">Range Status: <span id="rangeValue">0</span>%</label>
+              <input type="range" class="form-range" min="0" max="100" value="0" id="editRangeStatus">
+              <div class="progress mt-2" style="height: 8px;">
+                <div class="progress-bar bg-success" id="rangeProgressBar" style="width: 0%;"></div>
+              </div>
+            </div>
+  
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-success" id="saveTaskBtn">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let currentTaskId = null;
+    let taskModalInstance = null; // To control the main modal
+  
+    const taskCard = document.getElementById('task-assigned');
+  
+    taskCard.addEventListener('click', () => {
+      fetch('/task_manager/get_my_tasks')
+        .then(res => {
+          if (!res.ok) throw new Error('Network error');
+          return res.json();
+        })
+        .then(data => {
+          const tbody = document.getElementById('taskModalBody');
+          const noTasksMsg = document.getElementById('noTasksMessage');
+          tbody.innerHTML = '';
+  
+          if (data.tasks.length === 0) {
+            noTasksMsg.style.display = 'block';
+          } else {
+            noTasksMsg.style.display = 'none';
+          }
+  
+          data.tasks.forEach(task => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td class="fw-medium">${escapeHtml(task.task_name)}</td>
+              <td class="text-muted small">${escapeHtml(task.description || '-')}</td>
+              <td>
+                <span class="badge bg-${task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'warning' : 'info'}">
+                  ${task.priority || 'Low'}
+                </span>
+              </td>
+              <td class="text-nowrap">${task.due_date || '-'}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-primary shadow-sm" 
+                        onclick="openEditModal(${task.id}, '${task.task_status || 'Pending'}', '${escapeHtmlForAttr(task.remarks || '')}', ${task.range_status || 0})">
+                  <i class="bi bi-pencil-square me-1"></i> Update
+                </button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+  
+          // Show main modal and store instance
+          const modalElement = document.getElementById('taskModal');
+          taskModalInstance = new bootstrap.Modal(modalElement);
+          taskModalInstance.show();
+        })
+        .catch(err => {
+          alert('Failed to load tasks: ' + err.message);
+        });
+    });
+  
+    function openEditModal(taskId, status, remarks, rangeValue) {
+      currentTaskId = taskId;
+  
+      // Populate form
+      document.getElementById('editTaskStatus').value = status;
+      document.getElementById('editRemarks').value = remarks;
+      document.getElementById('editRangeStatus').value = rangeValue;
+      document.getElementById('rangeValue').textContent = rangeValue;
+      document.getElementById('rangeProgressBar').style.width = rangeValue + '%';
+  
+      // Live slider update
+      const slider = document.getElementById('editRangeStatus');
+      slider.oninput = function() {
+        document.getElementById('rangeValue').textContent = this.value;
+        document.getElementById('rangeProgressBar').style.width = this.value + '%';
+      };
+  
+      // IMPORTANT: Hide the main modal before showing edit modal
+      if (taskModalInstance) {
+        taskModalInstance.hide();
+      }
+  
+      // Show edit modal
+      const editModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+      editModal.show();
+    }
+  
+    // Save changes
+    document.getElementById('saveTaskBtn').addEventListener('click', () => {
+      if (!currentTaskId) return;
+  
+      const status = document.getElementById('editTaskStatus').value;
+      const remarks = document.getElementById('editRemarks').value;
+      const range = document.getElementById('editRangeStatus').value;
+  
+      updateTask(currentTaskId, 'task_status', status);
+      updateTask(currentTaskId, 'remarks', remarks);
+      updateTask(currentTaskId, 'range_status', range);
+  
+      const btn = document.getElementById('saveTaskBtn');
+      btn.innerHTML = '<i class="bi bi-check2-all"></i> Saved!';
+      btn.disabled = true;
+  
+      setTimeout(() => {
+        btn.innerHTML = 'Save Changes';
+        btn.disabled = false;
+        bootstrap.Modal.getInstance(document.getElementById('editTaskModal')).hide();
+        
+        // Optional: Refresh task list after save
+        // taskCard.click(); // Uncomment if you want auto-refresh
+      }, 1500);
+    });
+  
+    function updateTask(taskId, field, value) {
+      fetch('/task_manager/update_task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: taskId, field: field, value: value })
+      }).catch(err => console.error('Update failed:', err));
+    }
+  
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+  
+    function escapeHtmlForAttr(text) {
+      return (text || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    }
+  </script>
+  
+  <!-- Bootstrap Icons -->
+  

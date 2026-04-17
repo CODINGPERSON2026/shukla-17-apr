@@ -1,0 +1,98 @@
+<!-- modals/edit_task/editTask.html -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <input type="hidden" name="task_id" id="editTaskId">
+            <div class="mb-3">
+              <label class="form-label">Task Name</label>
+              <input type="text" class="form-control" name="task_name" id="editTaskName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" name="description" id="editTaskDescription" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Priority</label>
+              <select class="form-control" name="priority" id="editTaskPriority" required>
+                <option value="">Select Priority</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+            </div>
+            <div class="mb-3 position-relative">
+              <label class="form-label">Assigned To</label>
+              <input type="text" class="form-control" id="editSearchPersonnel" placeholder="Search personnel..." autocomplete="off" required>
+              <div id="editSearchResults" class="list-group"></div>
+              <input type="hidden" name="assigned_to" id="editAssignedTo" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Due Date</label>
+              <input type="date" class="form-control" name="due_date" id="editDueDate" required>
+            </div>
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Update Task</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+ <script>
+   
+      
+     // 1️⃣ Fetch task from backend
+async function openEditModal(taskId) {
+    try {
+      const res = await fetch(`/task_manager/get_task_update/${taskId}`);
+      if (!res.ok) throw new Error("Failed to fetch task");
+  
+      const task = await res.json();
+      populateEditModal(task); // call separate function to fill modal
+    } catch (err) {
+      console.error(err);
+      alert("Could not load task details.");
+    }
+  }
+  
+  // 2️⃣ Populate the modal fields
+  function populateEditModal(task) {
+    const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+  
+    document.getElementById('editTaskId').value = task.id;
+    document.getElementById('editTaskName').value = task.task_name;
+    document.getElementById('editTaskDescription').value = task.description;
+    document.getElementById('editTaskPriority').value = task.priority;
+    document.getElementById('editAssignedTo').value = task.assigned_to;
+    document.getElementById('editSearchPersonnel').value = task.assigned_to;
+    document.getElementById('editDueDate').value = task.due_date; // format: yyyy-mm-dd
+    modal.show();
+  }
+    document.getElementById("editTaskForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const taskId = document.getElementById("editTaskId").value;
+    const formData = new FormData(this);
+    const res = await fetch(`/task_manager/update_task/${taskId}`, {
+        method: "POST",
+        body: formData
+    });
+    const result = await res.json();
+    if (result.status === "success") {
+        showStatusModal("Task Updated", "Green", 2500);
+        bootstrap.Modal.getInstance(document.getElementById("editTaskModal")).hide();
+        loadTasks(); 
+    } else {
+        alert("Update failed!");
+    }
+});
+
+  </script>

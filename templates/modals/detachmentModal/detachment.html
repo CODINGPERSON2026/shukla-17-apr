@@ -1,0 +1,195 @@
+<style>
+  /* Increase width */
+  .custom-size {
+    max-width: 90% !important;
+    /* Adjust width percentage */
+    width: 90% !important;
+  }
+
+  /* Increase height */
+  .custom-size .modal-content {
+    height: 85vh !important;
+    /* 85% of screen height */
+    overflow-y: auto;
+    /* Enable scroll inside */
+  }
+
+  .table th,
+  .table td {
+    vertical-align: middle;
+  }
+</style>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-free-7.1.0-web/css/all.min.css') }}" />
+
+<div class="modal fade" id="detModal" tabindex="-1">
+  <div class="modal-dialog modal-lg custom-size">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Personnel in DET</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Detachment Filter -->
+        <div class="mb-3">
+          <label for="detachmentFilter" class="form-label">Filter by Detachment:</label>
+          <select id="detachmentFilter" class="form-select">
+            <option value="">All Detachments</option>
+            <!-- Options will be populated dynamically via fetch() -->
+          </select>
+        </div>
+
+        <!-- Spinner (visible while fetching) -->
+        <div id="detSpinner" class="text-center my-4">
+          <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+          <p class="mt-2">Fetching data...</p>
+        </div>
+
+        <!-- Table (hidden until fetch is complete) -->
+        <table class="table table-striped d-none" id="detTable" style="max-height:200px">
+          <thead>
+            <tr>
+              <th>Army Number</th>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Det Name</th>
+              <th>Days on Det</th>
+              <th>Company</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="detTableBody"></tbody>
+        </table>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("viewDetailsBtn").addEventListener("click", async function () {
+    const detModal = new bootstrap.Modal(document.getElementById('detModal'));
+    detModal.show();
+
+    // Populate detachment dropdown first
+    await load_detachments();
+
+    // Load personnel table
+    load_det_personnel();
+  });
+
+  // Detachment dropdown listener
+  document.getElementById("detachmentFilter").addEventListener("change", function () {
+    load_det_personnel(this.value);
+  });
+
+  // Fetch detachments dynamically
+  async function load_detachments() {
+    const select = document.getElementById("detachmentFilter");
+    try {
+      const res = await fetch("/stats/get_all_dets");
+      const data = await res.json();
+
+      if (data.status !== "success") throw new Error("Failed to fetch detachments");
+
+      // Clear existing options except "All Detachments"
+      select.innerHTML = `<option value="">All Detachments</option>`;
+
+      data.data.forEach(det => {
+        const opt = document.createElement("option");
+        opt.value = det.det_id;
+        opt.textContent = det.det_name;
+        select.appendChild(opt);
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load detachments");
+    }
+  }
+
+  async function load_det_personnel(det_id = "", min_days = 0) {
+    const spinner = document.getElementById("detSpinner");
+    const table = document.getElementById("detTable");
+    const tbody = document.getElementById("detTableBody");
+
+    spinner.classList.remove("d-none");
+    table.classList.add("d-none");
+    tbody.innerHTML = "";
+
+    try {
+      let url = "/stats/get_detachment_details";
+      // Construct URL carefully
+      const params = new URLSearchParams();
+      if (det_id) params.append("det_id", det_id);
+      if (min_days > 0) params.append("min_days", min_days);
+
+      if (Array.from(params).length > 0) url += "?" + params.toString();
+
+      const response = await fetch(url);
+      const result = await response.json();
+      console.log(result, "this is result");
+
+      if (result.status !== "success") throw new Error("Fetch failed");
+
+      if (result.data.length === 0) {
+        console.log(result.data.length)
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center">No personnel found</td></tr>`;
+      } else {
+        result.data.forEach(row => {
+          let colorClass = row.days_on_det > 60 ? 'text-danger fw-bold' : '';
+          tbody.innerHTML += `
+            <tr>
+              <td>${row.army_number}</td>
+              <td>${row.rank}</td>
+              <td>${row.name}</td>
+              <td class="${colorClass}">${row.det_name}</td>
+              <td class="${colorClass}">${row.days_on_det}</td>
+              <td>${row.company}</td>
+              <td>
+                <button class="btn btn-sm btn-danger delete-btn" data-army="${row.army_number}">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      spinner.classList.add("d-none");
+      table.classList.remove("d-none");
+
+      // Delete buttons
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", async function () {
+          const army_number = this.dataset.army;
+          if (!confirm(`Are you sure you want to delete ${army_number}?`)) return;
+
+          try {
+            const res = await fetch("/stats/delete_personnel", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ army_number })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+              alert("Deleted successfully");
+              load_det_personnel(det_id); // refresh table with current filter
+            } else {
+              alert("Failed to delete");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Error deleting personnel");
+          }
+        });
+      });
+
+    } catch (err) {
+      console.error(err);
+      spinner.innerHTML = `<p class="text-danger fw-bold mt-3">❌ Failed to load data</p>`;
+    }
+  }
+</script>

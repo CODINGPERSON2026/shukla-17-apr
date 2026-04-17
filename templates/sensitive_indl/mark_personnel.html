@@ -1,0 +1,747 @@
+{% extends "baseView.html" %}
+{% block content %}
+<link rel="stylesheet" href="/static/fontawesome-free-7.1.0-web/css/all.min.css">
+
+<style>
+    body { background: #f0f2f7; font-family: 'Segoe UI', sans-serif; }
+    .container-main { max-width: 1400px; padding-top: 2rem; padding-bottom: 3rem; }
+
+    /* ── Page Header ── */
+    .page-header {
+        background: linear-gradient(135deg, #1e2430 0%, #2d3a52 100%);
+        border-radius: 14px; padding: 1.5rem 2rem;
+        color: white; margin-bottom: 1.75rem;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+        box-shadow: 0 4px 20px rgba(30,36,48,0.15);
+    }
+    .page-header-left { display: flex; align-items: center; gap: 1rem; }
+    .page-header-icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        background: rgba(255,255,255,0.12);
+        display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    }
+    .page-header h4 { margin: 0; font-weight: 700; font-size: 1.2rem; }
+    .page-header p  { margin: 0; font-size: 0.82rem; opacity: 0.7; margin-top: 2px; }
+    .btn-back {
+        background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+        color: white; border-radius: 9px; padding: 0.45rem 1.1rem;
+        font-size: 0.85rem; font-weight: 600; display: flex; align-items: center;
+        gap: 7px; cursor: pointer; transition: background 0.15s; text-decoration: none;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.22); color: white; }
+
+    /* ── Cards ── */
+    .card { border: none; border-radius: 14px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); overflow: hidden; margin-bottom: 1.5rem; }
+    .card-header-custom { background: #1e2430; color: white; font-weight: 600; padding: 0.9rem 1.4rem; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    /* ── Add Panel ── */
+    .add-panel-wrap { background: #fff; border-radius: 14px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); margin-bottom: 1.5rem; overflow: hidden; }
+    .add-panel-toggle {
+        background: #1e2430; color: white; padding: 0.9rem 1.4rem;
+        display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+        border: none; width: 100%; text-align: left; font-size: 0.95rem; font-weight: 600;
+    }
+    .add-panel-toggle:hover { background: #252e40; }
+    .add-panel-toggle .toggle-left { display: flex; align-items: center; gap: 0.6rem; }
+    .add-panel-body { display: none; padding: 1.5rem; animation: slideDown 0.2s ease; }
+    .add-panel-body.open { display: block; }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+    .search-result-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.6rem 0.85rem; border: 1px solid #eaecf3; border-radius: 8px;
+        margin-bottom: 0.4rem; cursor: pointer; transition: all 0.12s;
+    }
+    .search-result-item:hover { background: #eef1fd; border-color: #4361ee; }
+    .search-result-item.selected { background: #eef1fd; border-color: #4361ee; }
+    .sri-name { font-size: 0.85rem; font-weight: 600; color: #1e2430; }
+    .sri-meta { font-size: 0.75rem; color: #9ea8c0; }
+    .sri-check { color: #4361ee; display: none; }
+    .search-result-item.selected .sri-check { display: block; }
+
+    .selected-badge {
+        background: #eef1fd; border: 1px solid #4361ee; border-radius: 8px;
+        padding: 0.5rem 0.85rem; display: flex; align-items: center; gap: 10px;
+        margin-bottom: 0.75rem; font-size: 0.85rem;
+    }
+    .selected-badge .clear-sel { background: none; border: none; color: #9ea8c0; cursor: pointer; margin-left: auto; }
+    .selected-badge .clear-sel:hover { color: #e63946; }
+
+    /* ── Table ── */
+    .table { font-size: 0.9rem; }
+    .table thead th { background: #f1f3f8; color: #5a6177; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; border: none; padding: 0.8rem 1rem; }
+    .table tbody td { vertical-align: middle; padding: 0.7rem 1rem; border-color: #f0f2f7; }
+    .table tbody tr:hover { background: #f7f8fc; }
+
+    .action-btn { padding: 0.32rem 0.7rem; font-size: 0.8rem; border-radius: 6px; margin: 0 2px; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-view   { background: #eef1fd; color: #4361ee; }
+    .btn-view:hover   { background: #4361ee; color: white; }
+    .btn-remark { background: #fff8e6; color: #d4900a; }
+    .btn-remark:hover { background: #f7b538; color: #212529; }
+    .btn-remove { background: #fdedf0; color: #e63946; }
+    .btn-remove:hover { background: #e63946; color: white; }
+
+    /* ── Toolbar ── */
+    .list-toolbar {
+        padding: 0.85rem 1.25rem; background: #f8f9fc;
+        border-bottom: 1px solid #eaecf3;
+        display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    }
+    .list-toolbar .search-wrap { flex: 1; min-width: 180px; position: relative; }
+    .list-toolbar .search-wrap input { padding-left: 2.1rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid #dde0ea; }
+    .list-toolbar .search-wrap .si { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: #9ea8c0; font-size: 0.78rem; }
+    .filter-select { font-size: 0.82rem; border-radius: 7px; border: 1px solid #dde0ea; padding: 0.38rem 0.65rem; background: white; color: #5a6177; }
+
+    /* ── Char bar ── */
+    .char-bar { height: 3px; background: #eef; border-radius: 2px; margin-top: 5px; overflow: hidden; }
+    .char-bar-fill { height: 100%; background: #dc3545; border-radius: 2px; transition: width 0.2s, background 0.2s; }
+
+    /* ── Reason Thread ── */
+    .reason-thread { display: flex; flex-direction: column; gap: 0.6rem; max-height: 320px; overflow-y: auto; padding-right: 3px; }
+    .reason-thread::-webkit-scrollbar { width: 4px; }
+    .reason-thread::-webkit-scrollbar-thumb { background: #c8cde0; border-radius: 4px; }
+
+    .reason-block { background: #fff; border: 1px solid #eaecf3; border-left: 3px solid #4361ee; border-radius: 0 10px 10px 0; padding: 0.75rem 1rem; }
+    .reason-block:nth-child(2n) { border-left-color: #f7b538; }
+    .reason-block:nth-child(3n) { border-left-color: #28a745; }
+    .reason-block:nth-child(4n) { border-left-color: #e63946; }
+    .reason-block:nth-child(5n) { border-left-color: #6f42c1; }
+
+    .rb-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .rb-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .rb-name  { font-size: 0.8rem; font-weight: 700; color: #1e2430; }
+    .rb-role  { font-size: 0.7rem; color: #7a82a0; background: #f0f2f7; padding: 1px 7px; border-radius: 20px; }
+    .rb-first { font-size: 0.66rem; color: #fff; background: #e63946; padding: 1px 7px; border-radius: 20px; }
+    .rb-text  { font-size: 0.88rem; color: #2d3352; line-height: 1.6; }
+    .rb-time  { font-size: 0.72rem; color: #9ea8c0; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .no-reason { background: #fffbf0; border: 1px dashed #ffc107; padding: 1rem; border-radius: 10px; color: #9a7a00; font-size: 0.85rem; text-align: center; }
+
+    /* ── View Modal ── */
+    .modal-content { border: none; border-radius: 16px; overflow: hidden; }
+    .modal-hero-detail {
+        background: linear-gradient(135deg, #1e2430 0%, #2d3a52 100%);
+        padding: 1.75rem 1.5rem 1.5rem; color: white; position: relative;
+    }
+    .modal-hero-detail .close-btn {
+        position: absolute; top: 1rem; right: 1rem;
+        background: rgba(255,255,255,0.15); border: none; color: white;
+        width: 30px; height: 30px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .modal-hero-detail .close-btn:hover { background: rgba(255,255,255,0.3); }
+    .modal-identity { display: flex; align-items: center; gap: 1.1rem; }
+    .modal-avatar-big { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .modal-name      { font-size: 1.1rem; font-weight: 700; margin: 0; }
+    .modal-rank-text { font-size: 0.84rem; opacity: 0.75; margin: 2px 0 0; }
+    .modal-meta-strip { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .meta-pill { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 0.35rem 0.8rem; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
+    .modal-section { padding: 1.1rem 1.5rem; }
+    .modal-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #9ea8c0; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 6px; }
+    .remarks-count { background: #eef1fd; color: #4361ee; font-size: 0.7rem; padding: 1px 7px; border-radius: 20px; font-weight: 700; }
+    .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #f0f2f7; display: flex; justify-content: flex-end; }
+
+    /* ── Remark Modal ── */
+    .edit-hero { background: linear-gradient(135deg, #d4900a, #f7b538); padding: 1.1rem 1.5rem; color: white; position: relative; display: flex; align-items: center; gap: 10px; }
+    .edit-hero h5 { margin: 0; font-weight: 700; font-size: 0.95rem; }
+    .edit-hero .close-btn { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    /* ── Empty / Loading ── */
+    .empty-state { text-align: center; padding: 2.5rem 1rem; color: #9ea8c0; }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.3; display: block; }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+
+    @media (max-width: 992px) { .container-main { padding: 1rem; } .content-wrapper { padding-left: 0; } }
+    @media (max-width: 576px) { .page-header { padding: 1.2rem; } .modal-meta-strip { gap: 0.5rem; } }
+</style>
+</head>
+<body>
+<div class="content-wrapper">
+    {% set header = "Sensitive Personnel Management" %}
+    {% set subscript = 'Search → Select → Mark → View Remarks' %}
+    {% include 'navbar/navbar.html' %}
+
+    <div class="container-fluid container-main">
+
+        <!-- ── Page Header ── -->
+        
+
+        <!-- ── Add New Personnel Panel ── -->
+        <div class="add-panel-wrap">
+            <button class="add-panel-toggle" id="toggleAddPanel">
+                <span class="toggle-left">
+                    <i class="fa-solid fa-user-plus"></i>
+                    Mark New Personnel as Sensitive
+                </span>
+                <i class="fa-solid fa-chevron-down" id="toggleChevron"></i>
+            </button>
+            <div class="add-panel-body" id="addPanelBody">
+                <div class="row g-4">
+
+                    <!-- Step 1 -->
+                    <div class="col-md-5">
+                        <p class="fw-semibold mb-2" style="font-size:0.85rem; color:#5a6177;">
+                            <span class="badge bg-primary me-2" style="font-size:0.72rem;">Step 1</span>
+                            Search &amp; Select Personnel
+                        </p>
+                        <input type="text" id="addSearchInput" class="form-control form-control-sm mb-2"
+                               placeholder="Type name or army number...">
+                        <div id="addSearchStatus" style="display:none;">
+                            <small class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>Searching...</small>
+                        </div>
+                        <div id="addSearchResults" style="max-height:200px; overflow-y:auto;"></div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="col-md-7">
+                        <p class="fw-semibold mb-2" style="font-size:0.85rem; color:#5a6177;">
+                            <span class="badge bg-primary me-2" style="font-size:0.72rem;">Step 2</span>
+                            Write Classification Reason
+                        </p>
+
+                        <div id="selectedPersonBadge" class="selected-badge" style="display:none;">
+                            <i class="fa-solid fa-user-shield text-primary"></i>
+                            <div>
+                                <strong id="selectedPersonName">-</strong>
+                                <div style="font-size:0.75rem; color:#9ea8c0;" id="selectedPersonMeta">-</div>
+                            </div>
+                            <button class="clear-sel" id="clearSelection" title="Clear">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <input type="hidden" id="add_army_number">
+                        <textarea class="form-control form-control-sm" id="addReason" rows="4"
+                            placeholder="Provide detailed classification reason (minimum 30 characters)..."></textarea>
+                        <div class="char-bar"><div class="char-bar-fill" id="addCharFill" style="width:0%"></div></div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small id="addCharCount" style="color:#dc3545;">0 / 30 minimum</small>
+                            <button class="btn btn-success btn-sm fw-semibold px-3" id="submitMarkBtn">
+                                <i class="fa-solid fa-shield-halved me-1"></i>Mark as Sensitive
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Classified List ── -->
+        <div class="card">
+            <div class="card-header-custom">
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Go Back
+                </a>
+                <i class="fa-solid fa-shield-virus"></i>
+                Classified Personnel List
+                
+            </div>
+            <a href="javascript:history.back()" class="btn-back">
+            <i class="fa-solid fa-arrow-left"></i> Go Back
+        </a>
+
+            <!-- Toolbar -->
+            <div class="list-toolbar">
+                <div class="search-wrap">
+                    <i class="fa-solid fa-magnifying-glass si"></i>
+                    <input type="text" id="mainSearchInput" class="form-control form-control-sm"
+                           placeholder="Search classified personnel...">
+                </div>
+                <select id="filterCount" class="filter-select">
+                    <option value="5">Show 5</option>
+                    <option value="10" selected>Show 10</option>
+                    <option value="25">Show 25</option>
+                    <option value="50">Show 50</option>
+                    <option value="all">Show All</option>
+                </select>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Army No.</th>
+                                <th>Rank</th>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Remarks</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sensitiveListBody"></tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state" style="display:none;">
+                        <i class="fa-solid fa-shield-slash"></i>
+                        <p class="mb-0" style="font-size:0.9rem;">No sensitive personnel records found.</p>
+                    </div>
+                    <div id="loadingState" class="empty-state">
+                        <span class="spinner-border spinner-border-sm text-muted me-2"></span>
+                        <span style="font-size:0.88rem; color:#9ea8c0;">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /container -->
+</div><!-- /content-wrapper -->
+
+
+<!-- ════════════════════════════════
+     VIEW DETAIL MODAL
+════════════════════════════════ -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-hero-detail">
+                <button class="close-btn" data-bs-dismiss="modal"><i class="fa-solid fa-xmark fa-sm"></i></button>
+                <div class="modal-identity">
+                    <div class="modal-avatar-big" id="viewAvatarBig">AB</div>
+                    <div>
+                        <p class="modal-name" id="viewName">-</p>
+                        <p class="modal-rank-text" id="viewRank">-</p>
+                    </div>
+                </div>
+                <div class="modal-meta-strip">
+                    <div class="meta-pill"><i class="fa-solid fa-id-badge"></i><span id="viewArmyNumber">-</span></div>
+                    <div class="meta-pill"><i class="fa-solid fa-building-shield"></i><span id="viewCompany">-</span></div>
+                    <div class="meta-pill"><i class="fa-regular fa-calendar"></i><span id="viewMarkedOn">-</span></div>
+                </div>
+            </div>
+            <div class="modal-section">
+                <div class="modal-section-title">
+                    <i class="fa-solid fa-comments"></i>
+                    Classification Remarks
+                    <span class="remarks-count" id="reasonCount">0</span>
+                </div>
+                <div class="reason-thread" id="viewReasonThread">
+                    <div class="no-reason"><i class="fa-regular fa-comment-dots me-2"></i>No remarks added yet.</div>
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     ADD REMARK MODAL
+════════════════════════════════ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="edit-hero">
+                <i class="fa-solid fa-pen-to-square fa-lg"></i>
+                <h5>Add Remark</h5>
+                <button class="close-btn" data-bs-dismiss="modal"><i class="fa-solid fa-xmark fa-sm"></i></button>
+            </div>
+            <div class="modal-section" style="padding-bottom:0;">
+                <input type="hidden" id="editArmyNumber">
+                <div class="alert alert-light border d-flex align-items-start gap-2 py-2 px-3 mb-3"
+                     style="font-size:0.82rem; border-radius:8px;">
+                    <i class="fa-solid fa-circle-info text-primary mt-1" style="flex-shrink:0;"></i>
+                    <span>Your remark will be saved as a <strong>new entry</strong> under your name. Previous remarks are preserved.</span>
+                </div>
+                <label class="form-label fw-semibold" style="font-size:0.85rem;">
+                    Your Remark <span class="text-danger">*</span>
+                </label>
+                <textarea class="form-control" id="editReason" rows="6" minlength="30"
+                    placeholder="Add your classification remark (minimum 30 characters)..."></textarea>
+                <div class="char-bar mt-2"><div class="char-bar-fill" id="editCharFill" style="width:0%"></div></div>
+                <small id="editCharCount" style="color:#dc3545;">0 / 30 minimum</small>
+            </div>
+            <div class="modal-footer-custom mt-3">
+                <button type="button" class="btn btn-light me-2 px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-semibold px-4" id="saveEditBtn">
+                    <i class="fa-solid fa-plus me-1"></i>Add Remark
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ── Toast ── -->
+<div class="toast-container">
+    <div id="actionToast" class="toast align-items-center border-0 text-white" role="alert">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toastMessage">Action completed.</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+    const el = document.getElementById('actionToast');
+    const colors = { success:'#28a745', danger:'#dc3545', warning:'#e6a817', info:'#4361ee' };
+    el.style.background = colors[type] || colors.success;
+    document.getElementById('toastMessage').textContent = msg;
+    new bootstrap.Toast(el, { delay: 3000 }).show();
+}
+
+// ── Avatar helpers ─────────────────────────────────────────────────────────
+const PALETTE = ['#4361ee','#f7b538','#28a745','#e63946','#6f42c1','#20c997','#fd7e14','#0dcaf0','#d63384'];
+function nameToColor(n) {
+    let h = 0;
+    for (let i = 0; i < n.length; i++) h = n.charCodeAt(i) + ((h << 5) - h);
+    return PALETTE[Math.abs(h) % PALETTE.length];
+}
+function getInitials(n) { return (n||'?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase(); }
+function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(s || ''));
+    return d.innerHTML;
+}
+
+// ── Char counter ───────────────────────────────────────────────────────────
+function updateCharCounter(text, countEl, fillEl, min = 30) {
+    const len = text.trim().length;
+    const pct = Math.min((len / min) * 100, 100);
+    const ok  = len >= min;
+    countEl.textContent   = ok ? `✓ ${len} characters` : `${len} / ${min} minimum`;
+    countEl.style.color   = ok ? '#28a745' : '#dc3545';
+    fillEl.style.width    = pct + '%';
+    fillEl.style.background = ok ? '#28a745' : (pct > 50 ? '#f7b538' : '#dc3545');
+}
+document.getElementById('addReason').addEventListener('input', function () {
+    updateCharCounter(this.value, document.getElementById('addCharCount'), document.getElementById('addCharFill'));
+});
+document.getElementById('editReason').addEventListener('input', function () {
+    updateCharCounter(this.value, document.getElementById('editCharCount'), document.getElementById('editCharFill'));
+});
+
+// ── Add Panel toggle ───────────────────────────────────────────────────────
+const addPanelBody  = document.getElementById('addPanelBody');
+const toggleChevron = document.getElementById('toggleChevron');
+
+document.getElementById('toggleAddPanel').addEventListener('click', function () {
+    const open = addPanelBody.classList.toggle('open');
+    toggleChevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+});
+
+// ── Personnel search ───────────────────────────────────────────────────────
+let addSearchTimeout;
+let selectedArmyNumber = null;
+
+document.getElementById('addSearchInput').addEventListener('input', function () {
+    const q = this.value.trim();
+    clearTimeout(addSearchTimeout);
+    document.getElementById('addSearchResults').innerHTML = '';
+
+    if (q.length < 2) {
+        document.getElementById('addSearchStatus').style.display = 'none';
+        return;
+    }
+    document.getElementById('addSearchStatus').style.display = 'block';
+
+    addSearchTimeout = setTimeout(() => {
+        fetch('/search_personnel_to_mark', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ query: q })
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('addSearchStatus').style.display = 'none';
+            const container = document.getElementById('addSearchResults');
+            container.innerHTML = '';
+
+            if (!data.length) {
+                container.innerHTML = `<small class="text-muted"><i class="fa-solid fa-circle-xmark me-1"></i>No personnel found</small>`;
+                return;
+            }
+            data.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'search-result-item';
+                div.innerHTML = `
+                    <div>
+                        <div class="sri-name">${escapeHtml(p.name)}</div>
+                        <div class="sri-meta">${escapeHtml(p.army_number)} · ${escapeHtml(p.rank)}</div>
+                    </div>
+                    <i class="fa-solid fa-circle-check sri-check"></i>`;
+                div.addEventListener('click', () => selectPersonnel(p, div));
+                container.appendChild(div);
+            });
+        })
+        .catch(() => {
+            document.getElementById('addSearchStatus').style.display = 'none';
+            showToast('Search failed', 'danger');
+        });
+    }, 300);
+});
+
+function selectPersonnel(p, el) {
+    document.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedArmyNumber = p.army_number;
+    document.getElementById('add_army_number').value = p.army_number;
+    const badge = document.getElementById('selectedPersonBadge');
+    badge.style.display = 'flex';
+    document.getElementById('selectedPersonName').textContent = p.name;
+    document.getElementById('selectedPersonMeta').textContent = `${p.army_number} · ${p.rank}`;
+    document.getElementById('addReason').focus();
+    showToast(`${p.name} selected`, 'info');
+}
+
+document.getElementById('clearSelection').addEventListener('click', function () {
+    selectedArmyNumber = null;
+    document.getElementById('add_army_number').value = '';
+    document.getElementById('selectedPersonBadge').style.display = 'none';
+    document.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('selected'));
+    document.getElementById('addSearchInput').value = '';
+    document.getElementById('addSearchResults').innerHTML = '';
+    document.getElementById('addReason').value = '';
+    updateCharCounter('', document.getElementById('addCharCount'), document.getElementById('addCharFill'));
+});
+
+// ── Submit mark ────────────────────────────────────────────────────────────
+document.getElementById('submitMarkBtn').addEventListener('click', function () {
+    const armyNumber = document.getElementById('add_army_number').value;
+    const reason     = document.getElementById('addReason').value.trim();
+
+    if (!armyNumber) return showToast('Select a personnel first', 'warning');
+    if (!reason)     return showToast('Reason is required', 'warning');
+    if (reason.length < 30) return showToast('Reason must be at least 30 characters', 'warning');
+
+    const fd = new FormData();
+    fd.append('army_number', armyNumber);
+    fd.append('reason', reason);
+
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+    fetch('/sensitive/mark_sensitive', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Marked as sensitive successfully!');
+                // Reset
+                document.getElementById('addReason').value = '';
+                document.getElementById('addSearchInput').value = '';
+                document.getElementById('addSearchResults').innerHTML = '';
+                document.getElementById('selectedPersonBadge').style.display = 'none';
+                selectedArmyNumber = null;
+                document.getElementById('add_army_number').value = '';
+                updateCharCounter('', document.getElementById('addCharCount'), document.getElementById('addCharFill'));
+                // Collapse panel
+                addPanelBody.classList.remove('open');
+                toggleChevron.style.transform = 'rotate(0deg)';
+                refreshSensitiveList();
+            } else {
+                showToast(data.error || 'Failed to mark', 'danger');
+            }
+        })
+        .catch(() => showToast('Network error', 'danger'))
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fa-solid fa-shield-halved me-1"></i>Mark as Sensitive';
+        });
+});
+
+// ── Render reason thread ───────────────────────────────────────────────────
+function renderReasonThread(logs) {
+    const container = document.getElementById('viewReasonThread');
+    document.getElementById('reasonCount').textContent = logs.length;
+    if (!logs || logs.length === 0) {
+        container.innerHTML = '<div class="no-reason"><i class="fa-regular fa-comment-dots me-2"></i>No remarks added yet.</div>';
+        return;
+    }
+    container.innerHTML = logs.map((log, i) => {
+        const color    = nameToColor(log.added_by);
+        const initials = getInitials(log.added_by);
+        return `
+        <div class="reason-block">
+            <div class="rb-header">
+                <div class="rb-avatar" style="background:${color};">${initials}</div>
+                <span class="rb-name">${escapeHtml(log.added_by)}</span>
+                <span class="rb-role">${escapeHtml(log.added_by_role)}</span>
+                ${i === 0 ? '<span class="rb-first"><i class="fa-solid fa-star fa-xs me-1"></i>First Entry</span>' : ''}
+            </div>
+            <div class="rb-text">${escapeHtml(log.reason)}</div>
+            <div class="rb-time"><i class="fa-regular fa-clock"></i>${escapeHtml(log.added_on)}</div>
+        </div>`;
+    }).join('');
+}
+
+// ── Load list ──────────────────────────────────────────────────────────────
+function refreshSensitiveList() {
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('emptyState').style.display   = 'none';
+    document.getElementById('sensitiveListBody').innerHTML = '';
+
+    fetch('/sensitive/get_sensitive_list')
+        .then(r => r.json())
+        .then(res => {
+            document.getElementById('loadingState').style.display = 'none';
+            const tbody = document.getElementById('sensitiveListBody');
+
+            if (!res.success || res.data.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            res.data.forEach(s => {
+                const row = document.createElement('tr');
+                row.className = 'sensitive-row';
+                const safeLogsJson = JSON.stringify(s.reason_logs || []).replace(/'/g, '&#39;');
+                const logsCount    = (s.reason_logs || []).length;
+
+                row.innerHTML = `
+                    <td><code class="text-primary fw-semibold" style="font-size:0.82rem;">${s.army_number}</code></td>
+                    <td><span class="badge rounded-pill" style="background:#eef1fd;color:#4361ee;font-size:0.75rem;font-weight:600;">${s.rank}</span></td>
+                    <td><strong style="font-size:0.88rem;">${s.name}</strong></td>
+                    <td><span class="text-muted" style="font-size:0.85rem;">${s.company || 'N/A'}</span></td>
+                    <td>
+                        ${logsCount > 0
+                            ? `<span class="badge rounded-pill bg-primary" style="font-size:0.72rem;">${logsCount} remark${logsCount > 1 ? 's' : ''}</span>`
+                            : `<span class="badge rounded-pill bg-light text-muted border" style="font-size:0.72rem;">None</span>`}
+                    </td>
+                    <td class="text-center">
+                        <button class="btn action-btn btn-view" title="View Details"
+                            data-army="${s.army_number}" data-rank="${s.rank}"
+                            data-name="${s.name}" data-company="${s.company || 'N/A'}"
+                            data-marked="${s.marked_on}" data-logs='${safeLogsJson}'>
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button class="btn action-btn btn-remark" title="Add Remark"
+                            data-army="${s.army_number}">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn action-btn btn-remove" title="Remove"
+                            data-army="${s.army_number}" data-name="${s.name}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>`;
+                tbody.appendChild(row);
+            });
+
+            attachListeners();
+            applySearch();
+        })
+        .catch(() => {
+            document.getElementById('loadingState').style.display = 'none';
+            showToast('Failed to load list', 'danger');
+        });
+}
+
+// ── Table button listeners ─────────────────────────────────────────────────
+function attachListeners() {
+    document.querySelectorAll('.btn-view').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const logs = JSON.parse(this.dataset.logs || '[]');
+            openViewModal(
+                this.dataset.army, this.dataset.name,
+                this.dataset.rank, this.dataset.company,
+                this.dataset.marked, logs
+            );
+        });
+    });
+    document.querySelectorAll('.btn-remark').forEach(btn => {
+        btn.addEventListener('click', function () { openRemarkModal(this.dataset.army); });
+    });
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', function () { removePersonnel(this.dataset.army, this.dataset.name); });
+    });
+}
+
+// ── View modal ─────────────────────────────────────────────────────────────
+function openViewModal(armyNumber, name, rank, company, markedOn, logs) {
+    const avatarEl = document.getElementById('viewAvatarBig');
+    avatarEl.textContent  = getInitials(name);
+    avatarEl.style.background = nameToColor(name);
+    document.getElementById('viewName').textContent       = name;
+    document.getElementById('viewRank').textContent       = rank;
+    document.getElementById('viewArmyNumber').textContent = armyNumber;
+    document.getElementById('viewCompany').textContent    = company;
+    document.getElementById('viewMarkedOn').textContent   = markedOn;
+    renderReasonThread(logs);
+    new bootstrap.Modal(document.getElementById('viewModal')).show();
+}
+
+// ── Remark modal ───────────────────────────────────────────────────────────
+function openRemarkModal(armyNumber) {
+    document.getElementById('editArmyNumber').value       = armyNumber;
+    document.getElementById('editReason').value           = '';
+    document.getElementById('editCharCount').textContent  = '0 / 30 minimum';
+    document.getElementById('editCharCount').style.color  = '#dc3545';
+    document.getElementById('editCharFill').style.width   = '0%';
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+document.getElementById('saveEditBtn').addEventListener('click', function () {
+    const armyNumber = document.getElementById('editArmyNumber').value;
+    const reason     = document.getElementById('editReason').value.trim();
+    if (!reason)            return showToast('Remark cannot be empty', 'warning');
+    if (reason.length < 30) return showToast('Remark must be at least 30 characters', 'warning');
+
+    const fd = new FormData();
+    fd.append('army_number', armyNumber);
+    fd.append('reason', reason);
+
+    fetch('/sensitive/update_sensitive_reason', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Remark added successfully');
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                refreshSensitiveList();
+            } else {
+                showToast(data.error || 'Failed', 'danger');
+            }
+        });
+});
+
+// ── Remove ─────────────────────────────────────────────────────────────────
+function removePersonnel(armyNumber, name) {
+    if (!confirm(`Remove ${name} from the sensitive list?\nAll remarks will also be permanently deleted.`)) return;
+    const fd = new FormData();
+    fd.append('army_number', armyNumber);
+    fetch('/sensitive/remove_sensitive', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Removed successfully');
+                refreshSensitiveList();
+            } else {
+                showToast(data.error || 'Remove failed', 'danger');
+            }
+        });
+}
+
+// ── Search + Filter ────────────────────────────────────────────────────────
+function applySearch() {
+    const q = document.getElementById('mainSearchInput').value.toLowerCase().trim();
+    document.querySelectorAll('.sensitive-row').forEach(row => {
+        row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    });
+    applyFilter();
+}
+
+function applyFilter() {
+    const val = document.getElementById('filterCount').value;
+    let count = 0;
+    document.querySelectorAll('.sensitive-row').forEach(row => {
+        if (row.style.display === 'none') return;
+        count++;
+        if (val !== 'all' && count > parseInt(val)) row.style.display = 'none';
+    });
+}
+
+document.getElementById('mainSearchInput').addEventListener('input', applySearch);
+document.getElementById('filterCount').addEventListener('change', () => {
+    document.querySelectorAll('.sensitive-row').forEach(r => r.style.display = '');
+    applySearch();
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => { refreshSensitiveList(); });
+</script>
+</body>
+</html>
+{% endblock %}

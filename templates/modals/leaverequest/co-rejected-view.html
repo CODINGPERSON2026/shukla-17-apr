@@ -1,0 +1,293 @@
+<!-- First Modal: CO Rejected Leaves Summary -->
+<style>
+    /* Make the modal bigger */
+    #coRejectedModal .modal-dialog {
+      max-width: 1300px;
+    }
+  
+    #coRejectedModal .modal-content {
+      border-radius: 12px;
+    }
+  
+    /* Custom table styling */
+    #coRejectedTable th {
+      background-color: #f8d7da;
+      color: #721c24;
+      font-weight: 800;
+      text-align: center;
+      padding: 12px;
+    }
+  
+    #coRejectedTable td {
+      text-align: center;
+      padding: 4px 6px;
+      font-size: 17px;
+    }
+  
+    /* Alternate row colors */
+    #coRejectedTable tbody tr:nth-child(even) {
+      background-color: #fef2f2;
+    }
+  
+    /* Spinner spacing */
+    #coRejectedSpinner {
+      margin-bottom: 20px;
+    }
+  </style>
+  
+  <div class="modal fade" id="coRejectedModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Rejected Leaves</h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <div class="modal-body">
+          <div id="coRejectedSpinner" class="text-center my-3">
+            <div class="spinner-border text-danger" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+  
+          <table class="table table-striped d-none" id="coRejectedTable">
+            <thead>
+              <tr>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Rejection Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="coRejectedTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Second Modal: Full Leave Details -->
+  <div class="modal fade" id="coLeaveDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Leave Request Details</h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <div class="modal-body">
+          <div id="coLeaveSpinner" class="text-center my-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+  
+          <div id="coLeaveContent" class="d-none">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="fw-bold">Army Number</label>
+                <div class="form-control bg-light" id="co_army_number">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">Rank</label>
+                <div class="form-control bg-light" id="co_rank">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">Name</label>
+                <div class="form-control bg-light" id="co_name">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold"></label>
+                <div class="form-control bg-light" id="co_leave_type">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">Leave Days</label>
+                <div class="form-control bg-light" id="co_leave_days">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">From Date</label>
+                <div class="form-control bg-light" id="co_from_date">-</div>
+              </div>
+              <div class="col-md-6">
+                <label class="fw-bold">To Date</label>
+                <div class="form-control bg-light" id="co_to_date">-</div>
+              </div>
+              <div class="col-12">
+                <label class="fw-bold">Leave Reason</label>
+                <div class="form-control bg-light" style="min-height:60px" id="co_leave_reason">-</div>
+              </div>
+              <div class="col-12">
+                <label class="fw-bold text-danger">Rejection Reason</label>
+                <div class="form-control bg-light text-danger" style="min-height:60px" id="co_reject_reason">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button id="coSanctionLeaveBtn" class="btn btn-success">Sanction Leave</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+  let selectedLeaveId = null;
+  let isLoadingRejectedLeaves = false;
+  
+  // Function to load rejected leaves
+  async function loadRejectedLeaves() {
+    if (isLoadingRejectedLeaves) return;
+    isLoadingRejectedLeaves = true;
+  
+    const spinner = document.getElementById("coRejectedSpinner");
+    const table = document.getElementById("coRejectedTable");
+    const tbody = document.getElementById("coRejectedTableBody");
+  
+    spinner.classList.remove("d-none");
+    table.classList.add("d-none");
+    tbody.innerHTML = ""; // clear previous rows
+  
+    try {
+      const res = await fetch("/apply_leave/rejected_leaves");
+      if (!res.ok) throw new Error("Failed to fetch rejected leaves");
+  
+      const { data } = await res.json();
+  
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No rejected leaves found</td></tr>`;
+      } else {
+        tbody.innerHTML = data.map(row => `
+          <tr>
+            <td>${row.army_number || '-'}</td>
+            <td>${row.rank|| '-'}</td>
+
+            
+            <td>${row.name || '-'}</td>
+            <td>${row.request_status || 'Rejected'}</td>
+            <td>
+              <button class="btn btn-sm btn-info" onclick="viewCOLeaveDetails(${row.id})">
+                View Details
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      }
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Failed to load data</td></tr>`;
+    } finally {
+      spinner.classList.add("d-none");
+      table.classList.remove("d-none");
+      isLoadingRejectedLeaves = false;
+    }
+  }
+  
+  // Attach listener only once
+  const coRejectedModalEl = document.getElementById("coRejectedModal");
+  if (!coRejectedModalEl.dataset.listenerAttached) {
+    coRejectedModalEl.addEventListener("show.bs.modal", loadRejectedLeaves);
+    coRejectedModalEl.dataset.listenerAttached = true;
+  }
+  
+  // View Leave Details
+  async function viewCOLeaveDetails(id) {
+    selectedLeaveId = id;
+  
+    // Close rejected leaves modal first
+    const rejectedModalInstance = bootstrap.Modal.getInstance(coRejectedModalEl);
+    if (rejectedModalInstance) rejectedModalInstance.hide();
+  
+    const detailsModalEl = document.getElementById("coLeaveDetailsModal");
+    const detailsModal = bootstrap.Modal.getOrCreateInstance(detailsModalEl);
+    detailsModal.show();
+  
+    const spinner = document.getElementById("coLeaveSpinner");
+    const content = document.getElementById("coLeaveContent");
+  
+    spinner.classList.remove("d-none");
+    content.classList.add("d-none");
+  
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+  
+      const res = await fetch(`/apply_leave/get_leave_for_co/${id}`, {
+        signal: controller.signal
+      });
+  
+      clearTimeout(timeoutId);
+  
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+  
+      const { data } = await res.json();
+  
+      document.getElementById("co_army_number").innerText = data.army_number || '-';
+      
+
+      document.getElementById("co_rank").innerText =
+      data.rank || data.rank_name || data.army_rank || '-';
+    
+
+      document.getElementById("co_name").innerText = data.name || '-';
+      document.getElementById("co_leave_type").innerText = data.leave_type || '-';
+      document.getElementById("co_leave_days").innerText = data.leave_days || '-';
+      document.getElementById("co_from_date").innerText = data.from_date || '-';
+      document.getElementById("co_to_date").innerText = data.to_date || '-';
+      document.getElementById("co_leave_reason").innerText = data.leave_reason || '-';
+      document.getElementById("co_reject_reason").innerText = data.reject_reason || 'No reason provided';
+  
+    } catch (err) {
+      let message = "Failed to load leave details.";
+      if (err.name === 'AbortError') message = "Request timed out. Please try again.";
+      else if (err.message) message += " " + err.message;
+  
+      alert(message);
+      console.error(err);
+      detailsModal.hide();
+    } finally {
+      spinner.classList.add("d-none");
+      content.classList.remove("d-none");
+    }
+  }
+  
+  // Sanction Leave
+  document.getElementById("coSanctionLeaveBtn").addEventListener("click", async () => {
+    if (!selectedLeaveId) {
+      alert("No leave selected.");
+      return;
+    }
+  
+    if (!confirm("Are you sure you want to sanction this rejected leave?")) return;
+  
+    try {
+      const res = await fetch("/apply_leave/recommend_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leave_id: selectedLeaveId })
+      });
+  
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed to sanction leave");
+  
+      alert(result.message || "Leave sanctioned successfully!");
+  
+      // Close details modal
+      bootstrap.Modal.getInstance(document.getElementById("coLeaveDetailsModal")).hide();
+  
+      // Refresh the rejected leaves list without reopening modal
+      loadRejectedLeaves();
+  
+      // Show the modal again
+      const rejectedModal = bootstrap.Modal.getOrCreateInstance(coRejectedModalEl);
+      rejectedModal.show();
+  
+    } catch (err) {
+      alert(err.message || "An error occurred while sanctioning the leave.");
+      console.error(err);
+    }
+  });
+  </script>
+  

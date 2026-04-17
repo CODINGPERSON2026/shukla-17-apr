@@ -1,0 +1,355 @@
+<!-- ═══════════════════════════════
+     ALARM BADGE
+     ═══════════════════════════════ -->
+<span id="leave_alarm_alert" class="alert-gradient d-none" style="cursor:pointer;">
+    🔔 You have leave alarms!
+</span>
+
+
+<!-- ═══════════════════════════════
+     CO PENDING LEAVE MODAL
+     ═══════════════════════════════ -->
+<div class="modal fade" id="pendingLeaveModal" tabindex="-1"
+     aria-labelledby="pendingLeaveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content"
+         style="border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;
+                font-family:'Segoe UI',sans-serif;">
+
+      <!-- ── Header ── -->
+      <div class="modal-header flex-column align-items-stretch pb-0"
+           style="background:#ffffff;border-bottom:1px solid #f1f5f9;padding:22px 24px 0;">
+
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div style="font-size:22px;font-weight:700;color:#1d4ed8;">
+            Pending Leaves
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span id="pendingLeaveBadge"
+                  style="background:#fef2f2;color:#991b1b;font-size:12px;font-weight:600;
+                         padding:5px 14px;border-radius:20px;border:1px solid #fecaca;">
+              0 Overdue
+            </span>
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+          <div style="background:#fef2f2;border-radius:10px;padding:13px 16px;border-left:3px solid #ef4444;">
+            <div id="statCritical"
+                 style="font-size:26px;font-weight:700;color:#dc2626;line-height:1;">—</div>
+            <div style="font-size:12px;font-weight:500;color:#dc2626;opacity:0.7;margin-top:5px;">
+              Critical · 15+ days
+            </div>
+          </div>
+          <div style="background:#fff7ed;border-radius:10px;padding:13px 16px;border-left:3px solid #f97316;">
+            <div id="statHigh"
+                 style="font-size:26px;font-weight:700;color:#ea580c;line-height:1;">—</div>
+            <div style="font-size:12px;font-weight:500;color:#ea580c;opacity:0.7;margin-top:5px;">
+              High · 8–14 days
+            </div>
+          </div>
+          <div style="background:#f0fdf4;border-radius:10px;padding:13px 16px;border-left:3px solid #22c55e;">
+            <div id="statMod"
+                 style="font-size:26px;font-weight:700;color:#16a34a;line-height:1;">—</div>
+            <div style="font-size:12px;font-weight:500;color:#16a34a;opacity:0.7;margin-top:5px;">
+              Moderate · 7+ days
+            </div>
+          </div>
+        </div>
+
+        <!-- Rank Filter -->
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:16px;">
+          <label style="font-size:12px;font-weight:700;color:#64748b;
+                        text-transform:uppercase;letter-spacing:0.8px;white-space:nowrap;">
+            Filter by Rank
+          </label>
+          <select id="rankFilter"
+                  onchange="applyRankFilter()"
+                  style="font-size:13px;padding:6px 32px 6px 12px;border-radius:8px;
+                         border:1px solid #e2e8f0;background:#f8fafc;color:#0f172a;
+                         cursor:pointer;outline:none;min-width:180px;
+                         appearance:none;-webkit-appearance:none;
+                         background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%2364748b%22 d=%22M6 8L1 3h10z%22/></svg>');
+                         background-repeat:no-repeat;background-position:right 10px center;">
+            <option value="ALL">All Ranks</option>
+          </select>
+          <span id="filterCount" style="font-size:12px;color:#94a3b8;"></span>
+        </div>
+
+      </div>
+
+      <!-- ── Body ── -->
+      <div class="modal-body" id="pendingLeaveBody"
+           style="background:#f8fafc;padding:14px 20px;
+                  display:flex;flex-direction:column;gap:10px;">
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border spinner-border-sm me-2"></div>
+          Loading…
+        </div>
+      </div>
+
+      <!-- ── Footer ── -->
+      <div class="modal-footer justify-content-between"
+           style="background:#ffffff;border-top:1px solid #f1f5f9;padding:13px 24px;">
+        <div class="d-flex align-items-center gap-4">
+          <span class="d-flex align-items-center gap-2"
+                style="font-size:12px;color:#94a3b8;font-weight:500;">
+            <span style="width:9px;height:9px;border-radius:2px;
+                         background:#ef4444;display:inline-block;"></span> Critical
+          </span>
+          <span class="d-flex align-items-center gap-2"
+                style="font-size:12px;color:#94a3b8;font-weight:500;">
+            <span style="width:9px;height:9px;border-radius:2px;
+                         background:#f97316;display:inline-block;"></span> High
+          </span>
+          <span class="d-flex align-items-center gap-2"
+                style="font-size:12px;color:#94a3b8;font-weight:500;">
+            <span style="width:9px;height:9px;border-radius:2px;
+                         background:#94a3b8;display:inline-block;"></span> Moderate
+          </span>
+        </div>
+        <small style="font-size:12px;color:#cbd5e1;">Sorted oldest first</small>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ══════════════════════════════════════════
+   GLOBALS
+   ══════════════════════════════════════════ */
+let _allRequests = [];
+
+/* ══════════════════════════════════════════
+   1. Badge alarm check  — UNCHANGED
+   ══════════════════════════════════════════ */
+async function showLeavePendingAlarm() {
+    try {
+        const res = await fetch('/api/leave_pending_alarm');
+        if (!res.ok) throw new Error("Network error");
+
+        const result = await res.json();
+        const alarmAlert = document.getElementById("leave_alarm_alert");
+
+        if (result.pending && result.pending > 0) {
+            alarmAlert.classList.remove("d-none");
+            alarmAlert.classList.add("alert-pulse");
+            alarmAlert.innerText = `🔔 ${result.pending} leave request(s) pending > 7 days`;
+        } else {
+            alarmAlert.classList.add("d-none");
+            alarmAlert.classList.remove("alert-pulse");
+        }
+
+    } catch (err) {
+        console.error("Error fetching leave alarms:", err);
+    }
+}
+
+/* ══════════════════════════════════════════
+   2. Populate rank dropdown from data
+   ══════════════════════════════════════════ */
+function populateRankFilter(requests) {
+    const select = document.getElementById("rankFilter");
+    const ranks  = [...new Set(requests.map(r => r.rank).filter(Boolean))].sort();
+
+    select.innerHTML = `<option value="ALL">All Ranks</option>`;
+    ranks.forEach(rank => {
+        const count = requests.filter(r => r.rank === rank).length;
+        const opt   = document.createElement("option");
+        opt.value       = rank;
+        opt.textContent = `${rank} (${count})`;
+        select.appendChild(opt);
+    });
+}
+
+/* ══════════════════════════════════════════
+   3. Apply filter on dropdown change
+   ══════════════════════════════════════════ */
+function applyRankFilter() {
+    const selected = document.getElementById("rankFilter").value;
+    const filtered = selected === "ALL"
+        ? _allRequests
+        : _allRequests.filter(r => r.rank === selected);
+
+    const countEl = document.getElementById("filterCount");
+    countEl.textContent = selected === "ALL"
+        ? ""
+        : `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+
+    renderCards(filtered);
+}
+
+/* ══════════════════════════════════════════
+   4. Render cards
+   ══════════════════════════════════════════ */
+function renderCards(requests) {
+    const body = document.getElementById("pendingLeaveBody");
+
+    if (!requests.length) {
+        body.innerHTML = `
+          <div class="text-center py-5" style="color:#64748b;">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none"
+                 style="display:block;margin:0 auto 14px;">
+              <circle cx="22" cy="22" r="20" stroke="#94a3b8" stroke-width="1.5"/>
+              <path d="M14 22h16" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:14px;font-weight:500;">No results for this rank</div>
+            <div style="font-size:12px;margin-top:4px;color:#94a3b8;">Try selecting a different filter</div>
+          </div>`;
+        return;
+    }
+
+    const avatarColors = [
+        {bg:'#fef2f2', color:'#dc2626'},
+        {bg:'#fff7ed', color:'#ea580c'},
+        {bg:'#eff6ff', color:'#2563eb'},
+        {bg:'#f0fdf4', color:'#16a34a'},
+        {bg:'#fdf4ff', color:'#9333ea'},
+    ];
+
+    const cardBorderColor = d => {
+        if (d >= 15) return '#ef4444';
+        if (d >= 8)  return '#f97316';
+        return              '#94a3b8';
+    };
+
+    const daysBadge = d => {
+        if (d >= 15) return `<span style="background:#fef2f2;color:#991b1b;font-size:12px;
+                                          font-weight:600;padding:3px 10px;border-radius:20px;">
+                               ${d} days pending</span>`;
+        if (d >= 8)  return `<span style="background:#fff7ed;color:#9a3412;font-size:12px;
+                                          font-weight:600;padding:3px 10px;border-radius:20px;">
+                               ${d} days pending</span>`;
+        return               `<span style="background:#f1f5f9;color:#64748b;font-size:12px;
+                                          padding:3px 10px;border-radius:20px;">
+                               ${d} days pending</span>`;
+    };
+
+    const initials = name =>
+        name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+    body.innerHTML = requests.map((r, i) => {
+        const av = avatarColors[i % avatarColors.length];
+        const bc = cardBorderColor(r.days_pending);
+        return `
+        <div style="background:#ffffff;border:1px solid #e2e8f0;border-left:4px solid ${bc};
+                    border-radius:12px;padding:16px;display:flex;gap:14px;align-items:center;">
+
+          <!-- Avatar -->
+          <div style="width:44px;height:44px;border-radius:10px;flex-shrink:0;
+                      background:${av.bg};color:${av.color};
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:14px;font-weight:700;">
+            ${initials(r.full_name)}
+          </div>
+
+          <!-- Info — left/center -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:600;color:#0f172a;margin-bottom:4px;">
+              ${r.full_name}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:600;
+                           padding:2px 8px;border-radius:4px;">
+                ${r.rank}
+              </span>
+              <span style="font-size:12px;color:#94a3b8;">·</span>
+              <span style="font-size:12px;color:#94a3b8;">${r.army_number}</span>
+              <span style="font-size:12px;color:#94a3b8;">·</span>
+              <span style="font-size:12px;color:#94a3b8;">${r.company}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="background:#eff6ff;color:#1d4ed8;font-size:12px;
+                           font-weight:500;padding:3px 10px;border-radius:20px;">
+                ${r.leave_type}
+              </span>
+              <span style="background:#f8fafc;color:#64748b;font-size:12px;
+                           padding:3px 10px;border-radius:20px;border:1px solid #e2e8f0;">
+                ${r.from_date} – ${r.to_date} &nbsp;(${r.leave_days} day${r.leave_days > 1 ? 's' : ''})
+              </span>
+              ${daysBadge(r.days_pending)}
+            </div>
+          </div>
+
+          <!-- Pending at — RIGHT side -->
+          <div style="flex-shrink:0;text-align:center;
+                      border-left:1px solid #f1f5f9;padding-left:16px;min-width:120px;">
+            <div style="font-size:11px;color:#94a3b8;font-weight:500;
+                        text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">
+              Pending at
+            </div>
+            <span style="font-size:13px;font-weight:700;color:#92400e;
+                         background:#fef3c7;border:1px solid #fde68a;
+                         padding:5px 14px;border-radius:20px;
+                         display:inline-block;letter-spacing:0.3px;">
+              ${r.request_sent_to}
+            </span>
+          </div>
+
+        </div>`;
+    }).join('');
+}
+
+/* ══════════════════════════════════════════
+   5. Full modal render (stats + filter + cards)
+   ══════════════════════════════════════════ */
+function renderPendingLeaveModal(requests) {
+    _allRequests = requests;
+
+    const total    = requests.length;
+    const critical = requests.filter(r => r.days_pending >= 15).length;
+    const high     = requests.filter(r => r.days_pending >= 8 && r.days_pending < 15).length;
+    const mod      = total - critical - high;
+
+    document.getElementById("pendingLeaveBadge").textContent = `${total} Overdue`;
+    document.getElementById("statCritical").textContent      = critical;
+    document.getElementById("statHigh").textContent          = high;
+    document.getElementById("statMod").textContent           = mod;
+    document.getElementById("filterCount").textContent       = "";
+
+    document.getElementById("rankFilter").value = "ALL";
+
+    populateRankFilter(requests);
+    renderCards(requests);
+}
+
+/* ══════════════════════════════════════════
+   6. Run on page load  — UNCHANGED
+   ══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    showLeavePendingAlarm();
+});
+
+/* ══════════════════════════════════════════
+   7. Click alarm → open modal + fetch details
+   ══════════════════════════════════════════ */
+document.getElementById("leave_alarm_alert").addEventListener("click", async () => {
+    const modal = new bootstrap.Modal(document.getElementById("pendingLeaveModal"));
+    modal.show();
+
+    try {
+        const res = await fetch('/api/leave_pending_details');
+        if (!res.ok) throw new Error("Network error");
+        const result = await res.json();
+        renderPendingLeaveModal(result.requests || []);
+    } catch (err) {
+        document.getElementById("pendingLeaveBody").innerHTML = `
+          <div class="text-center py-5 text-danger">
+            Failed to load requests. Please try again.
+          </div>`;
+        console.error("Error loading pending leave details:", err);
+    }
+});
+
+/* ══════════════════════════════════════════
+   8. Tab switching  — UNCHANGED
+   ══════════════════════════════════════════ */
+document.getElementById("pending-tab").addEventListener("shown.bs.tab", loadLeaveRequests);
+document.getElementById("recommended-tab").addEventListener("shown.bs.tab", loadRecommendedLeaves);
+document.getElementById("rejected-tab").addEventListener("shown.bs.tab", loadRejectedLeaves);
+</script>

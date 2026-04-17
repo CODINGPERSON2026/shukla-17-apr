@@ -1,0 +1,160 @@
+<!-- Modal -->
+<div class="modal fade" id="dutySearchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">SELECT DOMAIN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Search -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-10">
+                        <select id="dutySearchDropdown" class="form-select">
+                            <option value="">-- SELECT DOMAIN --</option>
+                            <option value="TM">TM</option>
+                            <option value="MULTI MEDIA">MULTI MEDIA</option>
+                            <option value="CODING">CODING</option>
+                            <option value="ACCOUNT">ACCOUNT</option>
+                            <option value="PROJECTS">PROJECTS</option>
+                            <option value="SYSTEM">SYSTEM</option>
+                            <option value="IT">IT</option>
+                            <option value="EXCHANGE">EXCHANGE</option>
+                            <option value="NFS">NFS</option>
+                            <option value="RR">RR</option>
+                            <option value="ICN AND BTS">ICN AND BTS</option>
+                            <option value="PA">PA</option>
+                            <option value="RP">RP</option>
+                            <option value="RUNNER">RUNNER</option>
+                            <option value="BUDDY">BUDDY</option>
+                            <option value="CLK">CLK</option>
+                            <option value="ONCO">ONCO</option>
+                            <option value="DUTY EFS">DUTY EFS</option>
+                            <option value="LINE MAN ">LINE MAN CQ</option>
+                            <option value="RT JCO">RT JCO</option>
+                            <option value="ORH">ORH</option>
+                            <option value="MESS CDR">MESS CDR</option>
+                            <option value="TRG CLK">TRG CLK</option>
+                            <option value="CHM">CHM</option>
+                            <option value="RHM">RHM</option>
+                            <option value="STOREMAN">STOREMAN</option>
+                            <option value="NODE">NODE</option>
+                            <option value="DUTY DVR MTNCO">DUTY DVR MTNCO</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" id="dutySearchBtn">Search</button>
+                    </div>
+                </div>
+
+                <p id="dutySearchWarning" style="font-weight:bold;font-size:16px;"></p>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sr No</th>
+
+                                <th>Army Number</th>
+                                <th>Rank</th>
+                                <th>Name</th>
+                                <th>Trade</th>
+                                <th>TRADE WORK</th>
+                                <th>Company</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dutySearchTableBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const searchDropdown = document.getElementById('dutySearchDropdown');
+        const searchBtn = document.getElementById('dutySearchBtn');
+        const tableBody = document.getElementById('dutySearchTableBody');
+        const warningMsg = document.getElementById('dutySearchWarning');
+
+        searchBtn.addEventListener('click', async () => {
+            const duty = searchDropdown.value;
+
+            warningMsg.innerText = "";
+            tableBody.innerHTML = "";
+
+            if (!duty) {
+                warningMsg.innerText = "Please select a Duty to search";
+                warningMsg.style.color = "red";
+                return;
+            }
+
+            try {
+                const res = await fetch(`/search_personnel?trade=${encodeURIComponent(duty)}`);
+
+                if (res.status === 401) {
+                    warningMsg.innerText = "Please login again";
+                    warningMsg.style.color = "red";
+                    return;
+                }
+
+                const personnel = await res.json();
+
+                if (personnel.error) {
+                    warningMsg.innerText = personnel.error;
+                    warningMsg.style.color = "red";
+                    return;
+                }
+
+                if (!personnel || personnel.length === 0) {
+                    warningMsg.innerText = "No personnel found";
+                    warningMsg.style.color = "red";
+                    return;
+                }
+
+                tableBody.innerHTML = "";
+                personnel.forEach((p, idx) => {
+                    tableBody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                       
+                        <td>${p.army_number}</td>
+                        <td>${p.rank}</td>
+                         <td>${p.name}</td>
+                        <td>${p.trade}</td>
+                        <td class="fw-bold text-primary">${p.current_duty || 'N/A'}</td>
+                        <td>${p.company}</td>
+                    </tr>`;
+                });
+
+                warningMsg.innerText = `Found ${personnel.length} personnel`;
+                warningMsg.style.color = "green";
+
+            } catch (error) {
+                console.error('Search error:', error);
+                warningMsg.innerText = "Error searching personnel";
+                warningMsg.style.color = "red";
+            }
+        });
+
+
+
+        // Clear on close
+        document.getElementById('dutySearchModal').addEventListener('hidden.bs.modal', () => {
+            searchDropdown.value = '';
+            tableBody.innerHTML = '';
+            warningMsg.innerText = '';
+        });
+    })();
+</script>

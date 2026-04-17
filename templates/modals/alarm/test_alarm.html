@@ -1,0 +1,73 @@
+<!-- Alarm Modal -->
+<div class="modal fade" id="alarmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-danger">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">⚠ Upcoming Assistant Test Alert</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Army No:</strong> <span id="alarmArmyNo"></span></p>
+          <p><strong>Name:</strong> <span id="alarmName"></span></p>
+          <p><strong>Next Test Date:</strong> <span id="alarmDate"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" data-bs-dismiss="modal">Acknowledge</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function getNextTestDate(row) {
+        const dates = [
+            row.asst_test1,
+            row.asst_test2,
+            row.asst_test3,
+            row.asst_test4
+        ].filter(d => d); // remove empty
+    
+        if (dates.length === 0) return null;
+    
+        dates.sort(); // YYYY-MM-DD sorts correctly
+        return dates[0];
+    }
+    
+    document.getElementById("agniveersModal").addEventListener("shown.bs.modal", function () {
+    
+        fetch("/api/agniveer-alarms")
+            .then(res => res.json())
+            .then(data => {
+    
+                const today = new Date().toISOString().split("T")[0];
+                const tbody = document.getElementById("agniveerTableBody");
+                tbody.innerHTML = "";
+    
+                data.forEach(row => {
+                    const nextTest = getNextTestDate(row);
+    
+                    // 🚨 ALARM CONDITION
+                    if (nextTest && nextTest > today) {
+                        document.getElementById("alarmArmyNo").innerText = row.army_no;
+                        document.getElementById("alarmName").innerText = row.name;
+                        document.getElementById("alarmDate").innerText = nextTest;
+    
+                        new bootstrap.Modal(document.getElementById("alarmModal")).show();
+                    }
+    
+                    tbody.innerHTML += `
+                    <tr>
+                        <td>${row.army_no}</td>
+                        <td>${row.rank}</td>
+                        <td>${row.name}</td>
+                        <td>${row.batch}</td>
+                        <td>${row.asst_test_status}</td>
+                        <td>${row.asst_test1 || "-"}</td>
+                        <td>${row.asst_test2 || "-"}</td>
+                        <td>${row.asst_test3 || "-"}</td>
+                        <td>${row.asst_test4 || "-"}</td>
+                    </tr>`;
+                });
+            });
+    });
+    </script>
+      

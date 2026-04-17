@@ -1,0 +1,168 @@
+<style>
+    .alarm-gradient {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #da4444, #c209a3);
+        color: #fff;
+        padding: 2px 18px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        cursor: pointer;
+    }
+    
+    /* Shine Effect */
+    .alarm-gradient::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -60%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%);
+        transform: skewX(-25deg);
+        animation: shine 2.5s infinite;
+    }
+    
+    @keyframes shine {
+        0% { left: -60%; }
+        100% { left: 120%; }
+    }
+    </style>
+    
+    <!-- Toast Container -->
+    <span id="alarmAlert" class="alarm-gradient d-none">
+        🔔 You have pending JCO Kunba assignments!
+    </span>
+    
+    <!-- JCO Kunda Modal -->
+    <div class="modal fade" id="update_assigned_interview" tabindex="-1" aria-labelledby="updateAssignedInterviewLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="updateAssignedInterviewLabel">Pending JCO Kunda Assignments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped table-bordered" id="assignedInterviewTable">
+                        <thead>
+                            <tr>
+                                <th>Army Number</th>
+                                <th>Rank</th>
+                                <th>Name</th>
+                                <th>Home State</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        /* Show the alarm toast if there are pending JCO Kunda assignments */
+        async function showAssignedAlarms() {
+            try {
+                const res = await fetch('/api/alarms_pending_kunda_assignments');
+                if (!res.ok) throw new Error("Network error");
+        
+                const result = await res.json();
+                const alarmAlert = document.getElementById("alarmAlert");
+        
+                if (result.rows && result.rows.length > 0) {
+                    alarmAlert.classList.remove('d-none'); // show alert
+                } else {
+                    alarmAlert.classList.add('d-none'); // hide alert if no pending assignments
+                }
+        
+            } catch (err) {
+                console.error("Error fetching pending kunda assignments:", err);
+            }
+        }
+        
+        /* Load pending personnel into modal */
+        async function load_pending_interview() {
+            try {
+                const res = await fetch('/api/kunda_pending_personnel');
+                if (!res.ok) throw new Error("Network error");
+        
+                const result = await res.json();
+                const tbody = document.querySelector("#assignedInterviewTable tbody");
+                tbody.innerHTML = "";
+        
+                if (result.rows && result.rows.length > 0) {
+                    result.rows.forEach(r => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${r.army_number}</td>
+                            <td>${r.rank}</td>
+                            <td>${r.name}</td>
+                            <td>${r.home_state}</td> 
+                           <td>
+    <button class="btn btn-success btn-sm" 
+        onclick='doneinterview(${JSON.stringify(r.home_state)}, ${JSON.stringify(r.army_number)})'>
+        Interview Done
+    </button>
+</td>
+
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center">No pending personnel</td></tr>`;
+                }
+        
+            } catch (err) {
+                console.error("Error loading personnel:", err);
+                const tbody = document.querySelector("#assignedInterviewTable tbody");
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error loading personnel</td></tr>`;
+            }
+        }
+        
+        /* Combined refresh for modal table and alarm visibility */
+        async function refreshAlarmsAndTable() {
+            await load_pending_interview();
+            await showAssignedAlarms();
+        }
+        
+        /* Mark interview done */
+        async function doneinterview(home_state,army_number_front_end) {
+            alert('clicked')
+            try {
+                const res = await fetch('/api/mark_interview_done', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ home_state,army_number_front_end })
+                });
+        
+                if (!res.ok) throw new Error("Network error");
+        
+                // Refresh table and alarm
+                await refreshAlarmsAndTable();
+        
+            } catch (err) {
+                console.error("Error marking interview done:", err);
+                alert("Failed to mark interview done!");
+            }
+        }
+        
+        /* Open modal on alarm click */
+        document.getElementById("alarmAlert").addEventListener("click", function () {
+            const modal = new bootstrap.Modal(document.getElementById('update_assigned_interview'));
+            modal.show();
+            load_pending_interview();
+        });
+        
+        /* Initial load on page ready */
+        document.addEventListener('DOMContentLoaded', showAssignedAlarms);
+        </script>
+        
+    

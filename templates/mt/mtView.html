@@ -1,0 +1,197 @@
+{% extends "baseView.html" %}
+{% block content %}
+  <style>
+    body { background: #f5f7fa; }
+   
+    .ht {padding-top: 1rem;}
+    .card { border-radius: 18px; border: none; background: white;}
+    .status-dot { height: 10px; width: 10px; display: inline-block; border-radius: 50%; }
+    .dot-green { background: #23c552; }
+    .dot-red { background: #f44336; }
+    .dot-orange { background: #ff9800; }
+    .dot-blue { background: #3399ff; }l
+    .avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
+    .department-bar { height: 8px; border-radius: 4px; }
+    .bar-uiux { background: #ff6f00; }
+    .bar-dev { background: #267af6; }
+    .bar-mgmt { background: #ff4b68; }
+    .bar-hr { background: #34bfa3; }
+    .bar-testing { background: #ffa336; }
+    .bar-mkt { background: #f47920; }
+    .top-bar-buttons .btn { margin-right: 1rem; }
+  </style>
+  <div class="content-wrapper">
+   {% set header = "Vehicle Management" %}
+    {% set subscript = "Search vehicle → Add Vehicle → View maintenance " %}
+{% include 'navbar/navbar.html' %}
+  </div>
+<div class="dashboard-content">
+  <button class="btn btn-primary w-5 h-5" style="height: fit-content; margin-bottom: 20px;" onclick="window.location.href='/daily_running'">Daily Vehicle Running</button>
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card p-3 text-center">
+          <small class="text-muted">Total Vehicle</small>
+          <h3 class="ht">{{ vehicles | length}}</h3>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card p-3 text-center">
+          <small class="text-muted">Total Drivers</small>
+          <h3 class="ht">{{ drivers | length}}</h3>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card p-3 text-center">
+          <small class="text-muted">Hill Test Passed</small>
+          <h3 class="ht">{{ drivers | selectattr('hill_test') | list | length }}</h3>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card p-3 text-center">
+          <small class="text-muted">Under Maintainance</small>
+          <h3 class="ht">{{ Maintainance | length}}</h3>
+        </div>
+      </div>
+  </div>
+
+    <!-- ✅ Add Vehicle Form -->
+  <div class="card p-4 mb-5 shadow-sm">
+    <h5 class="mb-3 text-primary">➕ Add New Vehicle</h5>
+    <form method="POST" action="{{ url_for('mt') }}">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <input type="text" class="form-control" name="vehicle_no" placeholder="Vehicle No" required>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select" name="type" required>
+            <option value="">Select Type</option>
+            <option>GYPSY</option>
+            <option>ALS</option>
+            <option>Motorcycle</option>
+            <option>Scorpio</option>
+            <option>Fortuner</option>
+          </select>
+        </div>
+        <div class="col-md-1">
+          <input type="text" class="form-control" name="class" maxlength="10" placeholder="Class" required>
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control" name="detailment" placeholder="Detailment" required>
+        </div>
+        <div class="col-md-2">
+          <input type="number" class="form-control" name="dist_travelled" placeholder="Distance (km)" required>
+        </div>
+        <div class="col-md-1">
+          <input type="number" class="form-control" name="quantity" placeholder="Qty" min="1" required>
+        </div>
+        <div class="col-md-1">
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="bullet_proof" value="Y">
+            <label class="form-check-label">B.P.</label>
+          </div>
+        </div>
+        <div class="col-md-12 text-end">
+          <button type="submit" class="btn btn-primary px-4">Add Vehicle</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- 🟦 Existing Summary Cards -->
+  <!-- (Keep your previous summary and tables unchanged below) -->
+
+  <!-- Vehicles Table -->
+  <h4 class="mt-4">Vehicle List</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Vehicle No</th>
+          <th>Type</th>
+          <th>Class</th>
+          <th>Detailment</th>
+          <th>Distance Travelled (km)</th>
+          <th>Quantity</th>
+          <th>Bullet Proof</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vehicles %}
+        <tr>
+          <td>{{ v.vehicle_no }}</td>
+          <td>{{ v.type }}</td>
+          <td>{{ v.class }}</td>
+          <td>{{ v.detailment }}</td>
+          <td>{{ v.dist_travelled }}</td>
+          <td>{{ v.quantity }}</td>
+          <td>
+            {% if v.bullet_proof == 'Y' %}
+              <span class="badge green">Yes</span>
+            {% else %}
+              <span class="badge red">No</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Drivers Table -->
+  <h4 class="mt-5">Drivers List</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-success">
+        <tr>
+          <th>Name</th>
+          <th>License</th>
+          <th>Hill Test</th>
+          <th>Assigned Vehicle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in drivers %}
+        <tr>
+          <td>{{ d.name }}</td>
+          <td>{{ d.license }}</td>
+          <td>
+            {% if d.hill_test %}
+              <span class="badge bg-success">Passed</span>
+            {% else %}
+              <span class="badge bg-secondary">Not Passed</span>
+            {% endif %}
+          </td>
+          <td>{{ d.vehicle }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Maintenance Table -->
+  <h4 class="mt-5">Under Maintenance</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-danger">
+        <tr>
+          <th>Vehicle</th>
+          <th>Issue</th>
+          <th>Date Reported</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in maintenance %}
+        <tr>
+          <td>{{ m.vehicle }}</td>
+          <td>{{ m.issue }}</td>
+          <td>{{ m.date_reported }}</td>
+          <td>{{ m.status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

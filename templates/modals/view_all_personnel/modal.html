@@ -1,0 +1,293 @@
+<!-- Personnel Modal -->
+<style>
+  .name-cell {
+      background-color: #1ca443;
+      font-weight: 600;
+      color: white;
+  }
+
+  .company-1  { background-color: #0d6efd; color: white; font-weight: 600; }
+  .company-2  { background-color: #198754; color: white; font-weight: 600; }
+  .company-3  { background-color: #e67e22; color: white; font-weight: 600; }
+  .company-hq { background-color: #8e44ad; color: white; font-weight: 600; }
+
+  .company-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.82em;
+      letter-spacing: 0.4px;
+  }
+
+  #personnelModal thead tr th {
+      background-color: #1ca443;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9em;
+      letter-spacing: 0.3px;
+  }
+
+  #personnelModal tbody tr:nth-child(even) {
+      background-color: #f0faf3;
+  }
+
+  #personnelModal tbody tr:hover {
+      background-color: #d4edda;
+      transition: background-color 0.2s ease;
+  }
+
+  #personnelModal .modal-header {
+      background-color: #1ca443;
+      color: white;
+  }
+
+  #personnelModal .modal-header .modal-title {
+      font-weight: 700;
+      letter-spacing: 0.5px;
+  }
+
+  #personnelModal .modal-header .btn-close {
+      filter: invert(1);
+  }
+
+  #personnelSearch:focus,
+  #companyFilter:focus {
+      border-color: #1ca443;
+      box-shadow: 0 0 0 0.2rem rgba(28, 164, 67, 0.25);
+  }
+
+  #personnelCount {
+      background-color: #1ca443;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.85em;
+  }
+</style>
+
+<div class="modal fade" id="personnelModal" tabindex="-1">
+<div class="modal-dialog modal-xl modal-dialog-centered">
+  <div class="modal-content">
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h5 class="modal-title">👥 Personnel List</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+
+    <!-- BODY -->
+    <div class="modal-body">
+
+      <!-- SEARCH + FILTER -->
+      <div class="d-flex gap-2 mb-3">
+
+        <input type="text"
+               id="personnelSearch"
+               class="form-control"
+               placeholder="🔍 Search Army Number / Rank / Name">
+
+        <select id="companyFilter"
+                class="form-select"
+                style="min-width:260px;">
+          <option value="">All Companies</option>
+          <option value="1 Company">1 Company</option>
+          <option value="2 Company">2 Company</option>
+          <option value="3 Company">3 Company</option>
+          <option value="HQ Company">HQ Company</option>
+        </select>
+
+      </div>
+
+      <!-- COUNT -->
+      <p class="mb-2">
+        <strong>Total Found:</strong>
+        <span id="personnelCount">0</span>
+      </p>
+
+      <!-- LOADER -->
+      <div id="personnelLoader" class="text-center my-4 d-none">
+        <div class="spinner-border text-success" role="status"></div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Army Number</th>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Home State</th>
+              <th>Company</th>
+            </tr>
+          </thead>
+          <tbody id="personnelTableBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+let personnelModal = new bootstrap.Modal(
+  document.getElementById('personnelModal')
+);
+
+let debounceTimer = null;
+
+/* ✅ USER COMPANY FROM BACKEND */
+const userCompany = "{{company}}";
+console.log(userCompany)
+
+/* ✅ SETUP COMPANY FILTER (NEW FEATURE) */
+function setupCompanyFilter() {
+
+  const dropdown = document.getElementById("companyFilter");
+
+  if (!userCompany) return;
+
+  let c = userCompany.trim().toLowerCase();
+
+  if (c !== "admin" && c !== "center") {
+
+      dropdown.innerHTML = "";
+
+      let option = document.createElement("option");
+      option.value = userCompany;
+      option.textContent = userCompany;
+      option.selected = true;
+
+      dropdown.appendChild(option);
+
+      dropdown.disabled = true;
+  }
+}
+
+
+/* OPEN MODAL */
+function openPersonnelModal() {
+
+  personnelModal.show();
+
+  document.getElementById("personnelSearch").value = "";
+
+  setupCompanyFilter(); // ✅ added
+
+  let company = document.getElementById("companyFilter").value;
+
+  fetchPersonnel("", company);
+}
+
+
+/* DEBOUNCE FUNCTION */
+function debounceFetch() {
+
+  clearTimeout(debounceTimer);
+
+  debounceTimer = setTimeout(() => {
+
+      let query   = document.getElementById("personnelSearch").value;
+      let company = document.getElementById("companyFilter").value;
+
+      fetchPersonnel(query, company);
+
+  }, 300);
+}
+
+
+/* SEARCH INPUT */
+document.getElementById("personnelSearch")
+.addEventListener("keyup", debounceFetch);
+
+
+/* FILTER DROPDOWN */
+document.getElementById("companyFilter")
+.addEventListener("change", debounceFetch);
+
+
+/* COMPANY COLOR HELPER */
+function getCompanyClass(company) {
+
+let c = (company || '').trim().toLowerCase();
+
+if (c === "1 company")  return "company-1";
+if (c === "2 company")  return "company-2";
+if (c === "3 company")  return "company-3";
+if (c === "hq company") return "company-hq";
+
+return "";
+}
+
+
+/* FETCH DATA */
+function fetchPersonnel(query, company) {
+
+  let loader = document.getElementById("personnelLoader");
+  let table  = document.getElementById("personnelTableBody");
+
+  loader.classList.remove("d-none");
+  table.innerHTML = "";
+
+  let url = `/personnel_information/api/personnel?search=${encodeURIComponent(query)}&company=${encodeURIComponent(company)}`;
+
+  fetch(url)
+  .then(res => res.json())
+  .then(data => {
+
+      loader.classList.add("d-none");
+
+      document.getElementById("personnelCount").innerText = data.count;
+
+      if (data.data.length === 0) {
+          table.innerHTML = `
+              <tr>
+                <td colspan="5" class="text-center text-muted">
+                  No personnel found
+                </td>
+              </tr>
+          `;
+          return;
+      }
+
+      data.data.forEach(p => {
+
+          let companyClass = getCompanyClass(p.company);
+
+          let row = `
+              <tr>
+                <td>${p.army_number}</td>
+                <td>${p.rank}</td>
+                <td class="name-cell">${p.name}</td>
+                <td>${p.home_state}</td>
+                <td>
+                  <span class="company-badge ${companyClass}">
+                    ${p.company}
+                  </span>
+                </td>
+              </tr>
+          `;
+
+          table.insertAdjacentHTML("beforeend", row);
+
+      });
+
+  })
+  .catch(err => {
+
+      loader.classList.add("d-none");
+
+      table.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center text-danger">
+              ⚠️ Failed to load data
+            </td>
+          </tr>
+      `;
+
+      console.error(err);
+  });
+}
+</script>

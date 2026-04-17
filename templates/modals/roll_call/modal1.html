@@ -1,0 +1,249 @@
+
+<!-- ================= MODAL ================= -->
+<div class="modal fade" id="rollCallPoints" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold text-uppercase">Center Roll Call</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs px-3">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#addTab">
+            Add Roll Call
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#updateTab" id="updateTabBtn">
+            Update Roll Call
+          </button>
+        </li>
+      </ul>
+
+      <!-- Content -->
+      <div class="tab-content">
+
+        <!-- ================= ADD TAB ================= -->
+        <div class="tab-pane fade show active p-4" id="addTab">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Category</label>
+            <select class="form-select" id="rollType">
+              <option value="">-- Select Category --</option>
+              <option value="SM_SUGGESTION">SM Suggestion</option>
+              <option value="OR_REQUEST">OR Request</option>
+            </select>
+          </div>
+
+          <div id="orExtraFields" class="d-none">
+            <div class="fw-semibold mb-2">Requested By</div>
+            <label class="form-label">Army Number</label>
+            <input type="text" class="form-control" id="armyNumber">
+          </div>
+
+          <div class="mb-3 d-none" id="pointSection">
+            <label class="form-label fw-semibold">Point</label>
+            <select class="form-select" id="rollPoint"></select>
+          </div>
+
+          <div class="mb-3 d-none" id="descSection">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea class="form-control" id="rollDesc" rows="4"></textarea>
+          </div>
+
+          <div id="alertBox" class="alert d-none"></div>
+
+          <button class="btn btn-primary" id="submitRollCall">Submit Point</button>
+        </div>
+
+        <!-- ================= UPDATE TAB ================= -->
+        <div class="tab-pane fade p-4" id="updateTab">
+
+          <table class="table table-bordered table-hover">
+            <thead class="table-white">
+              <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Point</th>
+                <th>Army No</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="pendingRollCallBody">
+              <tr>
+                <td colspan="6" class="text-center">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+/* ================= POINT DATA ================= */
+const smPoints = [
+  "Training Improvement",
+  "Discipline & Conduct",
+  "Infrastructure / Living Conditions",
+  "Welfare & Morale",
+  "Operational Readiness"
+];
+
+const orPoints = [
+  "Leave / Pass Request",
+  "Equipment Requirement",
+  "Medical Assistance",
+  "Accommodation Issue",
+  "Administrative Issue"
+];
+
+/* ================= ELEMENTS ================= */
+const rollType = document.getElementById("rollType");
+const rollPoint = document.getElementById("rollPoint");
+const rollDesc = document.getElementById("rollDesc");
+const pointSection = document.getElementById("pointSection");
+const descSection = document.getElementById("descSection");
+const orExtraFields = document.getElementById("orExtraFields");
+const armyNumber = document.getElementById("armyNumber");
+const alertBox = document.getElementById("alertBox");
+
+/* ================= CATEGORY CHANGE ================= */
+rollType.addEventListener("change", () => {
+  rollPoint.innerHTML = "";
+  orExtraFields.classList.add("d-none");
+  armyNumber.value = "";
+
+  let points = [];
+  if (rollType.value === "SM_SUGGESTION") points = smPoints;
+  if (rollType.value === "OR_REQUEST") {
+    points = orPoints;
+    orExtraFields.classList.remove("d-none");
+  }
+
+  if (points.length) {
+    pointSection.classList.remove("d-none");
+    descSection.classList.remove("d-none");
+    points.forEach(p => {
+      rollPoint.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  }
+});
+
+/* ================= SUBMIT ================= */
+document.getElementById("submitRollCall").addEventListener("click", () => {
+
+  if (!rollType.value || !rollPoint.value || !rollDesc.value.trim()) {
+    showAlert("All fields are required", "danger");
+    return;
+  }
+
+  if (rollType.value === "OR_REQUEST" && !armyNumber.value.trim()) {
+    showAlert("Army Number required", "danger");
+    return;
+  }
+
+  fetch("/roll_call/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      category: rollType.value,
+      point_title: rollPoint.value,
+      point_description: rollDesc.value,
+      army_number: armyNumber.value || null
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      showAlert("Submitted Successfully", "success");
+      rollDesc.value = "";
+      armyNumber.value = "";
+    } else showAlert(d.message, "danger");
+  });
+});
+
+/* ================= UPDATE TAB ================= */
+document.getElementById("updateTabBtn").addEventListener("click", loadPending);
+
+function loadPending() {
+  fetch("/roll_call/pending")
+    .then(r => r.json())
+    .then(d => {
+
+      const tbody = document.getElementById("pendingRollCallBody");
+      tbody.innerHTML = "";
+
+      // ✅ FIXED CONDITION
+      if (d.status !== "success" || !d.data || d.data.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center">No Pending Records</td>
+          </tr>`;
+        return;
+      }
+
+      console.log(d)
+
+      d.data.forEach(r => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${r.id}</td>
+            <td>${r.category}</td>
+            <td>${r.point_title}</td>
+            <td>${r.army_number || "-"}</td>
+            <td>
+              <span class="badge bg-warning">${r.status}</span>
+            </td>
+            <td>
+              <button class="btn btn-success btn-sm"
+                onclick="updateStatus(${r.id}, 'APPROVED')">
+                Approve
+              </button>
+              <button class="btn btn-danger btn-sm"
+                onclick="updateStatus(${r.id}, 'REJECTED')">
+                Reject
+              </button>
+            </td>
+          </tr>`;
+      });
+    })
+    .catch(() => {
+      document.getElementById("pendingRollCallBody").innerHTML = `
+        <tr><td colspan="6" class="text-center text-danger">Error loading data</td></tr>`;
+    });
+}
+
+
+function updateStatus(id, status) {
+  fetch("/roll_call/update_status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, status })
+  })
+  .then(() => loadPending());
+}
+
+/* ================= ALERT ================= */
+function showAlert(msg, type) {
+  alertBox.className = `alert alert-${type}`;
+  alertBox.textContent = msg;
+  alertBox.classList.remove("d-none");
+  setTimeout(() => alertBox.classList.add("d-none"), 3000);
+}
+</script>

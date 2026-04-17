@@ -1,0 +1,355 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+  <!-- 🔙 BACK BUTTON -->
+  <div class="mb-3 d-flex justify-content-between align-items-center">
+    <a href="/account/?fy={{ current_fy }}" class="btn btn-outline-secondary">
+      ← Back to Grants
+    </a>
+
+    <!-- ✅ SHOW FY -->
+    <span class="text-muted fw-semibold">
+      Financial Year: {{ current_fy }}
+    </span>
+  </div>
+
+  {% if role != 'CO' %}
+  <!-- ACTION BUTTONS -->
+  <div class="mb-4">
+    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addSoModal">
+      + Add Sanction Order
+    </button>
+
+    <button class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#addExpModal">
+      + Add Expenditure
+    </button>
+
+    <button class="btn btn-primary" onclick="openAllocationModal()">
+      + Add Additional Allocation
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- TITLE -->
+  <h4 class="mb-4">
+    {{ grant.name }} ({{ grant.code_head }})
+  </h4>
+
+  <!-- SUMMARY CARDS -->
+  <div class="row mb-4 g-3">
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Total Allotment</h6>
+        <h5 id="totalAllotment" class="mb-0 number-count">₹ 0</h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Total Expenditure</h6>
+        <h5 id="totalExpenditure" class="mb-0 number-count text-danger">₹ 0</h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Balance</h6>
+        <h5 id="balanceAmount" class="mb-0 number-count {{ 'text-danger' if (balance or 0) < 0 else 'text-success' }}">
+          ₹ 0
+        </h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6 class="text-muted mb-1">Utilization %</h6>
+        <h5 id="utilizationPercent" class="mb-0 number-count">{{ "{:.2f}".format(exp_percent or 0) }}%</h5>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SANCTION ORDERS -->
+  <div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+      Sanction Orders
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-bordered mb-0 text-center">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>SO Number</th>
+            <th>Amount (₹)</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for so in sos %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ so.so_number }}</td>
+            <td>{{ "{:,.2f}".format(so.so_amount or 0) }}</td>
+            <td>{{ so.created_at.strftime("%d-%m-%Y") }}</td>
+          </tr>
+          {% endfor %}
+          {% if sos|length == 0 %}
+          <tr>
+            <td colspan="4">No Sanction Orders Added</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXPENDITURES -->
+  <div class="card">
+    <div class="card-header bg-dark text-white">
+      Expenditures
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-bordered mb-0 text-center">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Amount (₹)</th>
+            <th>Remarks</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenditures %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="text-danger">
+              {{ "{:,.2f}".format(e.amount or 0) }}
+            </td>
+            <td>{{ e.remarks or '-' }}</td>
+            <td>{{ e.created_at.strftime("%d-%m-%Y") }}</td>
+          </tr>
+          {% endfor %}
+          {% if expenditures|length == 0 %}
+          <tr>
+            <td colspan="4">No Expenditures Added</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- ADD SO -->
+<div class="modal fade" id="addSoModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Sanction Order</h5>
+      <form id="addSoForm">
+        <div class="mb-3">
+          <label>SO Number</label>
+          <input type="text" class="form-control" id="soNumber" required>
+        </div>
+        <div class="mb-3">
+          <label>SO Amount</label>
+          <input type="number" class="form-control" id="soAmount" required>
+        </div>
+        <button class="btn btn-success w-100">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXPENDITURE -->
+<div class="modal fade" id="addExpModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Expenditure</h5>
+      <form id="addExpForm">
+        <div class="mb-3">
+          <label>Amount</label>
+          <input type="number" class="form-control" id="expAmount" required>
+        </div>
+        <div class="mb-3">
+          <label>Remarks</label>
+          <input type="text" class="form-control" id="expRemarks">
+        </div>
+        <button class="btn btn-danger w-100">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ALLOCATION -->
+<div class="modal fade" id="allocationModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Additional Allocation</h5>
+
+      <div class="mb-3">
+        <label>Amount</label>
+        <input type="number" id="allocAmount" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Remarks</label>
+        <input type="text" id="allocRemarks" class="form-control">
+      </div>
+
+      <button class="btn btn-primary w-100"
+              onclick="submitAllocation({{ grant.id }})">
+        Submit
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Count-up Animation Function
+function animateValue(id, start, end, duration, prefix = "", suffix = "", isPercent = false) {
+  const obj = document.getElementById(id);
+  if (!obj) return;
+
+  const range = end - start;
+  let startTimestamp = null;
+  let lastValue = start;
+
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+    let currentValue = start + range * progress;
+
+    if (isPercent) {
+      obj.textContent = currentValue.toFixed(2) + suffix;
+    } else {
+      obj.textContent = prefix + Number(Math.floor(currentValue)).toLocaleString("en-IN") + suffix;
+    }
+
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    } else {
+      // Final precise value
+      if (isPercent) {
+        obj.textContent = end.toFixed(2) + suffix;
+      } else {
+        obj.textContent = prefix + Number(end).toLocaleString("en-IN") + suffix;
+      }
+    }
+  };
+
+  window.requestAnimationFrame(step);
+}
+
+const grantId = {{ grant.id }};
+const fy = "{{ current_fy }}";
+
+// Trigger count-up animations when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  const allotment = {{ grant.allotment or 0 }};
+  const expenditure = {{ total_exp or 0 }};
+  const balanceVal = {{ balance or 0 }};
+  const utilPercent = {{ exp_percent or 0 }};
+
+  // Animate Allotment
+  animateValue("totalAllotment", 0, allotment, 1400, "₹ ", "");
+
+  // Animate Expenditure
+  animateValue("totalExpenditure", 0, expenditure, 1600, "₹ ", "");
+
+  // Animate Balance
+  animateValue("balanceAmount", 0, balanceVal, 1200, "₹ ", "");
+
+  // Animate Utilization
+  animateValue("utilizationPercent", 0, utilPercent, 1000, "", "%", true);
+});
+
+/* ADD SO */
+document.getElementById("addSoForm")
+.addEventListener("submit", function(e){
+  e.preventDefault();
+
+  fetch(`/account/grants/${grantId}/add-so?fy=${fy}`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      so_number: document.getElementById("soNumber").value.trim(),
+      so_amount: Number(document.getElementById("soAmount").value)
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      alert("Sanction Order Added");
+      window.location.href = `/account/grants/${grantId}?fy=${fy}`;
+    } else {
+      alert(data.message);
+    }
+  });
+});
+
+/* ADD EXPENDITURE */
+document.getElementById("addExpForm")
+.addEventListener("submit", function(e){
+  e.preventDefault();
+
+  fetch(`/account/grants/${grantId}/add-exp?fy=${fy}`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      amount: Number(document.getElementById("expAmount").value),
+      remarks: document.getElementById("expRemarks").value.trim()
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      alert("Expenditure Added");
+      window.location.href = `/account/grants/${grantId}?fy=${fy}`;
+    } else {
+      alert(data.message);
+    }
+  });
+});
+
+/* ADD ALLOCATION */
+function openAllocationModal() {
+  new bootstrap.Modal(document.getElementById('allocationModal')).show();
+}
+
+function submitAllocation(grantId) {
+  let amount = Number(document.getElementById("allocAmount").value);
+  let remarks = document.getElementById("allocRemarks").value.trim();
+
+  if(!amount || amount <= 0){
+    alert("Enter valid allocation amount");
+    return;
+  }
+
+  fetch(`/account/grants/${grantId}/add-allocation?fy=${fy}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount: amount,
+      remarks: remarks
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Allocation Added Successfully");
+      window.location.href = `/account/grants/${grantId}?fy=${fy}`;
+    } else {
+      alert(data.message);
+    }
+  });
+}
+</script>
+
+{% endblock %}

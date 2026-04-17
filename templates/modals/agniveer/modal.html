@@ -1,0 +1,498 @@
+<!-- ===================== AGNIVEER MODAL ===================== -->
+<div class="modal fade" id="agni_Modal" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <!-- HEADER — compact -->
+      <div class="modal-header py-2 bg-primary text-white d-flex justify-content-between align-items-center">
+        <h6 class="modal-title fw-bold mb-0">
+          <i class="bi bi-shield-fill-check me-2"></i>Agniveer Assistant Test
+        </h6>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-light btn-sm fw-semibold" onclick="agni_printTable()">
+            <i class="bi bi-printer-fill"></i> Print
+          </button>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+
+      <div class="modal-body pt-2 pb-2">
+
+        <!-- Batch Filter — compact -->
+        <div class="row mb-2">
+          <div class="col-md-5">
+            <div class="input-group input-group-sm shadow-sm">
+              <span class="input-group-text bg-dark text-white">
+                <i class="bi bi-filter"></i>&nbsp;Batch
+              </span>
+              <select id="agni_BatchFilter" class="form-select form-select-sm">
+                <option value="all">All Batches</option>
+              </select>
+              <button id="agni_ResetFilter" class="btn btn-outline-secondary btn-sm" type="button">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle text-center mb-0">
+            <thead class="agni_tableHead">
+              <tr>
+                <th rowspan="2">Batch</th>
+                <th rowspan="2">DOE</th>
+                <th rowspan="2">TOE</th>
+                <th rowspan="2">STR</th>
+                <th colspan="2">TENURE (20 MONTHS)</th>
+                <th colspan="4">Timelines for Asst from DOE</th>
+                <th colspan="4">Assmt completed on / or such wef</th>
+                <th rowspan="2">Screening Board</th>
+                <th rowspan="2">Remarks</th>
+              </tr>
+              <tr>
+                <th>From</th>
+                <th>To</th>
+                <th>12 Mo</th>
+                <th>18 Mo</th>
+                <th>30 Mo</th>
+                <th>42 Mo</th>
+                <th>1st Yr</th>
+                <th>2nd Yr</th>
+                <th>3rd Yr</th>
+                <th>4th Yr</th>
+              </tr>
+            </thead>
+            <tbody id="agni_TableBody">
+              <tr>
+                <td colspan="16" class="text-center text-muted py-3">No records found</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer py-2 bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ===================== END AGNIVEER MODAL ===================== -->
+
+
+<!-- ===================== REMARKS SIDE PANEL (plain div — no Bootstrap offcanvas JS) ===================== -->
+<div id="agni_RemarksPanel" style="
+     position:fixed; top:0; right:-420px; width:400px; height:100%;
+     z-index:1070; display:flex; flex-direction:column;
+     background:#fff; box-shadow:-4px 0 24px rgba(0,0,0,0.22);
+     transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+     overflow:hidden;">
+
+  <!-- Panel header -->
+  <div style="background:linear-gradient(135deg,#1d3557,#457b9d);
+              color:#fff; padding:10px 16px;
+              display:flex; align-items:center; justify-content:space-between;
+              flex-shrink:0;">
+    <div>
+      <div style="font-weight:700; font-size:0.92rem;">
+        <i class="bi bi-chat-square-text-fill me-1"></i>Remarks
+      </div>
+      <div id="agni_RemarksMeta" style="opacity:0.75; font-size:0.73rem; margin-top:1px;"></div>
+    </div>
+    <!-- plain button — no Bootstrap dismiss, just calls agni_closeRemarks() -->
+    <button onclick="agni_closeRemarks()"
+            style="background:none; border:none; color:#fff; font-size:1.2rem;
+                   cursor:pointer; line-height:1; padding:4px 6px; opacity:0.85;"
+            title="Close">&times;</button>
+  </div>
+
+  <!-- Scrollable body -->
+  <div id="agni_RemarksBody" style="flex:1; overflow-y:auto; padding:0;"></div>
+
+</div>
+<!-- ===================== END REMARKS SIDE PANEL ===================== -->
+
+
+<!-- ===================== STYLES ===================== -->
+<style>
+  /* --- Table head --- */
+  .agni_tableHead tr:first-child th {
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 10px 8px;
+  }
+  .agni_tableHead tr:last-child th {
+    background: linear-gradient(135deg, #a8dadc, #f1faee);
+    color: #1d3557;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 8px 6px;
+  }
+
+  /* --- Body cells normal --- */
+  #agni_TableBody td {
+    font-size: 0.9rem;
+    padding: 10px 8px;
+  }
+
+  /* --- Row hover --- */
+  #agni_Modal .table-hover tbody tr:hover {
+    background-color: #eef4ff !important;
+  }
+
+  /* --- Row zebra --- */
+  .agni_row1 { background-color: #fffbf0 !important; }
+  .agni_row2 { background-color: #f0f8ff !important; }
+  .agni_row3 { background-color: #f0fff4 !important; }
+  .agni_row4 { background-color: #fff5f5 !important; }
+  .agni_row5 { background-color: #fafafa !important; }
+
+  /* --- View Remarks button --- */
+  .agni_viewRemarksBtn {
+    border: none;
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    color: #fff;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .agni_viewRemarksBtn:hover { opacity: 0.82; }
+  .agni_viewRemarksBtn.agni_disabled {
+    background: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .agni_countPill {
+    background: rgba(255,255,255,0.25);
+    border-radius: 99px;
+    padding: 1px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  /* --- Remarks scroll area --- */
+  .agni_remarksScroll {
+    padding: 14px 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* --- Single remark card --- */
+  .agni_remarkCard {
+    border-radius: 8px;
+    border: 1.5px solid;
+    overflow: hidden;
+  }
+  .agni_remarkCard-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .agni_remarkCard-body {
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.55;
+  }
+  .agni_num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-size: 0.72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  /* colour themes */
+  .agni_rc1 { border-color:#ffc107; }
+  .agni_rc1 .agni_remarkCard-hdr  { background:#fff8e1; color:#856404; }
+  .agni_rc1 .agni_remarkCard-body { background:#fffdf5; color:#5c4300; }
+  .agni_rc1 .agni_num             { background:#ffc107; color:#5c4300; }
+
+  .agni_rc2 { border-color:#0d6efd; }
+  .agni_rc2 .agni_remarkCard-hdr  { background:#e7f0ff; color:#084298; }
+  .agni_rc2 .agni_remarkCard-body { background:#f5f9ff; color:#062059; }
+  .agni_rc2 .agni_num             { background:#0d6efd; color:#fff; }
+
+  .agni_rc3 { border-color:#198754; }
+  .agni_rc3 .agni_remarkCard-hdr  { background:#e8f5ee; color:#0f5132; }
+  .agni_rc3 .agni_remarkCard-body { background:#f4fbf7; color:#093320; }
+  .agni_rc3 .agni_num             { background:#198754; color:#fff; }
+
+  .agni_rc4 { border-color:#dc3545; }
+  .agni_rc4 .agni_remarkCard-hdr  { background:#fdecea; color:#842029; }
+  .agni_rc4 .agni_remarkCard-body { background:#fff6f6; color:#5c1018; }
+  .agni_rc4 .agni_num             { background:#dc3545; color:#fff; }
+
+  .agni_rc5 { border-color:#6c757d; }
+  .agni_rc5 .agni_remarkCard-hdr  { background:#efefef; color:#41464b; }
+  .agni_rc5 .agni_remarkCard-body { background:#f8f9fa; color:#2b2e31; }
+  .agni_rc5 .agni_num             { background:#6c757d; color:#fff; }
+
+  .agni_rc6 { border-color:#e91e63; }
+  .agni_rc6 .agni_remarkCard-hdr  { background:#fce4ec; color:#880e4f; }
+  .agni_rc6 .agni_remarkCard-body { background:#fff5f8; color:#5c0933; }
+  .agni_rc6 .agni_num             { background:#e91e63; color:#fff; }
+
+  .agni_rc7 { border-color:#03a9f4; }
+  .agni_rc7 .agni_remarkCard-hdr  { background:#e1f5fe; color:#01579b; }
+  .agni_rc7 .agni_remarkCard-body { background:#f3faff; color:#013a6b; }
+  .agni_rc7 .agni_num             { background:#03a9f4; color:#fff; }
+
+  .agni_rc8 { border-color:#ffb300; }
+  .agni_rc8 .agni_remarkCard-hdr  { background:#fff8e1; color:#e65100; }
+  .agni_rc8 .agni_remarkCard-body { background:#fffdf0; color:#a33700; }
+  .agni_rc8 .agni_num             { background:#ffb300; color:#5c2e00; }
+
+  /* no remarks placeholder */
+  .agni_noRemarks {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #ced4da;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+  .agni_noRemarks i { font-size: 2.4rem; }
+
+  /* --- PRINT --- */
+  @media print {
+    body * { visibility: hidden; }
+    #agni_Modal, #agni_Modal * { visibility: visible; }
+    #agni_Modal {
+      position: absolute; left:0; top:0;
+      width:100%; margin:0; padding:0;
+    }
+    #agni_Modal .modal-header .btn,
+    #agni_Modal .modal-header .btn-close,
+    #agni_Modal .modal-footer,
+    #agni_Modal .row.mb-2 { display: none !important; }
+    #agni_Modal .modal-content { border:none !important; box-shadow:none !important; }
+    #agni_Modal .modal-dialog  { margin:0 !important; max-width:100% !important; }
+    #agni_Modal .table-responsive { overflow:visible !important; }
+    #agni_Modal .table { border-collapse:collapse !important; width:100% !important; }
+    #agni_Modal .table th,
+    #agni_Modal .table td {
+      border:1px solid #333 !important;
+      font-size:8pt !important;
+      padding:3px !important;
+      color:#000 !important;
+    }
+    .agni_tableHead tr:first-child th { background:#f0f0f0 !important; color:#000 !important; }
+    .agni_tableHead tr:last-child th  { background:#ffffff !important; color:#000 !important; }
+    .agni_viewRemarksBtn { display:none !important; }
+    .agni_row1,.agni_row2,.agni_row3,
+    .agni_row4,.agni_row5 { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #agni_RemarksPanel { display:none !important; }
+  }
+</style>
+<!-- ===================== END STYLES ===================== -->
+
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+(function () {
+  'use strict';
+
+  let agni_allData   = [];
+  let agni_isLoaded  = false;
+  let agni_isLoading = false;
+
+  /* ── Modal open guard ─────────────────────────────── */
+  document.getElementById('agni_Modal')
+    .addEventListener('shown.bs.modal', function () {
+      if (agni_isLoaded || agni_isLoading) return;
+      agni_loadData();
+    });
+
+  /* ── Fetch in parallel ────────────────────────────── */
+  function agni_loadData() {
+    agni_isLoading = true;
+    agni_showSpinner();
+    Promise.all([
+      fetch('/agni/get_batches').then(r => r.json()),
+      fetch('/agni/get_all_agniveers').then(r => r.json())
+    ])
+    .then(function ([batches, records]) {
+      agni_populateBatchFilter(batches);
+      agni_allData   = records;
+      agni_isLoaded  = true;
+      agni_isLoading = false;
+      agni_applyFilters();
+    })
+    .catch(function (err) {
+      agni_isLoading = false;
+      agni_showError(err);
+    });
+  }
+
+  /* ── Batch dropdown ───────────────────────────────── */
+  function agni_populateBatchFilter(batches) {
+    const sel = document.getElementById('agni_BatchFilter');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">All Batches</option>' +
+      batches.map(b => `<option value="${b}">${b}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+
+  /* ── Filter ───────────────────────────────────────── */
+  function agni_applyFilters() {
+    const batch = document.getElementById('agni_BatchFilter').value;
+    agni_renderTable(
+      batch === 'all' ? agni_allData : agni_allData.filter(a => a.batch === batch)
+    );
+  }
+
+  /* ── Render rows ──────────────────────────────────── */
+  function agni_renderTable(data) {
+    const tbody = document.getElementById('agni_TableBody');
+    if (!data.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="16" class="text-center text-muted py-3">No records found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function (p, i) {
+      const parts      = p.remarks ? p.remarks.split('|').map(r => r.trim()).filter(Boolean) : [];
+      const hasRemarks = parts.length > 0;
+      const btn = hasRemarks
+        ? `<button class="agni_viewRemarksBtn" onclick="agni_openRemarks(${i})">
+             <i class="bi bi-chat-square-text-fill"></i>
+             View Remarks
+             <span class="agni_countPill">${parts.length}</span>
+           </button>`
+        : `<button class="agni_viewRemarksBtn agni_disabled" disabled>
+             <i class="bi bi-chat-square"></i> No Remarks
+           </button>`;
+      return `
+        <tr class="agni_row${(i % 5) + 1}">
+          <td><span class="badge bg-primary">${p.batch}</span></td>
+          <td>${agni_fmtMY(p.DOE)}</td>
+          <td>${agni_fmtMY(p.TOE)}</td>
+          <td>${p.strength}</td>
+          <td>${agni_fmtMY(p.TOS)}</td>
+          <td>${agni_fmtMY(p.END_OF_TENURE)}</td>
+          <td>${agni_testCell(p.asst_test1, p.test1_status)}</td>
+          <td>${agni_testCell(p.asst_test2, p.test2_status)}</td>
+          <td>${agni_testCell(p.asst_test3, p.test3_status)}</td>
+          <td>${agni_testCell(p.asst_test4, p.test4_status)}</td>
+          <td>${agni_fmtFull(p.assmt_wef_1st)}</td>
+          <td>${agni_fmtFull(p.assmt_wef_2nd)}</td>
+          <td>${agni_fmtFull(p.assmt_wef_3rd)}</td>
+          <td>${agni_fmtFull(p.assmt_wef_4th)}</td>
+          <td class="text-start">${p.screening_board || '<span class="text-muted">—</span>'}</td>
+          <td>${btn}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  /* ── Open remarks — pure CSS slide, zero Bootstrap JS ── */
+  window.agni_openRemarks = function (index) {
+    const p = agni_allData[index];
+    if (!p) return;
+
+    document.getElementById('agni_RemarksMeta').textContent =
+      'Batch: ' + p.batch + '  ·  Strength: ' + p.strength;
+
+    const parts = p.remarks
+      ? p.remarks.split('|').map(function(r){ return r.trim(); }).filter(Boolean)
+      : [];
+
+    const body = document.getElementById('agni_RemarksBody');
+
+    if (!parts.length) {
+      body.innerHTML =
+        '<div class="agni_noRemarks">' +
+          '<i class="bi bi-chat-square"></i>' +
+          '<span>No remarks recorded</span>' +
+        '</div>';
+    } else {
+      body.innerHTML = '<div class="agni_remarksScroll">' +
+        parts.map(function (remark, i) {
+          return '<div class="agni_remarkCard agni_rc' + ((i % 8) + 1) + '">' +
+            '<div class="agni_remarkCard-hdr">' +
+              '<span class="agni_num">' + (i + 1) + '</span>' +
+              'Remark ' + (i + 1) +
+            '</div>' +
+            '<div class="agni_remarkCard-body">' + remark + '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    /* Slide in — just move the right offset to 0 */
+    document.getElementById('agni_RemarksPanel').style.right = '0';
+  };
+
+  /* ── Close remarks — slide back out, no Bootstrap involved ── */
+  window.agni_closeRemarks = function () {
+    document.getElementById('agni_RemarksPanel').style.right = '-420px';
+  };
+
+  /* ── Helpers ──────────────────────────────────────── */
+  function agni_fmtMY(d) {
+    if (!d) return '<span class="text-muted">—</span>';
+    return new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  }
+  function agni_fmtFull(d) {
+    if (!d) return '<span class="text-muted">—</span>';
+    return `<strong>${new Date(d).toLocaleDateString('en-GB',
+      { day: '2-digit', month: 'short', year: 'numeric' })}</strong>`;
+  }
+  function agni_testCell(date, status) {
+    if (!date) return '<span class="text-muted">—</span>';
+    const badge = status === 1
+      ? '<span class="badge bg-success ms-1">✓</span>'
+      : '<span class="badge bg-warning text-dark ms-1">P</span>';
+    return `<strong>${agni_fmtMY(date)}</strong>${badge}`;
+  }
+
+  /* ── Spinner / Error ──────────────────────────────── */
+  function agni_showSpinner() {
+    document.getElementById('agni_TableBody').innerHTML = `
+      <tr><td colspan="16" class="text-center py-4">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading data…
+      </td></tr>`;
+  }
+  function agni_showError(err) {
+    console.error('Agniveer load error:', err);
+    document.getElementById('agni_TableBody').innerHTML = `
+      <tr><td colspan="16" class="text-center text-danger py-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Failed to load data. Please close and reopen.
+      </td></tr>`;
+  }
+
+  /* ── Print ────────────────────────────────────────── */
+  window.agni_printTable = function () { window.print(); };
+
+  /* ── Filter listeners ─────────────────────────────── */
+  document.getElementById('agni_BatchFilter').addEventListener('change', agni_applyFilters);
+  document.getElementById('agni_ResetFilter').addEventListener('click', function () {
+    document.getElementById('agni_BatchFilter').value = 'all';
+    agni_applyFilters();
+  });
+
+})();
+</script>
+<!-- ===================== END SCRIPT ===================== -->

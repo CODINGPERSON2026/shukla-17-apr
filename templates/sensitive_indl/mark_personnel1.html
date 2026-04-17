@@ -1,0 +1,520 @@
+{% extends "baseView.html" %}
+{% block content %}
+<link rel="stylesheet" href="/static/fontawesome-free-7.1.0-web/css/all.min.css">
+    
+    
+    <style>
+        body { background: #f8f9fc; font-family: 'Segoe UI', sans-serif; }
+        .container-main { max-width: 1400px; padding-top: 2rem; padding-bottom: 3rem; }
+
+        .page-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+        .page-header h2 { font-size: 1.8rem; font-weight: 700; margin: 0; }
+        .page-header .subtitle { font-size: 1rem; opacity: 0.9; }
+
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 1.5rem; }
+        .card-header-custom {
+            background: #343a40; color: white; font-weight: 600; padding: 1rem 1.5rem; font-size: 1.05rem;
+        }
+
+        .table { font-size: 0.92rem; }
+        .table thead th { background: #e9ecef; color: #495057; font-weight: 600; font-size: 0.88rem; }
+        .table tbody td { vertical-align: middle; }
+
+        .action-btn {
+            padding: 0.4rem 0.9rem; font-size: 0.85rem; border-radius: 6px; margin: 0 3px; border: none; cursor: pointer;
+        }
+        .btn-view { background: #4361ee; color: white; }
+        .btn-view:hover { background: #3a56d4; }
+        .btn-edit { background: #f7b538; color: #212529; }
+        .btn-edit:hover { background: #e09e1a; }
+        .btn-remove { background: #e63946; color: white; }
+        .btn-remove:hover { background: #d62839; }
+
+        .selected-row { background-color: #e3f2fd !important; cursor: pointer; }
+
+        .personnel-photo-large {
+            width: 140px; height: 140px; object-fit: cover; border-radius: 12px;
+            border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .reason-box {
+            background: #fff3cd; padding: 1rem; border-radius: 8px; border-left: 4px solid #ffc107;
+            max-height: 200px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6;
+        }
+
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1080; }
+
+        
+
+        @media (max-width: 992px) {
+            .container-main { padding: 1rem; }
+            .page-header { padding: 1.5rem; }
+            .content-wrapper { padding-left: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper">
+    {% set header = "Sensitive Personnel Management" %}
+        {% set subscript = 'Add Personnel → View Personnel → Update Personnel' %}
+      
+        {% include 'navbar/navbar.html' %}
+    <div class="container-fluid container-main">
+    
+
+        <div class="row">
+            <!-- Left: Search & Mark -->
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header-custom"><i class="bi bi-search me-2"></i>Search Personnel</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="search_query" class="form-label fw-semibold">Search by Name or Army Number</label>
+                            <input type="text" id="search_query" class="form-control form-control-lg" 
+                                   placeholder="Type name or army number..." autocomplete="off">
+                            <small class="text-muted">Start typing to search...</small>
+                        </div>
+                        <div id="searchStatus" class="text-center mt-2" style="display:none;">
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                            <small>Searching...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="card" style="display:none;">
+                    <div class="card-header-custom"><i class="bi bi-list-check me-2"></i>Search Results</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="resultTable">
+                                <thead>
+                                    <tr>
+                                        <th width="8%">Select</th>
+                                        <th>Army No.</th>
+                                        <th>Name</th>
+                                        <th>Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-custom"><i class="bi bi-shield-check me-2"></i>Mark as Sensitive</div>
+                    <div class="card-body">
+                        <form id="markForm">
+                            <input type="hidden" id="army_number">
+                            <div class="mb-3">
+                                <label for="reason" class="form-label fw-semibold">Reason for Classification <span class="text-danger">*</span></label>
+                                <textarea class="form-control"
+          id="reason"
+          rows="5"
+          required
+          minlength="30"
+          placeholder="Provide detailed reason (minimum 30 characters)..."></textarea>
+
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="bi bi-shield-check me-2"></i>Mark as Sensitive
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Classified List -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="d-flex justify-content-between align-items-center card-header-custom">
+                        <span><i class="bi bi-shield-fill-exclamation me-2"></i>Classified Personnel List</span>
+                        <select id="filterCount" class="form-select w-auto bg-white text-dark">
+                            <option value="5">Show 5</option>
+                            <option value="10" selected>Show 10</option>
+                            <option value="25">Show 25</option>
+                            <option value="50">Show 50</option>
+                            <option value="all">Show All</option>
+                        </select>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        
+                                        <th>Army No.</th>
+                                        <th>Rank</th>
+                                        <th>Name</th>
+                                        <th>Company</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sensitiveListBody"></tbody>
+                            </table>
+                            <div id="emptyState" class="text-center py-5 text-muted" style="display:none;">
+                                <i class="bi bi-shield-slash display-4"></i>
+                                <p class="mt-3">No sensitive personnel records found.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container">
+    <div id="actionToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage">Action completed.</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-fill-exclamation me-2"></i>Sensitive Personnel Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="viewPhoto" src="/static/photos/default.jpeg" alt="Personnel" class="personnel-photo-large mb-3">
+                <h4 id="viewName">-</h4>
+                <p class="text-muted" id="viewRank">-</p>
+                <div class="row text-start mt-4">
+                    <div class="col-md-6"><strong>Army Number:</strong> <span id="viewArmyNumber">-</span></div>
+                    <div class="col-md-6"><strong>Company:</strong> <span id="viewCompany">-</span></div>
+                    <div class="col-12 mt-3"><strong>Marked On:</strong> <span id="viewMarkedOn">-</span></div>
+                </div>
+                <div class="mt-4 text-start">
+                    <strong>Classification Reason:</strong>
+                    <div class="reason-box mt-2" id="viewReason">-</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Classification Reason</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editArmyNumber">
+                <label for="editReason" class="form-label fw-semibold">Reason</label>
+                <textarea class="form-control"
+          id="editReason"
+          rows="7"
+          required
+          minlength="30"></textarea>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="saveEditBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('actionToast');
+        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        document.getElementById('toastMessage').textContent = message;
+        new bootstrap.Toast(toast).show();
+    }
+
+    function refreshSensitiveList() {
+        fetch('/get_sensitive_list')
+            .then(r => r.json())
+            .then(res => {
+                const tbody = document.getElementById('sensitiveListBody');
+                const emptyState = document.getElementById('emptyState');
+                tbody.innerHTML = '';
+
+                if (!res.success || res.data.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+
+                res.data.forEach(s => {
+                    const row = document.createElement('tr');
+                    row.className = 'sensitive-row';
+                    
+                    // Safe HTML escaping for reason (prevents JSON.parse error)
+                    const safeReason = (s.reason || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    
+                    row.innerHTML = `
+                        
+                        <td><code>${s.army_number}</code></td>
+                        <td>${s.rank}</td>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${s.company || 'N/A'}</td>
+                       <td class="text-center">
+    <button class="btn action-btn btn-view" title="View"
+        data-army="${s.army_number}"
+        data-rank="${s.rank}"
+        data-name="${s.name}"
+        data-company="${s.company || 'N/A'}"
+        data-reason="${safeReason}"
+        data-marked="${s.marked_on}">
+        <i class="fa-solid fa-eye"></i>
+    </button>
+
+    <button class="btn action-btn btn-edit" title="Edit"
+        data-army="${s.army_number}"
+        data-reason="${safeReason}">
+        <i class="fa-solid fa-pen"></i>
+    </button>
+
+    <button class="btn action-btn btn-remove" title="Remove"
+        data-army="${s.army_number}"
+        data-name="${s.name}">
+        <i class="fa-solid fa-trash"></i>
+    </button>
+</td>
+
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                attachActionButtonListeners();
+                applyFilter();
+            })
+            .catch(err => {
+                console.error('Load error:', err);
+                showToast('Failed to load list', 'danger');
+            });
+    }
+
+    function attachActionButtonListeners() {
+        document.querySelectorAll('.btn-view').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const army = this.dataset.army;
+                const name = this.dataset.name;
+                const rank = this.dataset.rank;
+                const company = this.dataset.company;
+                const reason = this.dataset.reason.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                const marked = this.dataset.marked;
+                showPersonnelDetails(army, name, rank, company, reason, marked);
+            });
+        });
+
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const army = this.dataset.army;
+                const reason = this.dataset.reason.replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                editPersonnel(army, reason);
+            });
+        });
+
+        document.querySelectorAll('.btn-remove').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const army = this.dataset.army;
+                const name = this.dataset.name;
+                removePersonnel(army, name);
+            });
+        });
+    }
+
+    // Fixed: Use correct endpoint
+    let searchTimeout;
+    document.getElementById('search_query').addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('searchStatus').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('searchStatus').style.display = 'block';
+
+        searchTimeout = setTimeout(() => {
+            fetch('/search_personnel_to_mark', {  // ← Fixed endpoint
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ query: query })
+            })
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.querySelector('#resultTable tbody');
+                tbody.innerHTML = '';
+                document.getElementById('resultsSection').style.display = data.length ? 'block' : 'none';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No personnel found</td></tr>`;
+                    showToast('No results found', 'info');
+                    return;
+                }
+
+                data.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><input type="radio" name="select_person" value="${p.army_number}"></td>
+                        <td><code>${p.army_number}</code></td>
+                        <td><strong>${p.name}</strong></td>
+                        <td>${p.rank}</td>
+                    `;
+                    tr.style.cursor = 'pointer';
+                    tr.addEventListener('click', (e) => {
+                        if (e.target.type !== 'radio') tr.querySelector('input').checked = true;
+                        selectRow(p.army_number, tr);
+                    });
+                    tbody.appendChild(tr);
+                });
+
+                showToast(`${data.length} result${data.length > 1 ? 's' : ''} found`, 'success');
+            })
+            .catch(err => {
+                console.error('Search error:', err);
+                showToast('Search failed', 'danger');
+            })
+            .finally(() => {
+                document.getElementById('searchStatus').style.display = 'none';
+            });
+        }, 300);
+    });
+
+    function selectRow(army_number, row) {
+        document.querySelectorAll('#resultTable tbody tr').forEach(r => r.classList.remove('selected-row'));
+        row.classList.add('selected-row');
+        document.getElementById('army_number').value = army_number;
+        showToast('Personnel selected. Enter reason and mark as sensitive.', 'info');
+    }
+
+    document.getElementById('markForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const armyNumber = document.getElementById('army_number').value;
+        const reason = document.getElementById('reason').value.trim();
+
+        if (!armyNumber) return showToast('Select a personnel first', 'warning');
+        if (!reason) 
+    return showToast('Reason is required', 'warning');
+
+if (reason.length < 30)
+    return showToast('Reason must be at least 30 characters long', 'warning');
+
+
+        const fd = new FormData();
+        fd.append('army_number', armyNumber);
+        fd.append('reason', reason);
+
+        fetch('/mark_sensitive', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Marked as sensitive successfully!');
+                    this.reset();
+                    document.getElementById('army_number').value = '';
+                    document.getElementById('resultsSection').style.display = 'none';
+                    document.getElementById('search_query').value = '';
+                    refreshSensitiveList();
+                } else {
+                    showToast(data.error || 'Failed to mark', 'danger');
+                }
+            })
+            .catch(() => showToast('Network error', 'danger'));
+    });
+
+    function showPersonnelDetails(armyNumber, name, rank, company, reason, markedOn) {
+        const photo = document.getElementById('viewPhoto');
+        photo.src = `/static/photos/${armyNumber}.jpeg`;
+        photo.onerror = () => photo.src = '/static/photos/default.jpeg';
+
+        document.getElementById('viewName').textContent = name;
+        document.getElementById('viewRank').textContent = rank;
+        document.getElementById('viewArmyNumber').textContent = armyNumber;
+        document.getElementById('viewCompany').textContent = company;
+        document.getElementById('viewReason').textContent = reason || 'No reason provided';
+        document.getElementById('viewMarkedOn').textContent = markedOn;
+
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+    }
+
+    function editPersonnel(armyNumber, reason) {
+        document.getElementById('editArmyNumber').value = armyNumber;
+        document.getElementById('editReason').value = reason || '';
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    document.getElementById('saveEditBtn').addEventListener('click', function() {
+        const armyNumber = document.getElementById('editArmyNumber').value;
+        const reason = document.getElementById('editReason').value.trim();
+        if (!reason)
+    return showToast('Reason cannot be empty', 'warning');
+
+if (reason.length < 30)
+    return showToast('Reason must be at least 30 characters long', 'warning');
+
+
+        const fd = new FormData();
+        fd.append('army_number', armyNumber);
+        fd.append('reason', reason);
+
+        fetch('/update_sensitive_reason', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Reason updated successfully');
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    refreshSensitiveList();
+                } else {
+                    showToast(data.error || 'Update failed', 'danger');
+                }
+            });
+    });
+
+    function removePersonnel(armyNumber, name) {
+        if (!confirm(`Remove ${name} from sensitive list?`)) return;
+
+        const fd = new FormData();
+        fd.append('army_number', armyNumber);
+
+        fetch('/remove_sensitive', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Removed successfully');
+                    refreshSensitiveList();
+                } else {
+                    showToast(data.error || 'Remove failed', 'danger');
+                }
+            });
+    }
+
+    function applyFilter() {
+        const val = document.getElementById('filterCount').value;
+        document.querySelectorAll('.sensitive-row').forEach((row, i) => {
+            row.style.display = (val === 'all' || i < parseInt(val)) ? '' : 'none';
+        });
+    }
+    document.getElementById('filterCount').addEventListener('change', applyFilter);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshSensitiveList();
+    });
+</script>
+</body>
+</html>
+{% endblock %}

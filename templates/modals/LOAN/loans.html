@@ -1,0 +1,230 @@
+<!-- ================== LOAN GRAPH MODAL ================== -->
+<div class="modal fade" id="loanModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-custom">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Loan Distribution</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body d-flex align-items-center justify-content-center">
+        <canvas id="loanDonutChart" style="max-height: 80vh; width: 100%;"></canvas>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================== LOAN TABLE MODAL ================== -->
+<div class="modal fade" id="loanTableModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-custom">
+    <div class="modal-content">
+
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title" id="loanTableTitle">Loan Details</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <div class="loan-table-scroll">
+          <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-white sticky-top">
+              <tr>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Loan Type</th>
+                <th>Total Amount</th>
+                <th>Pending</th>
+                <th>EMI</th>
+              </tr>
+            </thead>
+            <tbody id="loanTableBodyPopup">
+              <tr>
+                <td colspan="7" class="text-center text-muted py-4">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================== STYLES ================== -->
+<style>
+  .modal-fullscreen-custom {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    height: 95vh;
+    margin: auto;
+  }
+
+  .modal-fullscreen-custom .modal-content {
+    height: 95vh;
+    border-radius: 8px;
+  }
+
+  .modal-fullscreen-custom .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 1055;
+  }
+
+  .modal-fullscreen-custom .modal-body {
+    height: calc(95vh - 64px);
+  }
+
+  .loan-table-scroll {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .loan-table-scroll th,
+  .loan-table-scroll td {
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f1f5f9;
+  }
+
+  .loan-table-scroll td:nth-child(5),
+  .loan-table-scroll td:nth-child(6),
+  .loan-table-scroll td:nth-child(7) {
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .loan-table-scroll td:nth-child(5) {
+    color: #2563eb;
+  }
+
+  .loan-table-scroll td:nth-child(6) {
+    color: #dc2626;
+  }
+
+  .loan-table-scroll td:nth-child(7) {
+    color: #16a34a;
+  }
+</style>
+
+<!-- ================== SCRIPT ================== -->
+<script>
+  let loanChart;
+
+  /* Load chart when modal opens */
+  document.getElementById('loanModal')
+    .addEventListener('shown.bs.modal', loadLoanChart);
+
+  function loadLoanChart() {
+    fetch('/loan_details/summary')
+      .then(res => res.json())
+      .then(data => {
+
+        const ctx = document.getElementById('loanDonutChart');
+        if (loanChart) loanChart.destroy();
+
+        loanChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: [
+              '0–5 Lakh',
+              '6–10 Lakh',
+              '11–15 Lakh',
+              '16–20 Lakh',
+              '> 20 Lakh'
+            ],
+            datasets: [{
+              label: 'Number of Loans',
+              data: [
+                data.l0_5,
+                data.l6_10,
+                data.l11_15,
+                data.l16_20,
+                data.l20_plus
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            onClick: (evt, elements) => {
+              if (!elements.length) return;
+
+              const index = elements[0].index;
+              const rangeMap = ['0_5', '6_10', '11_15', '16_20', '20_plus'];
+              const labelMap = [
+                '0–5 Lakh',
+                '6–10 Lakh',
+                '11–15 Lakh',
+                '16–20 Lakh',
+                '> 20 Lakh'
+              ];
+
+              loadLoanTablePopup(rangeMap[index], labelMap[index]);
+            }
+          }
+        });
+      });
+  }
+
+  /* SAFE MODAL SWITCH (NO FREEZE) */
+  function loadLoanTablePopup(rangeKey, label) {
+
+    document.getElementById('loanTableTitle').innerText =
+      `Loan Details (${label})`;
+
+    const tbody = document.getElementById('loanTableBodyPopup');
+    tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="text-center text-muted py-4">Loading...</td>
+    </tr>
+  `;
+
+    const loanModalEl = document.getElementById('loanModal');
+    const loanModalInstance = bootstrap.Modal.getInstance(loanModalEl);
+
+    if (loanModalInstance) loanModalInstance.hide();
+
+    loanModalEl.addEventListener('hidden.bs.modal', () => {
+      new bootstrap.Modal(
+        document.getElementById('loanTableModal')
+      ).show();
+    }, { once: true });
+
+    fetch(`/loan_details/by-range/${rangeKey}`)
+      .then(res => res.json())
+      .then(rows => {
+        tbody.innerHTML = '';
+
+        if (!rows.length) {
+          tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">No data</td>
+          </tr>
+        `;
+          return;
+        }
+
+        rows.forEach(r => {
+          tbody.innerHTML += `
+          <tr>
+            <td>${r.army_number}</td>
+            <td>${r.rank}</td>
+            <td>${r.name}</td>
+            <td>${r.company_name}</td>
+            <td>${r.loan_type}</td>
+            <td>${r.total_amount}</td>
+            <td>${r.pending}</td>
+            <td>${r.emi_per_month}</td>
+          </tr>
+        `;
+        });
+      });
+  }
+</script>

@@ -1,0 +1,590 @@
+<style>
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+  }
+  
+  #popupCard {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 420px;
+    z-index: 2000;
+    display: none;
+  }
+  
+  /* CENTER CARD TOAST */
+  #centerToast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    z-index: 9999;
+    width: 360px;
+    display: none;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  
+  #centerToast.show {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  #centerToast .toast-icon {
+    font-size: 2.8rem;
+    margin-bottom: 8px;
+  }
+  
+  #centerToast.approve-toast {
+    background: linear-gradient(135deg, #d4edda, #a8d5b5);
+    border: 2px solid #28a745;
+    color: #155724;
+  }
+  
+  #centerToast.reject-toast {
+    background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+    border: 2px solid #dc3545;
+    color: #721c24;
+  }
+  
+  /* Loading spinner overlay for tables */
+  .table-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.82);
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    gap: 12px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .table-loading-overlay.active {
+    display: flex;
+  }
+  
+  .tab-pane {
+    position: relative;
+  }
+  </style>
+  </head>
+  
+  <body>
+  
+  <!-- TOAST (top-right, for general messages) -->
+  <div class="toast-container">
+    <div id="liveToast" class="toast text-white border-0">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMsg"></div>
+        <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- CENTER CARD TOAST (for Approve / Reject feedback) -->
+  <div id="centerToast" class="text-center p-4">
+    <div class="toast-icon" id="centerToastIcon"></div>
+    <h5 class="fw-bold mb-1" id="centerToastTitle"></h5>
+    <p class="mb-0 small" id="centerToastMsg"></p>
+  </div>
+  
+  <!-- POPUP -->
+  <div id="popupCard" class="card shadow">
+    <div class="card-header d-flex justify-content-between">
+      <strong id="popupTitle">Details</strong>
+      <button class="btn-close" onclick="closePopup()"></button>
+    </div>
+  
+    <div class="card-body" id="popupContent"></div>
+  
+    <div class="card-footer text-end d-none" id="popupFooter">
+      <button class="btn btn-secondary btn-sm me-2" id="skipBtn">Skip</button>
+      <button class="btn btn-success btn-sm" id="confirmBtn">Submit</button>
+    </div>
+  </div>
+  
+  <!-- MAIN MODAL -->
+  <div class="modal fade" id="rollCallPoints">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Center Roll Call</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <!-- Tabs -->
+        <ul class="nav nav-tabs px-3">
+          <li class="nav-item" id="addTabNav">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#addTab">Add</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#updateTab" id="updateTabBtn">Update</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#approvedTab" id="approvedTabBtn">Approved</button>
+          </li>
+        </ul>
+  
+        <div class="tab-content">
+  
+          <!-- ADD TAB -->
+          <div class="tab-pane fade show active p-4" id="addTab">
+  
+            <label class="form-label">Category</label>
+            <select class="form-select mb-3" id="rollType">
+              <option value="">-- Select Category --</option>
+              <option value="SM_SUGGESTION">SM Suggestion</option>
+              <option value="OR_REQUEST">OR Request</option>
+            </select>
+  
+            <div id="orExtraFields" class="d-none">
+              <label>Army Number</label>
+              <input type="text" class="form-control mb-2" id="armyNumber">
+  
+              <div id="armyInfoBox" class="d-none">
+                <div class="alert alert-info p-2">
+                  <strong>Army:</strong> <span id="infoArmy"></span> |
+                  <strong>Rank:</strong> <span id="infoRank"></span> |
+                  <strong>Name:</strong> <span id="infoName"></span> |
+                  <strong>Company:</strong> <span id="infoCompany"></span>
+                </div>
+              </div>
+            </div>
+  
+            <div id="pointSection" class="d-none mb-3">
+              <label>Point Category</label>
+              <select class="form-select" id="rollPoint"></select>
+            </div>
+  
+            <div id="descSection" class="d-none">
+              <label>Points</label>
+              <div id="pointsContainer"></div>
+              <button class="btn btn-sm btn-outline-primary mt-2" onclick="addPointField()">+ Add Point</button>
+            </div>
+  
+            <button class="btn btn-primary mt-3" id="submitRollCall">Submit</button>
+          </div>
+  
+          <!-- UPDATE TAB -->
+          <div class="tab-pane fade p-4" id="updateTab">
+            <!-- Loading Spinner -->
+            <div class="table-loading-overlay" id="pendingLoader">
+              <div class="spinner-border text-primary" role="status"></div>
+              <span>Loading pending records...</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Army No.</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="pendingRollCallBody"></tbody>
+              </table>
+            </div>
+          </div>
+  
+          <!-- APPROVED TAB -->
+          <div class="tab-pane fade p-4" id="approvedTab">
+            <!-- Loading Spinner -->
+            <div class="table-loading-overlay" id="approvedLoader">
+              <div class="spinner-border text-success" role="status"></div>
+              <span>Loading approved records...</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Army No.</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Company</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="approvedRollCallBody"></tbody>
+              </table>
+            </div>
+          </div>
+  
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <script>
+  
+  const currentUser = "{{ role }}";
+  let mainModalEl = null;
+  
+  /* ── TOAST (top-right, general) ── */
+  function showToast(msg, type="success") {
+    const el = document.getElementById("liveToast");
+    document.getElementById("toastMsg").textContent = msg;
+    el.className = "toast text-white " + (type === "success" ? "bg-success" : "bg-danger");
+    new bootstrap.Toast(el).show();
+  }
+  
+  /* ── CENTER CARD TOAST (Approve / Reject) ── */
+  let centerToastTimer = null;
+  
+  function showCenterToast(status) {
+    const el       = document.getElementById("centerToast");
+    const iconEl   = document.getElementById("centerToastIcon");
+    const titleEl  = document.getElementById("centerToastTitle");
+    const msgEl    = document.getElementById("centerToastMsg");
+  
+    if (status === "APPROVED") {
+      el.className = "approve-toast show";
+      iconEl.textContent  = "✅";
+      titleEl.textContent = "Approved!";
+      msgEl.textContent   = "The record has been successfully approved.";
+    } else {
+      el.className = "reject-toast show";
+      iconEl.textContent  = "❌";
+      titleEl.textContent = "Rejected!";
+      msgEl.textContent   = "The record has been marked as rejected.";
+    }
+  
+    clearTimeout(centerToastTimer);
+    centerToastTimer = setTimeout(() => {
+      el.style.opacity   = "0";
+      el.style.transform = "translate(-50%, -50%) scale(0.85)";
+      setTimeout(() => {
+        el.className = "";
+        el.style.display   = "none";
+        el.style.opacity   = "";
+        el.style.transform = "";
+      }, 260);
+    }, 2200);
+  }
+  
+  /* ── POPUP ── */
+  function openPopup(title, content, showFooter=false, confirmCallback=null) {
+    document.getElementById("popupTitle").textContent = title;
+    document.getElementById("popupContent").innerHTML = content;
+  
+    const footer = document.getElementById("popupFooter");
+  
+    if (showFooter) {
+      footer.classList.remove("d-none");
+      document.getElementById("confirmBtn").onclick = confirmCallback;
+    } else {
+      footer.classList.add("d-none");
+    }
+  
+    document.getElementById("popupCard").style.display = "block";
+  
+    setTimeout(() => {
+      const input = document.getElementById("remarkInput");
+      if (input) input.focus();
+    }, 100);
+  }
+  
+  function closePopup() {
+    document.getElementById("popupCard").style.display = "none";
+  
+    if (mainModalEl) {
+      setTimeout(() => {
+        new bootstrap.Modal(mainModalEl).show();
+      }, 200);
+    }
+  }
+  
+  /* ── VIEW DESCRIPTION ── */
+  function viewDescription(text) {
+    openPopup("Full Description", `<p>${text}</p>`);
+  }
+  
+  /* ── DATA ── */
+  const smPoints = ["Training Improvement","Discipline","Infrastructure","Welfare","Operational"];
+  const orPoints = ["Leave","Equipment","Medical","Accommodation","Admin"];
+  
+  /* ── ADD POINT FIELD ── */
+  function addPointField(value="") {
+    const div = document.createElement("div");
+    div.className = "d-flex mb-2";
+    div.innerHTML = `
+      <input type="text" class="form-control me-2 pointInput" value="${value}">
+      <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">X</button>
+    `;
+    document.getElementById("pointsContainer").appendChild(div);
+  }
+  
+  /* ── CATEGORY CHANGE ── */
+  rollType.addEventListener("change", () => {
+    rollPoint.innerHTML = "";
+    pointsContainer.innerHTML = "";
+    orExtraFields.classList.add("d-none");
+    armyInfoBox.classList.add("d-none");
+  
+    let points = [];
+    if (rollType.value === "SM_SUGGESTION") points = smPoints;
+    if (rollType.value === "OR_REQUEST") {
+      points = orPoints;
+      orExtraFields.classList.remove("d-none");
+    }
+  
+    if (points.length) {
+      pointSection.classList.remove("d-none");
+      descSection.classList.remove("d-none");
+      points.forEach(p => {
+        rollPoint.innerHTML += `<option value="${p}">${p}</option>`;
+      });
+      addPointField();
+    }
+  });
+  
+  /* ── ARMY CHECK ── */
+  let timer;
+  
+  armyNumber.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const value = armyNumber.value.trim();
+      if (!value) return;
+  
+      fetch(`/roll_call/check_army/${value}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          armyInfoBox.classList.remove("d-none");
+          infoArmy.textContent    = data.data.army_number;
+          infoRank.textContent    = data.data.rank;
+          infoName.textContent    = data.data.name;
+          infoCompany.textContent = data.data.company;
+        } else {
+          armyInfoBox.classList.add("d-none");
+          showToast("Army Number not found","danger");
+        }
+      });
+    }, 500);
+  });
+  
+  /* ── LOAD PENDING (with merged army cells + spinner) ── */
+  updateTabBtn.onclick = loadPending;
+  
+  function loadPending() {
+    const loader = document.getElementById("pendingLoader");
+    loader.classList.add("active");
+  
+    fetch("/roll_call/pending")
+    .then(r => r.json())
+    .then(d => {
+      loader.classList.remove("active");
+      const tbody = document.getElementById("pendingRollCallBody");
+      tbody.innerHTML = "";
+  
+      /* group rows by army_number to merge cells */
+      const rows  = d.data;
+      const groups = {};
+      rows.forEach((r, idx) => {
+        const key = r.army_number || `__no_army_${idx}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+      });
+  
+      Object.values(groups).forEach(group => {
+        group.forEach((r, i) => {
+          const tr = document.createElement("tr");
+  
+          let armyCell = "";
+          if (i === 0) {
+            armyCell = `<td rowspan="${group.length}" class="align-middle text-center fw-bold">${r.army_number || "-"}</td>`;
+          }
+  
+          tr.innerHTML = `
+            <td>${r.category}</td>
+            ${armyCell}
+            <td>${r.rank || "-"}</td>
+            <td><strong>${r.name || "-"}</strong></td>
+            <td>${r.company || "-"}</td>
+            <td>
+              <small>${r.point_description.substring(0,25)}...</small><br>
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="viewDescription(\`${r.point_description}\`)">View</button>
+            </td>
+            <td><span class="badge bg-warning">${r.status}</span></td>
+            <td>
+              <button class="btn btn-success btn-sm"
+                onclick="updateStatus(${r.id},'APPROVED')">Approve</button>
+              <button class="btn btn-danger btn-sm"
+                onclick="updateStatus(${r.id},'REJECTED')">Reject</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    })
+    .catch(() => {
+      loader.classList.remove("active");
+      showToast("Failed to load pending records","danger");
+    });
+  }
+  
+  /* ── LOAD APPROVED (with merged army cells + spinner) ── */
+  approvedTabBtn.onclick = loadApproved;
+  
+  function loadApproved() {
+    const loader = document.getElementById("approvedLoader");
+    loader.classList.add("active");
+  
+    fetch("/roll_call/approved")
+    .then(r => r.json())
+    .then(d => {
+      loader.classList.remove("active");
+      const tbody = document.getElementById("approvedRollCallBody");
+      tbody.innerHTML = "";
+  
+      const rows = d.data;
+      const groups = {};
+      rows.forEach((r, idx) => {
+        const key = r.army_number || `__no_army_${idx}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+      });
+  
+      Object.values(groups).forEach(group => {
+        group.forEach((r, i) => {
+          const tr = document.createElement("tr");
+  
+          let armyCell = "";
+          if (i === 0) {
+            armyCell = `<td rowspan="${group.length}" class="align-middle text-center fw-bold">${r.army_number || "-"}</td>`;
+          }
+  
+          tr.innerHTML = `
+            <td>${r.category}</td>
+            ${armyCell}
+            <td>${r.rank || "-"}</td>
+            <td><strong>${r.name || "-"}</strong></td>
+            <td>${r.company || "-"}</td>
+            <td>
+              <small>${r.point_description.substring(0,25)}...</small><br>
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="viewDescription(\`${r.point_description}\`)">View</button>
+            </td>
+            <td><span class="badge bg-success">${r.status}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      });
+    })
+    .catch(() => {
+      loader.classList.remove("active");
+      showToast("Failed to load approved records","danger");
+    });
+  }
+  
+  /* ── UPDATE STATUS ── */
+  function updateStatus(id, status) {
+  
+    mainModalEl = document.getElementById("rollCallPoints");
+    const modalInstance = bootstrap.Modal.getInstance(mainModalEl);
+    if (modalInstance) modalInstance.hide();
+  
+    setTimeout(() => {
+  
+      openPopup(
+        status + " Remark",
+        `<textarea id="remarkInput" class="form-control"
+          placeholder="Add remark (optional)"></textarea>`,
+        true,
+        () => {
+          const remark = document.getElementById("remarkInput").value || null;
+  
+          fetch("/roll_call/update_status", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ id, status, remark })
+          })
+          .then(() => {
+            closePopup();
+            showCenterToast(status);   /* ← center card toast */
+            loadPending();
+          });
+        }
+      );
+  
+      document.getElementById("skipBtn").onclick = () => {
+        fetch("/roll_call/update_status", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ id, status, remark: null })
+        })
+        .then(() => {
+          closePopup();
+          showCenterToast(status);     /* ← center card toast */
+          loadPending();
+        });
+      };
+  
+    }, 300);
+  }
+  
+  /* ── SUBMIT ── */
+  submitRollCall.onclick = () => {
+    const points = [...document.querySelectorAll(".pointInput")]
+      .map(i => i.value.trim()).filter(v => v);
+  
+    if (!rollType.value || !rollPoint.value || points.length === 0) {
+      return showToast("All fields required","danger");
+    }
+  
+    if (rollType.value === "OR_REQUEST" && !armyNumber.value.trim()) {
+      return showToast("Army Number required","danger");
+    }
+  
+    fetch("/roll_call/submit", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        category:    rollType.value,
+        point_title: rollPoint.value,
+        points:      points,
+        army_number: armyNumber.value || null
+      })
+    })
+    .then(() => {
+      showToast("Submitted Successfully");
+      pointsContainer.innerHTML = "";
+      addPointField();
+      armyNumber.value = "";
+      armyInfoBox.classList.add("d-none");
+    });
+  };
+  
+  /* ── ROLE ── */
+  if (currentUser === "CO" || currentUser === "2IC") {
+    addTabNav.style.display = "none";
+    new bootstrap.Tab(updateTabBtn).show();
+    loadPending();
+  }
+  
+  </script>
+  
+  </body>

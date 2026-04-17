@@ -1,0 +1,227 @@
+{% extends "baseView.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leave Percentage Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background: #eef2f5;
+            font-size: 14px;
+        }
+
+        /* Small Compact Card */
+        .mini-card {
+            background: white;
+            border: 1px solid #d1d1d1;
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
+            width: 360px;   /* Adjust card width as required */
+        }
+
+        .mini-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        /* Compact table */
+        .compact-table {
+            font-size: 12.5px;
+        }
+        .compact-table th,
+        .compact-table td {
+            padding: 4px 6px !important;
+        }
+
+        .compact-table th {
+            background: #3a3f44;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Scroll inside card if needed */
+        .table-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        /* Color-coded leave percentage */
+        .percentage-high {
+            background-color: #ffdddd;
+            color: #b30000;
+            font-weight: 600;
+        }
+        .percentage-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .percentage-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+
+<body>
+<div style="padding-left: 16rem;">
+    <!-- Leave % -->
+    <div class="mini-card mt-3">
+        <div class="mini-card-title">📊 Leave % (Company & Rank)</div>
+    
+        <div class="table-container">
+            <table class="table table-bordered compact-table text-center" id="leaveTable">
+                <thead>
+                    <tr>
+                        <th>COY</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Coy Wise Man power-->
+    <div class="mini-card mt-3">
+    <div class="mini-card-title"> Coy Wise Man Power</div>
+    
+        <div class="table-container">
+            <table class="table table-bordered compact-table text-center" id="coyTable">
+                <thead>
+                    <tr>
+                        <th>Entity</th>
+                        <th>Man Power</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mini-card mt-3">
+        <div class="mini-card-title">Today's Event</div>
+            <div class="table-container">
+            <table class="table table-bordered compact-table text-center" id="dailyEvent">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Event</th>
+                        <th>Venue</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    loadLeaveStats();
+    loadCompanyStatus();
+    loadDailyEvent();
+
+});
+
+function loadLeaveStats() {
+    fetch("/leave_status")
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector("#leaveTable tbody");
+            tbody.innerHTML = "";
+            console.log("Leave", data);
+            data.forEach(row => {
+                let percentClass = "";
+                if (row.leave_percentage >= 40) {
+                    percentClass = "percentage-high";
+                } else if (row.leave_percentage >= 20) {
+                    percentClass = "percentage-medium";
+                } else {
+                    percentClass = "percentage-low";
+                }
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${row.company.toUpperCase()}</td>
+                    <td class="${percentClass}">${row.leave_percentage}%</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => console.error("Error loading leave stats:", err));
+}
+
+function loadCompanyStatus() {
+    fetch("/company_status")
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector("#coyTable tbody");
+            console.log("Data for Coy", data);
+            tbody.innerHTML = "";
+            data.forEach(row => {
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${row.company}</td>
+                    <td class="present">${row.officer_count},${row.jco_count},${row.other_rank_count}</td>`;
+
+                tbody.appendChild(tr);
+            });
+
+        })
+        .catch(err => console.error("Error loading Company Manpower stats:", err)); 
+}
+
+function loadDailyEvent() {
+    fetch("/daily_event")
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector("#dailyEvent tbody");
+            tbody.innerHTML = "";
+            console.log("Daily event", data);
+            data.forEach(row => {
+
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td class="event_date">${formatDate(row.event_date)}</td>
+                    <td class="event_name">${row.event_name}</td>
+                    <td class="event_venue">${row.venue}</td>`;
+
+                tbody.appendChild(tr);
+            });
+
+        })
+        .catch(err => console.error("Error loading daily event stats:", err)); 
+}
+
+function formatDate(d) {
+    let date = new Date(d);
+    let day = String(date.getDate()).padStart(2, '0');
+    let month = String(date.getMonth() + 1).padStart(2, '0');
+    let year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+</script>
+
+</body>
+</html>
+
+
+{% endblock %}

@@ -1,0 +1,1513 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+<style>
+  :root {
+    --light-blue: #3b82f6;
+    --dark-blue: #2563eb;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Dashboard Wrapper */
+  .dashboard-content {
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Shimmer Effect */
+  .shimmer-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: #f6f7f8;
+    border-radius: 12px;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .shimmer-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .shimmer-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .shimmer-line {
+    height: 10px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .shimmer-line.short {
+    width: 60%;
+  }
+
+  .shimmer-line.medium {
+    width: 80%;
+  }
+
+  .shimmer-line.long {
+    width: 100%;
+  }
+
+  .shimmer-title {
+    height: 18px;
+    width: 90px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  .shimmer-number {
+    height: 30px;
+    width: 70px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e0e0e0 25%, #d0d0d0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Main Content */
+  .main-content {
+    padding: 1px;
+    min-height: 100vh;
+  }
+
+  /* Action Section */
+  .action-section {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: 35px;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #ff9933 0%, #ff9933 33%, #ffffff 33%, #ffffff 66%, #138808 66%);
+  }
+
+  .action-section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+ .action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border-bottom: 0.5px solid #d1d5db;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  flex-wrap: nowrap !important; /* never wraps */
+}
+.action-buttons::-webkit-scrollbar { display: none; }
+.cmd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 13px;
+  height: 32px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: none;
+  transition: filter 0.15s, transform 0.1s;
+  font-family: inherit;
+  text-decoration: none;
+}
+.cmd-btn:active { transform: scale(0.97); }
+.cmd-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.5s ease,
+      padding 0.3s ease, margin 0.3s ease;
+    overflow: hidden;
+  }
+
+  .card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    padding: 16px;
+    position: relative;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--light-blue) 0%,
+        var(--dark-blue) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card h3 {
+    font-size: 1.8rem;
+    margin: 10px 0 5px 0;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1.2;
+  }
+
+  .card .text-muted {
+    color: var(--text-light) !important;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .card .text-success {
+    color: #10b981 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .card .text-danger {
+    color: #ef4444 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .card .icon-circle,
+  .card .mb-2,
+  .card .loan-icon {
+    margin-bottom: 8px;
+  }
+
+  .card .icon-circle i,
+  .card .mb-2 i,
+  .card .loan-icon i {
+    font-size: 1.5rem;
+    color: var(--light-blue);
+  }
+
+  .card .fa-2x {
+    font-size: 1.5rem !important;
+  }
+
+  .view-details {
+    background: linear-gradient(135deg, var(--light-blue) 0%, var(--dark-blue) 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .view-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 20px;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .action-section-title {
+      font-size: 1.2rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      padding: 14px;
+      min-height: 120px;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+    }
+
+    .card .text-muted {
+      font-size: 0.7rem;
+    }
+
+    .card .icon-circle i,
+    .card .mb-2 i,
+    .card .loan-icon i {
+      font-size: 1.3rem;
+    }
+  }
+
+  .btn-close {
+    background-color: red;
+  }
+
+  .stats-grid.hide {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .stats-grid.show {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 2000px;
+  }
+
+  
+
+  #show-btn {
+  width: 32px; height: 32px; padding: 0;
+  justify-content: center;
+  background: #D4AF37; color: #3A2E00;
+  border: none; border-radius: 6px; cursor: pointer;
+  flex-shrink: 0; display: inline-flex; align-items: center;
+}
+#show-btn:hover { filter: brightness(1.08); }
+.btn-navy  { background: #1B2A4A; color: #C8D6F0; }
+.btn-teal  { background: #0F6E56; color: #A8E8D4; }
+.btn-danger{ background: #7A1E1E; color: #F5C0C0; }
+.btn-amber { background: #7A520A; color: #FAD98A; }
+.btn-navy:hover, .btn-teal:hover,
+.btn-danger:hover, .btn-amber:hover { filter: brightness(1.2); }
+/* ── Outline ── */
+.btn-navy-outline  { background: transparent; color: #1B2A4A; border: 1.5px solid #1B2A4A; }
+.btn-teal-outline  { background: transparent; color: #0F6E56; border: 1.5px solid #0F6E56; }
+.btn-danger-outline{ background: transparent; color: #7A1E1E; border: 1.5px solid #7A1E1E; }
+.btn-amber-outline { background: transparent; color: #7A520A; border: 1.5px solid #7A520A; }
+
+.btn-navy-outline:hover  { background: #1B2A4A; color: #C8D6F0; }
+.btn-teal-outline:hover  { background: #0F6E56; color: #A8E8D4; }
+.btn-danger-outline:hover{ background: #7A1E1E; color: #F5C0C0; }
+.btn-amber-outline:hover { background: #7A520A; color: #FAD98A; }
+
+/* ── Soft (muted fill) ── */
+.btn-navy-soft  { background: #dde6f7; color: #1B2A4A; }
+.btn-teal-soft  { background: #c4eedd; color: #085041; }
+.btn-danger-soft{ background: #f7c1c1; color: #501313; }
+.btn-amber-soft { background: #fde9b8; color: #412402; }
+
+.btn-navy-soft:hover,
+.btn-teal-soft:hover,
+.btn-danger-soft:hover,
+.btn-amber-soft:hover { filter: brightness(.94); }
+
+/* ── Ghost (text only, hover tints bg) ── */
+.btn-navy-ghost  { background: transparent; color: #1B2A4A; }
+.btn-teal-ghost  { background: transparent; color: #0F6E56; }
+.btn-danger-ghost{ background: transparent; color: #7A1E1E; }
+.btn-amber-ghost { background: transparent; color: #7A520A; }
+
+.btn-navy-ghost:hover  { background: #e8edf8; }
+.btn-teal-ghost:hover  { background: #e1f5ee; }
+.btn-danger-ghost:hover{ background: #faece7; }
+.btn-amber-ghost:hover { background: #faeeda; }
+
+.cmd-divider {
+  width: 0.5px; height: 22px;
+  background: #d1d5db; flex-shrink: 0; margin: 0 2px;
+}
+
+  /* Full screen modal with 10px gap */
+  .modal-fullscreen .modal-dialog {
+    margin: 10px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+  }
+
+  .modal-fullscreen .modal-content {
+    height: 100%;
+  }
+
+  .modal-backdrop {
+    --bs-backdrop-opacity: 0.12;
+  }
+
+  .hide {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  .show {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  .sidebar-messenger {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #0078FF; color: white;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; border: none;
+  transition: filter 0.15s; position: relative;
+}
+.sidebar-messenger:hover { filter: brightness(1.15); }
+
+  .action-buttons .btn { all: unset; }
+.action-buttons .btn.cmd-btn { all: revert; }
+
+  .sidebar-messenger {
+    cursor: pointer;
+  }
+
+  .sidebar-messenger {
+    position: relative;
+    cursor: pointer;
+  }
+
+  #unreadBadge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+   @media (min-width: 1000px) {
+   .action-buttons{
+    /* color: red; */
+    margin: 4px 8px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+   }
+   .action-buttons .btn {
+    padding: 4px 10px;
+    border: none;
+    font-size: 10px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+ }
+}
+</style>
+
+<!-- Dashboard -->
+<div class="dashboard-content">
+  <div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">📅 Today's Events</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <ul id="eventList" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% set header = "15 CORPS ENGINEERING SIGNAL REGIMENT" %}
+  {% set subscript = 'Welcome ' ~ role ~ ' ' ~ current_user_name %}
+
+  {% include 'navbar/navbar.html' %}
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <div style="margin-bottom: 10px;">
+      {% if role in ['JCO','S/JCO'] %}
+      {% include 'modals/alarm/no_jco_kunba.html' %}
+      {% endif %}
+
+
+
+    </div>
+
+    <div class="action-buttons">
+      <button id="show-btn">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+{%if role in ['O2']%}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_dues_in">
+        ADD DUES IN
+      </button>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_dues_out">
+        ADD DUES OUT
+      </button>
+{%endif%}
+
+      {% if role in ['NCO PWR','SEC JCO','Subedar Major','NCO CHQ','NCO IT','NCO OP','NCO PWR','NCO MW','NCO
+      MCCS','NCO CHQ','SEC JCO','JCO LINE','S/JCO','NCO CHQ','JCO CHQ','ONCO','NCO RHQ','NCO TM','NCO MT','NCO
+      RP/NA','NCO QM','NCO LRW','JCO LRW','JCO QM', 'O CENTRAL NCO','JCO MW','PST CLK']
+      %}
+
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#personnelModal">
+        ASSIGN PERSONNEL
+      </button>
+      {% endif %}
+      {%if role == 'Subedar Major'%}
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#view_company_interview_pending">
+        INTERVIEW PENDING
+      </button>
+      {%endif%}
+
+      {% if role in ['NCO PWR','SEC JCO','Subedar Major','NCO CHQ','NCO LRW','NCO IT','NCO OP','NCO PWR','NCO MW','NCO
+      MCCS','NCO
+      CHQ','NCO QRT','SEC JCO','JCO MT','JCO LINE','JCO QM','S/JCO','JCO MW','OC','NCO CHQ','JCO CHQ','ONCO','NCO RHQ','NCO TM','NCO MT','NCO RP/NA','NCO
+      QM','O CENTRE NCO'] %}
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#rollCallPoints">
+        ROLL CALL POINTS
+      </button>
+      {% endif %}
+
+      {% if role == 'CO' %}
+      <button class="cmd-btn btn-danger  position-relative" data-bs-toggle="modal" data-bs-target="#coRejectedModal"
+        id="coRejectedBtn">
+        REJECTED LEAVES
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+          id="coRejectedCount">
+          <span class="shimmer-line" style="width: 20px; height: 8px; display: inline-block;"></span>
+          <span class="visually-hidden">unread messages</span>
+        </span>
+      </button>
+      {% endif %}
+
+      {% if role in ['O CENTRE NCO'] %}
+      <a href="/gallery/manage" class="cmd-btn btn-navy">
+        <i class="fas fa-images me-1"></i>
+        MANAGE GALLERY
+      </a>
+      {% endif %}
+      {% if role in ['TRGJCO'] %}
+      <a href="/oncourses/manage_course" class="cmd-btn btn-navy">
+        <i class="fas fa-images me-1"></i>
+        MANAGE COURSE
+      </a>
+      {% endif %}
+
+      {% if role in ['', 'O CENTRE NCO'] %}
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#tradeModal">
+        <i class="fas fa-plus-circle me-1"></i>
+        ADD TRADE
+      </button>
+      {% endif %}
+
+      {% if role|trim in [
+      'NCO PWR',
+      'NCO QRT',
+      'NCO CHQ',
+      'NCO IT',
+      'NCO OP',
+      'JCO MW',
+      'NCO MW',
+      'NCO LRW',
+      'NCO MCCS',
+      'NCO LINE',
+      'NCO RHQ',
+      'NCO TM',
+      'NCO MT',
+      'NCO RP/NA',
+      'NCO QM',
+      'SEC JCO',
+      'JCO LINE',
+      'JCO LRW',
+      'JCO CHQ',
+      'JCO IT',
+      'JCO MT',
+      'JCO RHQ',
+      'JCO MCCS',
+      'JCO QM',
+      'S/JCO',
+      'ONCO',
+      'OC',
+      '2IC',
+      'JCO QRT',
+      'JCO TM',
+      'JCO PWR',
+      'JCO OP',
+      'JCO SYS',
+      'JCO DET',
+      'NCO DET',
+      'NCO SYS',
+      'Subedar Major'
+      ] %}
+       <button id="leaveRequestsBtn" class="cmd-btn btn-navy position-relative">
+        LEAVE REQUESTS
+        <span
+          id="leaveRequestBadge"
+          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+          style="display: none;"
+        >
+          0
+        </span>
+  </button>
+      {% endif %}
+
+      {% if role in ['CO','2IC','ADJUTANT','OC'] %}
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#addEventModal">ADD EVENT </button>
+      {% endif %}
+
+      <!-- UPDATED: Parade Data Button for O CENTRE NCO and ONCO -->
+      {% if role in ['O CENTRE NCO', 'ONCO','SEC NCO','CHM'] %}
+      <button class="cmd-btn btn-navy" data-bs-toggle="modal" data-bs-target="#paradeDataModal">
+        <i class="fas fa-clipboard-list me-1"></i>
+        {% if role in ['O CENTRE NCO'] %}
+        Parade Data Management
+        {% else %}
+        ENTER PARADE DATA
+        {% endif %}
+      </button>
+      {% endif %}
+
+      {% if role == 'ONCO' %}
+      <a href="/onco/manage_leave" class="cmd-btn btn-amber-soft">
+        <i class="fas fa-calendar-times me-1"></i> MANAGE LEAVE
+      </a>
+      {% endif %}
+
+      <div class="sidebar-messenger position-relative" title="Chat with us" id="chatBtn">
+        <i class="fab fa-facebook-messenger"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="unreadBadge"
+          style="display: none;">
+          0
+        </span>
+      </div>
+    </div>
+
+    <div id="stats-card-grid" class="stats-grid show">
+      {% if role in ['CO', '2IC', 'ADJUTANT','OC'] %}
+      <!-- First Row Cards -->
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-target="#paradeStateModal"
+        data-bs-toggle="modal">
+        <div class="icon-circle">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <small class="text-muted">PARADE STATE</small>
+        <h3 id="mainPower">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO','ONCO', 'O CENTRE NCO', 'NCO CHQ','2IC','JCO MW', 'ADJUTANT','OC','S/JCO','HEAD CLK'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#attachmentModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <small class="text-muted">TD/ATTACHMENT</small>
+        <h3 id='attachment-count'>
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC', 'ADJUTANT','OC'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#dutySearchModal"
+        id="card-duty-search">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-user-tag"></i>
+        </div>
+        <small class="text-muted">DOMAIN SPECIALIZATION</small>
+        <h3 id="duty-search-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC', 'ADJUTANT','OC'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" id="openCourses">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <small class="text-muted">COURSE</small>
+        <h3 id="totalCoursesDone">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC', 'ADJUTANT','OC'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" id="interview-card">
+        <div class="icon-circle mb-2">
+          <i class="fa fa-male" aria-hidden="true"></i>
+        </div>
+        <small class="text-muted">KUNBA INTERVIEW</small>
+        <h3>
+          <span id="interview-Count">
+            <div class="shimmer-line" style="width: 30px; height: 24px; display: inline-block;"></div>
+          </span>/<span id="total-count">
+            <div class="shimmer-line" style="width: 30px; height: 24px; display: inline-block;"></div>
+          </span>
+        </h3>
+        <span id="interview%" class="text-danger">
+          <div class="shimmer-line" style="width: 50px; height: 14px; display: inline-block;"></div>
+        </span>
+      </div>
+      {% endif %}
+
+      {% if role in ['JCO' , 'S/JCO','SEC JCO','HEAD CLK'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#kunbaInterviewModal">
+        <div class="icon-circle mb-2">
+          <i class="fa fa-male" aria-hidden="true"></i>
+        </div>
+        <small class="text-muted">KUNBA INTERVIEW</small>
+        <h3>
+          <span id="interview-Count">
+            <div class="shimmer-line" style="width: 30px; height: 24px; display: inline-block;"></div>
+          </span>/<span id="total-count">
+            <div class="shimmer-line" style="width: 30px; height: 24px; display: inline-block;"></div>
+          </span>
+        </h3>
+        <span id="interview%" class="text-danger">
+          <div class="shimmer-line" style="width: 50px; height: 14px; display: inline-block;"></div>
+        </span>
+      </div>
+
+      <div class="card p-3 text-center" style="cursor:pointer" id="task-assigned" data-bs-toggle="modal"
+        data-bs-target="#taskModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <small class="text-muted">TASK PENDING</small>
+        <h3 id="task-count">
+          <div class="shimmer-line" style="width: 60px; height: 24px; display: inline-block;"></div>
+        </h3>
+        <span id="task-pending" class="text-danger">
+          <div class="shimmer-line" style="width: 50px; height: 14px; display: inline-block;"></div>
+        </span>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC','ONCO', 'ADJUTANT','OC','S/JCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" id="viewDetailsBtn">
+        <div class="mb-2">
+          <i class="fas fa-user-plus fa-2x text-primary"></i>
+        </div>
+        <small class="text-muted">DETACHMENT</small>
+        <h3 id="locationCount">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC','OC', 'ADJUTANT','S/JCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" id="openSensitive">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <small class="text-muted">SENSITIVE INDL</small>
+        <h3 id='sensitive-count'>
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC', 'HEAD CLK', 'ADJUTANT'] %}
+      <div class="card p-3 text-center" id="openBoardDetails">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-user-tie me-1"></i>
+        </div>
+        <small class="text-muted">BOO's</small>
+        <h3 id="board-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+{%if role in ['ONCO']%}
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        
+        onclick="openLeaveModal()"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+
+        <small class="text-muted">LEAVE STATUS</small>
+
+        <h3 id="sensitive-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {%endif%} 
+      {% if role in ['CO', '2IC', 'ADJUTANT'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" id="loanDetailGraph" data-bs-toggle="modal"
+        data-bs-target="#loanModal">
+        <div class="loan-icon">
+          <i class="fa-solid fa-hand-holding-dollar"></i>
+        </div>
+        <small class="text-muted">LOAN</small>
+        <h3 id="active-loan-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['PROJECT OFFICER','PROJECT JCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer; transition: all 0.3s ease;" id="openProjects">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-rocket"></i>
+        </div>
+        <small class="text-muted">TOTAL PROJECTS</small>
+        <h3 class="mb-0" id="get_projects_count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      <!-- Second Row Cards -->
+      {% if role in ['CO', '2IC', 'ADJUTANT','Subedar Major','S/JCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#centerRollCallModal">
+        <div class="mb-2">
+          <i class="fas fa-clipboard-list fa-2x text-primary"></i>
+        </div>
+        <small class="text-muted">CENTRAL ROLL CALL</small>
+        <h3 id="center-roll-points">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['CO', '2IC', 'ADJUTANT','TRGJCO','OC','HEAD CLK','S/JCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#agniveersModal">
+        <div class="icon-circle">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <small class="text-muted">AGNIVEER</small>
+        <h3 id="agniveer_count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {% endif %}
+
+      {% if role in ['TRGJCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#on_courses_modal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-user-graduate"></i>
+        </div>
+        <small class="text-muted">ADD INDL ON COURSE</small>
+      </div>
+      {% endif %}
+
+      {% if role in ['TRGJCO'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#fillupdetailsmodal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-fa-sign-in-alt"></i>
+        </div>
+        <small class="text-muted">FILL UP TEST DETAILS</small>
+      </div>
+      {% endif %}
+
+      {% if role in ['O2'] %}
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#duesInListModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-sign-in-alt"></i>
+        </div>
+        <small class="text-muted">DUES IN</small>
+      </div>
+      
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#duesOutListModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-edit"></i>
+        </div>
+        <small class="text-muted">DUES OUT</small>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Add Event Modal -->
+    <div class="modal fade" id="addEventModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Today's Event</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="eventForm">
+              <label>Event Date:</label>
+              <input type="date" class="form-control" name="event_date" value="{{ today }}" required>
+
+              <label class="mt-2">Event Name:</label>
+              <input type="text" class="form-control" name="event_name" required>
+
+              <label class="mt-2">Venue:</label>
+              <input type="text" class="form-control" name="venue" required>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveEvent()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% include 'modals/detachmentModal/detachment.html' %}
+    {% include 'modals/personnelModal/duty_search_modal.html' %}
+
+    {% include 'modals/personnelModal/personal_modal.html' %}
+    {% include 'modals/salesmodal/salesModal.html' %}
+    {% include 'modals/leaverequest/leave_request.html' %}
+    {% include 'modals/interview_pending/modal.html' %}
+    {% include 'modals/count_parade/modal.html' %}
+    {% include 'modals/attachment-modal/modal.html' %}
+    {% include 'modals/loan/loans.html' %}
+    {% include 'modals/roll_call/modal.html' %}
+    {% include 'modals/roll_call/view_roll_call.html' %}
+    {% include 'modals/course/courses.html' %}
+    {% include 'modals/interview_pending/jco-update-modal.html' %}
+    {% include 'modals/success-modal/modal.html' %}
+    {% include 'task_manager/update_task_by_jco.html' %}
+    {% include 'modals/adduser/user.html' %}
+    {% include 'modals/oncourses/modal.html' %}
+    {% include 'modals/messenger/modal.html' %}
+    {% if role in ['O CENTRE NCO'] %}
+    <div class="modal fade" id="tradeModal" tabindex="-1">
+      <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+          {% include 'modals/trade/trade.html' %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if role in ['CO', '2IC', 'ADJUTANT','TRGJCO','OC'] %}
+    {% include 'modals/agniveer/modal.html' %}
+    {% include 'modals/agniveer/fill_up_test_details.html' %}
+    {% endif %}
+
+    {% if role in ['O CENTRE NCO', 'ONCO'] %}
+    {% include 'modals/parade_data/index.html' %}
+    {% endif %}
+
+    {% if role =='CO'%}
+    {% include 'modals/leaverequest/co-rejected-view.html' %}
+    {% endif %}
+
+    {% if role in ['CO', '2IC', 'ADJUTANT','OC']%}
+    {% include 'modals/alarm/agniveer_test_alarms.html' %}
+    {% endif %}
+    {% if role == 'Subedar Major'%}
+    {% include 'modals/coy_kunba/view_company_kunba.html' %}
+    {% endif %}
+    {% if role in 'O2'%}
+    {% include 'modals/ADD-DUES-IN/modal.html' %}
+    {% include 'modals/ADD-DUES-IN/list_of_dues_in.html' %}
+    {% include 'modals/ADD-DUES-OUT/modal.html' %}
+    {% include 'modals/ADD-DUES-OUT/list_of_dues_out.html' %}
+    {% endif %}
+   
+{% if role in ['ONCO'] %}
+    {% include 'modals/Sanctioned_leaves/sanction_leave_modal.html' %}
+{% endif %}
+
+
+    <!-- Parade State Modal -->
+    <div class="modal fade modal-fullscreen" id="paradeStateModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Parade State</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            {% include 'modals/parade_state/index.html' %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% include 'images_section/section.html' %}
+    <script>
+      document.addEventListener('hidden.bs.modal', function () {
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+      });
+    </script>
+
+    <script>
+      // ========== SAFE ELEMENT CHECKER ==========
+      function safeQuerySelector(selector) {
+        const element = document.querySelector(selector);
+        if (!element) {
+          console.warn(`Element not found: ${selector}`);
+        }
+        return element;
+      }
+
+      function safeAddEventListener(selector, event, handler) {
+        const element = safeQuerySelector(selector);
+        if (element) {
+          element.addEventListener(event, handler);
+        }
+      }
+
+      // ========== CONDITIONAL EVENT LISTENERS ==========
+      function setupConditionalEventListeners() {
+        // Only add listeners if elements exist
+        const openBoardDetails = safeQuerySelector('#openBoardDetails');
+        if (openBoardDetails) {
+          openBoardDetails.addEventListener('click', function () {
+            window.location.href = "/board_details";
+          });
+        }
+
+        const openSensitive = safeQuerySelector('#openSensitive');
+        if (openSensitive) {
+          openSensitive.addEventListener('click', function () {
+            window.location.href = "/mark_personnel";
+          });
+        }
+
+        const overAllParadeState = safeQuerySelector('#overAllParadeState');
+        if (overAllParadeState) {
+          overAllParadeState.addEventListener('click', function () {
+            window.location.href = "/paradeState";
+          });
+        }
+
+        const openProjects = safeQuerySelector('#openProjects');
+        if (openProjects) {
+          openProjects.addEventListener('click', function () {
+            window.location.href = "/projects";
+          });
+        }
+
+        const showBtn = safeQuerySelector('#show-btn');
+        const statsGrid = safeQuerySelector('#stats-card-grid');
+        if (showBtn && statsGrid) {
+          showBtn.addEventListener('click', function () {
+            if (statsGrid.classList.contains("hide")) {
+              statsGrid.classList.remove("hide");
+              statsGrid.classList.add("show");
+              this.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            } else {
+              statsGrid.classList.remove("show");
+              statsGrid.classList.add("hide");
+              this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+          });
+        }
+
+        // Leave Requests Button
+        const leaveRequestsBtn = safeQuerySelector('#leaveRequestsBtn');
+        if (leaveRequestsBtn) {
+          leaveRequestsBtn.addEventListener('click', function () {
+            console.log('Leave requests clicked');
+          });
+        }
+      }
+
+      // ========== DASHBOARD DATA LOADING ==========
+      const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+      async function loadUnfitGraph(company) {
+        try {
+          const companySelect = safeQuerySelector('#companyFilter');
+          if (!companySelect) return;
+
+          const res = await fetch(`/api/unfit-graph?company=${encodeURIComponent(company)}`);
+          const data = await res.json();
+
+          if (!data || !data.length) {
+            console.warn("No data returned for company:", company);
+            return;
+          }
+
+          const months = data.map(d => MONTHS[d.month - 1]);
+          const values = data.map(d => d.unfit_count);
+
+          drawAreaLineGraph(months, values);
+        } catch (err) {
+          console.error("Error fetching unfit data:", err);
+        }
+      }
+
+      function drawAreaLineGraph(months, values) {
+        const canvas = safeQuerySelector('#unfitChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        const padding = 55;
+        const maxVal = Math.max(...values, 5);
+        const width = canvas.width - padding * 2;
+        const height = canvas.height - padding * 2;
+        const pointCount = values.length === 1 ? 1 : values.length - 1;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // ========== EVENT HANDLING ==========
+      function saveEvent() {
+        const eventForm = safeQuerySelector('#eventForm');
+        if (!eventForm) return;
+
+        let formData = new FormData(eventForm);
+
+        fetch("/add_event", {
+          method: "POST",
+          body: formData
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "success") {
+              alert("Event Added!");
+              location.reload();
+            }
+          });
+      }
+
+      // ========== HELPER FUNCTIONS ==========
+      function updateIfExists(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerText = value ?? '0';
+        }
+      }
+
+      // ========== INDIVIDUAL CARD API FETCHERS ==========
+
+      // Simple card fetcher (for cards with single value)
+      async function fetchCardData(cardId, endpoint, dataKey) {
+        const element = document.getElementById(cardId);
+        if (!element) return;
+
+        try {
+          const res = await fetch(endpoint);
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+          const data = await res.json();
+          element.innerText = data[dataKey] || '—';
+        } catch (err) {
+          console.error(`Error fetching ${cardId} data:`, err);
+          element.innerText = '—';
+        }
+      }
+
+      // Special card fetchers for complex cards
+      async function fetchManpowerData() {
+        const element = document.getElementById('mainPower');
+        if (!element) return;
+
+        try {
+          const res = await fetch('/api/dashboard/manpower');
+          const data = await res.json();
+          element.innerText = `${data.officerCount} - ${data.jcoCount} - ${data.orCount}`;
+        } catch (err) {
+          console.error("Error fetching manpower data:", err);
+          element.innerText = '—';
+        }
+      }
+
+      async function fetchInterviewData() {
+        const pendingEl = document.getElementById('interview-Count');
+        const totalEl = document.getElementById('total-count');
+        const percentEl = document.getElementById('interview%');
+
+        if (!pendingEl || !totalEl || !percentEl) return;
+
+        try {
+          const res = await fetch('/api/dashboard/interviews');
+          const data = await res.json();
+
+          pendingEl.innerText = data.pending_count || '0';
+          totalEl.innerText = data.total_count || '0';
+
+          const percentage = data.percentage ? `Pending ${data.percentage}%` : '0%';
+          percentEl.innerText = percentage;
+          percentEl.className = data.percentage >= 0 ? 'text-danger' : 'text-danger';
+        } catch (err) {
+          console.error("Error fetching interview data:", err);
+          pendingEl.innerText = '0';
+          totalEl.innerText = '0';
+          percentEl.innerText = '0%';
+        }
+      }
+
+      async function fetchTasksData() {
+        const countEl = document.getElementById('task-count');
+        const percentEl = document.getElementById('task-pending');
+
+        if (!countEl || !percentEl) return;
+
+        try {
+          const res = await fetch('/api/dashboard/tasks');
+          const data = await res.json();
+
+          const pending = data.pending || 0;
+          const total = data.total || 0;
+
+          countEl.innerText = `${pending} / ${total}`;
+
+          const percentage = total > 0 ? ((pending / total) * 100).toFixed(1) : 0;
+          percentEl.innerText = `Pending ${percentage}%`;
+          percentEl.className = percentage < 50 ? 'text-success' : 'text-danger';
+        } catch (err) {
+          console.error("Error fetching tasks data:", err);
+          countEl.innerText = '0 / 0';
+          percentEl.innerText = '0%';
+        }
+      }
+
+      // ========== LOAD ALL CARDS BASED ON EXISTENCE ==========
+      async function loadAllDashboardCards() {
+        const fetchPromises = [];
+
+        // Simple cards (single value)
+        const simpleCards = [
+          { id: 'locationCount', endpoint: '/api/dashboard/detachments', key: 'count' },
+          { id: 'attachment-count', endpoint: '/api/dashboard/attachments', key: 'count' },
+          { id: 'agniveer_count', endpoint: '/api/dashboard/agniveers', key: 'count' },
+          { id: 'get_projects_count', endpoint: '/api/dashboard/projects', key: 'count' },
+          { id: 'sensitive-count', endpoint: '/api/dashboard/sensitive', key: 'count' },
+          { id: 'active-loan-count', endpoint: '/api/dashboard/loans', key: 'count' },
+          { id: 'totalCoursesDone', endpoint: '/api/dashboard/courses', key: 'count' },
+          { id: 'center-roll-points', endpoint: '/api/dashboard/rollcall', key: 'points' },
+          { id: 'board-count', endpoint: '/api/dashboard/boards', key: 'count' },
+        ];
+          console.log(simpleCards,"thse are simple cards")
+        // Add simple card fetches
+        simpleCards.forEach(card => {
+          if (document.getElementById(card.id)) {
+            fetchPromises.push(fetchCardData(card.id, card.endpoint, card.key));
+          }
+        });
+
+        // Add special card fetches
+        if (document.getElementById('mainPower')) {
+          fetchPromises.push(fetchManpowerData());
+        }
+
+        if (document.getElementById('interview-Count')) {
+          fetchPromises.push(fetchInterviewData());
+        }
+
+        if (document.getElementById('task-count')) {
+          fetchPromises.push(fetchTasksData());
+        }
+
+        // Execute all fetches in parallel
+        await Promise.allSettled(fetchPromises);
+      }
+
+      async function loadTodayEvents() {
+        try {
+          const res = await fetch('/api/today_event_alarm');
+          const data = await res.json();
+
+          const list = safeQuerySelector("#eventList");
+          if (!list) return;
+
+          list.innerHTML = "";
+
+          if (!data.rows || data.rows.length === 0) {
+            list.innerHTML = `
+              <li class="list-group-item text-muted text-center">
+                No events for today
+              </li>`;
+            return;
+          }
+
+          data.rows.forEach(event => {
+            list.innerHTML += `
+              <li class="list-group-item">
+                <strong>${event.event_name}</strong><br>
+                <small class="text-muted">Location :  ${event.venue}</small>
+              </li>
+            `;
+          });
+
+        } catch (err) {
+          console.error("Error loading events:", err);
+        }
+      }
+
+      
+      async function updateRejectedLeaveCount() {
+        try {
+          const res = await fetch("/apply_leave/rejected_leaves");
+          if (!res.ok) throw new Error("Failed to fetch rejected leaves");
+
+          const { data } = await res.json();
+          const count = data ? data.length : 0;
+
+          const badge = document.getElementById("coRejectedCount");
+          if (badge) {
+            badge.innerText = count;
+            badge.style.display = count > 0 ? "inline-block" : "none";
+          }
+        } catch (err) {
+          console.error("Error fetching rejected leaves count:", err);
+        }
+      }
+
+      // ========== TEST DETAILS MODAL ==========
+      document.addEventListener("DOMContentLoaded", function () {
+        const testModal = document.getElementById("testDetailsModal");
+        const modalBody = document.getElementById("testDetailsModalBody");
+
+        if (testModal) {
+          testModal.addEventListener("show.bs.modal", function () {
+            modalBody.innerHTML = `
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary"></div>
+              </div>
+            `;
+
+            fetch("/fill-up-test-details")
+              .then(res => res.text())
+              .then(html => {
+                modalBody.innerHTML = html;
+                initFillUpTestForm();
+              })
+              .catch(() => {
+                modalBody.innerHTML = "<p class='text-danger'>Failed to load form</p>";
+              });
+          });
+
+          function initFillUpTestForm() {
+            modalBody.querySelectorAll(".test-status").forEach(select => {
+              select.addEventListener("change", function () {
+                const dateInput = this.closest(".row").querySelector(".test-date");
+                dateInput.disabled = this.value !== "Done";
+              });
+            });
+
+            const form = modalBody.querySelector("#fillTestForm");
+            if (form) {
+              form.addEventListener("submit", function (e) {
+                e.preventDefault();
+
+                const payload = {
+                  army_number: form.army_number.value,
+                  tests: [
+                    { test: "1st", status: form.test1.value, date: form.test1_date.value },
+                    { test: "2nd", status: form.test2.value, date: form.test2_date.value },
+                    { test: "3rd", status: form.test3.value, date: form.test3_date.value },
+                    { test: "4th", status: form.test4.value, date: form.test4_date.value }
+                  ]
+                };
+
+                fetch("/api/fill-up-test", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+                })
+                  .then(res => res.json())
+                  .then(() => {
+                    alert("Test details saved");
+                    bootstrap.Modal.getInstance(testModal).hide();
+                    location.reload();
+                  })
+                  .catch(() => alert("Save failed"));
+              });
+            }
+          }
+        }
+      });
+      async function updateLeaveRequestBadge() {
+        try {
+          const res = await fetch("/apply_leave/get_leave_requests");
+          if (!res.ok) throw new Error("Failed to fetch leave requests");
+      
+          const data = await res.json();
+      
+          const count = data.data ? data.data.length : 0;
+      
+          const badge = document.getElementById("leaveRequestBadge");
+      
+          if (badge) {
+            badge.innerText = count;
+      
+            if (count > 0) {
+              badge.style.display = "inline-block";
+            } else {
+              badge.style.display = "none";
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching leave request count:", err);
+        }
+      }
+
+      // ========== INITIALIZATION ==========
+      function initializeDashboard() {
+        console.log('Dashboard initialized for role:', '{{ role }}');
+
+        // Setup event listeners only for elements that exist
+        setupConditionalEventListeners();
+
+        // Load dashboard data for existing cards
+        loadAllDashboardCards();
+
+        // Load events if needed
+        loadTodayEvents();
+updateLeaveRequestBadge()
+        // Initialize date display if element exists
+        const dateDisplay = safeQuerySelector('#currentDateDisplay');
+        if (dateDisplay) {
+          const today = new Date();
+          const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+          dateDisplay.textContent = today.toLocaleDateString('en-US', options);
+        }
+      }
+
+      // ========== DOM READY ==========
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('DOM fully loaded for role:', '{{ role }}');
+        initializeDashboard();
+        updateRejectedLeaveCount();
+fetch('/company_based_domain_sp')
+  .then(res => res.json())
+  .then(count => {
+    console.log('Duty Count:', count);
+    document.getElementById('duty-search-count').innerText = count;
+  });
+        // Company filter event delegation
+        document.addEventListener("change", (e) => {
+          if (e.target && e.target.id === "companyFilter") {
+            const selectedCompany = e.target.value || "All";
+            loadUnfitGraph(selectedCompany);
+          }
+        });
+
+        // Initial chart load
+        const companySelect = safeQuerySelector("#companyFilter");
+        if (companySelect) {
+          const defaultCompany = companySelect.value || "All";
+          console.log("Initial company for chart:", defaultCompany);
+          loadUnfitGraph(defaultCompany);
+        }
+      });
+    </script>
+  </div>
+</div>
+<script src="static/js/chat.js"></script>
+{% endblock %}
+
+
+
+{%if role in ['ONCO']%}
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        
+        onclick="openLeaveModal()"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+
+        <small class="text-muted">LEAVE STATUS</small>
+
+        <h3 id="sensitive-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      {%endif%} 

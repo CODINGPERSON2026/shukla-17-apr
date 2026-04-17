@@ -1,0 +1,262 @@
+{% extends "baseView.html" %}
+
+{% block extra_css %}
+<style>
+  /* ─── Page wrapper ─────────────────────────────────────────── */
+  .gallery-page-header {
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+    color: white;
+    padding: 22px 30px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+  }
+
+  .gallery-page-header i {
+    font-size: 2rem;
+    color: #38bdf8;
+  }
+
+  .gallery-page-header h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .gallery-page-header p {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+
+  /* ─── Form Card ────────────────────────────────────────────── */
+  .gallery-card {
+    background: var(--card-background, #1e293b);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    padding: 30px;
+  }
+
+  .gallery-card label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary, #cbd5e1);
+    margin-bottom: 8px;
+  }
+
+  .gallery-card .form-control {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    color: var(--text-primary, #f8fafc);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+  }
+
+  .gallery-card .form-control:focus {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    color: white;
+  }
+
+  /* ─── Buttons ──────────────────────────────────────────────── */
+  .btn-upload {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.25s ease;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+    color: white;
+  }
+
+  /* ─── Image Preview ────────────────────────────────────────── */
+  .preview-wrapper {
+    margin-top: 14px;
+    border-radius: 12px;
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    background: rgba(15, 23, 42, 0.3);
+    padding: 10px;
+    display: none;
+    text-align: center;
+  }
+
+  .preview-wrapper img {
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
+  }
+
+  /* ─── Alert Toast ────────────────────────────────────────────── */
+  #galleryAlertBox {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 320px;
+    display: none;
+    animation: slideInRight 0.3s ease;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(40px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set header = "MANAGE GALLERY" %}
+{% set subscript = "Upload and update images for the portal gallery" %}
+{% include 'navbar/navbar.html' %}
+
+<!-- Alert Toast -->
+<div id="galleryAlertBox" class="alert shadow" role="alert"></div>
+
+<div class="p-4">
+
+  <!-- Page Header -->
+  <div class="gallery-page-header">
+    <i class="fas fa-images"></i>
+    <div>
+      <h4>Gallery Upload</h4>
+      <p>Add new images with attractive titles and subtitles to the main gallery section.</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+
+      <!-- Main Form Card -->
+      <div class="gallery-card">
+        <form id="galleryForm" enctype="multipart/form-data">
+
+          <!-- Title -->
+          <div class="mb-4">
+            <label for="titleStr"><i class="fas fa-heading me-1 text-primary"></i> Gallery Title</label>
+            <input type="text" id="titleStr" name="title" class="form-control" placeholder="e.g. Annual Parade 2026"
+              required>
+          </div>
+
+          <!-- Subtitle -->
+          <div class="mb-4">
+            <label for="subtitleStr"><i class="fas fa-align-left me-1 text-primary"></i> Subtitle (Optional)</label>
+            <textarea id="subtitleStr" name="subtitle" rows="3" class="form-control"
+              placeholder="Brief description of the event..."></textarea>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="mb-4">
+            <label for="imageInput"><i class="fas fa-camera retro-icon me-1 text-primary"></i> Image File <span
+                class="text-danger">*</span></label>
+            <input type="file" name="image" accept="image/*" class="form-control" id="imageInput" required>
+
+            <div id="previewContainer" class="preview-wrapper mt-3">
+              <img id="previewImage" alt="Image Preview">
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-upload" id="submitBtn">
+            <i class="fas fa-cloud-upload-alt me-2"></i> Upload to Gallery
+          </button>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Utility: Show Alert
+  function showGalleryAlert(message, type = 'success') {
+    const box = document.getElementById('galleryAlertBox');
+    box.className = `alert alert-${type} shadow`;
+    box.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} fs-5 me-2 align-middle"></i> <span class="align-middle">${message}</span>`;
+    box.style.display = 'block';
+
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+      box.style.display = 'none';
+    }, 4000);
+  }
+
+  // Handle Image Preview
+  document.getElementById('imageInput').addEventListener('change', function () {
+    const file = this.files[0];
+    const container = document.getElementById('previewContainer');
+    const preview = document.getElementById('previewImage');
+
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+      preview.src = '';
+    }
+  });
+
+  // Handle Form Submission via AJAX
+  document.getElementById('galleryForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const originalText = btn.innerHTML;
+
+    // Loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+
+    try {
+      const formData = new FormData(this);
+      const res = await fetch('/gallery/save', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showGalleryAlert('Image uploaded successfully to the gallery!', 'success');
+        this.reset();
+        document.getElementById('previewContainer').style.display = 'none';
+      } else {
+        showGalleryAlert(data.message || 'Failed to upload image.', 'danger');
+      }
+    } catch (err) {
+      showGalleryAlert('A network error occurred: ' + err.message, 'danger');
+    } finally {
+      // Restore button
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+</script>
+{% endblock %}

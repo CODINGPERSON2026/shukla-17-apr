@@ -1,0 +1,56 @@
+body { background: #f5f7fa; }
+.sidebar { width: 230px; min-height: 100vh; background: #fff; border-right: 1px solid #eee; position: fixed; }
+.sidebar .nav-link { color: #333; }
+.card { border-radius: 18px; border: none; }
+.status-dot { height: 10px; width: 10px; display: inline-block; border-radius: 50%; }
+.dot-green { background: #23c552; }
+.dot-red { background: #f44336; }
+.dot-orange { background: #ff9800; }
+.dot-blue { background: #3399ff; }
+.avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
+.department-bar { height: 8px; border-radius: 4px; }
+.bar-uiux { background: #ff6f00; }
+.bar-dev { background: #267af6; }
+.bar-mgmt { background: #ff4b68; }
+.bar-hr { background: #34bfa3; }
+.bar-testing { background: #ffa336; }
+.bar-mkt { background: #f47920; }
+.top-bar-buttons .btn { margin-right: 1rem; }
+.view-details {
+  background-color: #3498db;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s ease;
+}
+
+.view-details:hover {
+  background-color: #1f78b4;
+  transform: scale(1.02);
+}
+#fullscreenLoader {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* HTML: <div class="loader"></div> */
+.loader {
+  width: 15px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+}
+@keyframes l5 {
+    0%  {box-shadow: 20px 0 #000, -20px 0 #0002;background: #000 }
+    33% {box-shadow: 20px 0 #000, -20px 0 #0002;background: #0002}
+    66% {box-shadow: 20px 0 #0002,-20px 0 #000; background: #0002}
+    100%{box-shadow: 20px 0 #0002,-20px 0 #000; background: #000 }
+}

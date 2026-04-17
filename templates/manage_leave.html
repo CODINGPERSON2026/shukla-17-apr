@@ -1,0 +1,786 @@
+{% extends "baseView.html" %}
+{% block extra_css %}
+<style>
+  /* ─── Page wrapper ─────────────────────────────────────────── */
+  .ml-page-header {
+    background: linear-gradient(135deg, #3c425c 0%, #764ba2 100%);
+    color: white;
+    padding: 22px 30px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 8px 24px rgba(118, 75, 162, 0.35);
+  }
+
+  .ml-page-header i { font-size: 2rem; opacity: 0.9; }
+  .ml-page-header h4 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+  .ml-page-header p  { margin: 4px 0 0; font-size: 0.9rem; opacity: 0.85; }
+
+  /* ─── Card container ────────────────────────────────────────── */
+  .ml-card {
+    background: var(--card-background);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+  }
+
+  .ml-card-header {
+    padding: 18px 24px;
+    background: var(--card-background);
+    border-bottom: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ml-card-header h5 {
+    margin: 0; font-weight: 700;
+    color: var(--text-primary);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ─── Table ─────────────────────────────────────────────────── */
+  .table-responsive { overflow-x: auto; }
+
+  #leaveTable thead th {
+    background: linear-gradient(135deg, #3c425c 0%, #764ba2 100%);
+    color: white; font-weight: 600; font-size: 0.82rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border: none; white-space: nowrap; padding: 14px 12px;
+  }
+
+  #leaveTable tbody td {
+    vertical-align: middle; font-size: 0.88rem;
+    color: var(--text-primary); border-color: var(--border-color); padding: 12px;
+  }
+
+  #leaveTable tbody tr { transition: background 0.2s ease; }
+  #leaveTable tbody tr:hover { background: var(--border-color); }
+
+  /* ─── Badges ────────────────────────────────────────────────── */
+  .leave-type-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; padding: 4px 10px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+
+  .days-badge {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white; padding: 4px 10px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 700;
+  }
+
+  /* ─── Action buttons ────────────────────────────────────────── */
+  .btn-remove {
+    background: linear-gradient(135deg, #f5576c 0%, #c0392b 100%);
+    color: white; border: none; padding: 5px 12px; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600; transition: all 0.25s ease; white-space: nowrap;
+  }
+  .btn-remove:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,87,108,0.45); color: white; }
+
+  .btn-extend {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    color: #4a2f00; border: none; padding: 5px 12px; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600; transition: all 0.25s ease; white-space: nowrap;
+  }
+  .btn-extend:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(253,160,133,0.45); color: #4a2f00; }
+
+  /* ─── Alert Toast ────────────────────────────────────────────── */
+  #alertBox {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    min-width: 300px; display: none; animation: slideInRight 0.3s ease;
+  }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ─── Empty / Loading ────────────────────────────────────────── */
+  .ml-empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+  .ml-empty i { font-size: 3rem; margin-bottom: 14px; opacity: 0.5; }
+  .ml-spinner { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+
+  /* ─── Stats bar ─────────────────────────────────────────────── */
+  .ml-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .ml-stat-pill {
+    background: var(--card-background); border: 1px solid var(--border-color);
+    border-radius: 24px; padding: 8px 20px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.88rem; font-weight: 600; color: var(--text-primary);
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .ml-stat-pill i { color: #764ba2; }
+
+  /* ─── Leave History Modal ────────────────────────────────────── */
+  #leaveHistoryModal .modal-header {
+    background: linear-gradient(135deg, #3c425c 0%, #764ba2 100%);
+    color: white;
+  }
+  #leaveHistoryModal .modal-title { color: white; font-weight: 700; }
+  #leaveHistoryModal .btn-close { filter: invert(1); }
+
+  /* History Stats Grid */
+  .hist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .hist-stat-card {
+    border-radius: 14px;
+    padding: 16px 12px;
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.07);
+    transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .hist-stat-card:hover { transform: translateY(-2px); }
+
+  .hist-stat-card.al  { background: linear-gradient(135deg, #e0f0ff, #b3d4ff); }
+  .hist-stat-card.cl  { background: linear-gradient(135deg, #fff0e0, #ffd4a0); }
+  .hist-stat-card.aal { background: linear-gradient(135deg, #e0ffe8, #a8f0c0); }
+  .hist-stat-card.pl  { background: linear-gradient(135deg, #fce0ff, #e8a0ff); }
+
+  .hist-stat-card .stat-val {
+    font-size: 2rem; font-weight: 800; line-height: 1;
+    margin-bottom: 4px;
+  }
+  .hist-stat-card.al  .stat-val { color: #1a6fc4; }
+  .hist-stat-card.cl  .stat-val { color: #c47a1a; }
+  .hist-stat-card.aal .stat-val { color: #1a9e50; }
+  .hist-stat-card.pl  .stat-val { color: #8e1ac4; }
+
+  .hist-stat-card .stat-label {
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    opacity: 0.7;
+  }
+
+  .hist-stat-card .stat-name {
+    font-size: 0.78rem; font-weight: 600; margin-top: 2px;
+  }
+
+  /* History table */
+  .hist-table th {
+    background: linear-gradient(135deg, #3c425c, #764ba2);
+    color: white; font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; border: none;
+    padding: 10px 8px;
+  }
+  .hist-table td { font-size: 0.82rem; padding: 9px 8px; vertical-align: middle; }
+  .hist-table tbody tr:hover { background: rgba(118,75,162,0.06); }
+
+  .year-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; border-radius: 12px; padding: 2px 10px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+
+  /* ─── Extend Leave Modal ──────────────────────────────────────── */
+  #extendLeaveModal .modal-header {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    color: #4a2f00;
+  }
+  #extendLeaveModal .modal-title { color: #4a2f00; font-weight: 700; }
+
+  /* Leave type cards in extend modal */
+  .leave-type-select-group { display: flex; flex-direction: column; gap: 0; }
+
+  /* ─── Proceed button ─────────────────────────────────────────── */
+  .btn-proceed {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border: none; padding: 8px 22px;
+    border-radius: 10px; font-weight: 700; transition: all 0.25s;
+  }
+  .btn-proceed:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(118,75,162,0.4); color: white; }
+
+  .step-indicator {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 18px;
+  }
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    background: var(--border-color); color: var(--text-secondary);
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+  .step-dot.done   { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+  .step-line { flex: 1; height: 2px; background: var(--border-color); border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .ml-page-header { flex-direction: column; text-align: center; }
+    .hist-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% set header = "MANAGE LEAVE" %}
+{% set subscript = "Personnel Currently On Leave — " ~ company %}
+{% include 'navbar/navbar.html' %}
+
+<!-- Alert Toast -->
+<div id="alertBox" class="alert shadow" role="alert"></div>
+
+<div class="p-3">
+
+  <!-- Page Header -->
+  <div class="ml-page-header">
+    <i class="fas fa-calendar-times"></i>
+    <div>
+      <h4>Manage Leave</h4>
+      <p>View, remove, or extend leave for personnel currently on leave in your company.</p>
+    </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="ml-stats">
+    <div class="ml-stat-pill">
+      <i class="fas fa-users"></i>
+      <span>On Leave: <strong id="totalOnLeave">—</strong></span>
+    </div>
+    <div class="ml-stat-pill">
+      <i class="fas fa-building"></i>
+      <span>Company: <strong>{{ company }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="ml-card">
+    <div class="ml-card-header">
+      <h5><i class="fas fa-list-alt"></i> On-Leave Personnel</h5>
+      <button class="btn btn-sm btn-outline-primary" onclick="loadLeaveData()">
+        <i class="fas fa-sync-alt me-1"></i> Refresh
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" id="leaveTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Army Number</th>
+            <th>Name</th>
+            <th>Rank</th>
+            <th>Company</th>
+            <th>Leave Type</th>
+            <th>From Date</th>
+            <th>To Date</th>
+            <th>Leave Days</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="leaveTableBody">
+          <tr id="loadingRow">
+            <td colspan="10">
+              <div class="ml-spinner">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <p>Loading leave records…</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STEP 1 — Leave History Modal
+════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="leaveHistoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-history me-2"></i>Leave History
+          <small id="histPersonnelBadge" class="ms-2 fw-normal" style="font-size:0.8rem; opacity:0.85;"></small>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="stepDot1">1</div>
+          <div class="step-line"></div>
+          <div class="step-dot" id="stepDot2">2</div>
+        </div>
+        <p class="text-muted small mb-3">
+          <strong>Step 1:</strong> Review the leave history for this year, then proceed to extend leave.
+        </p>
+
+        <!-- Loading -->
+        <div id="histLoading" class="text-center py-4">
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <p class="text-muted">Fetching leave history…</p>
+        </div>
+
+        <!-- Content -->
+        <div id="histContent" class="d-none">
+
+          <!-- Current-year summary cards -->
+          <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.6px;">
+            <i class="fas fa-chart-bar me-1"></i> Current Year Summary
+          </h6>
+          <div class="hist-grid" id="histSummaryGrid">
+            <!-- injected by JS -->
+          </div>
+
+          <!-- Full history table -->
+          <h6 class="fw-bold mb-2 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.6px;">
+            <i class="fas fa-table me-1"></i> All Records
+          </h6>
+          <div class="table-responsive">
+            <table class="table table-hover hist-table mb-0">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>AL</th>
+                  <th>CL</th>
+                  <th>AAL</th>
+                  <th>PL</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="histTableBody"></tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Error -->
+        <div id="histError" class="alert alert-danger d-none mt-2"></div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn-proceed btn" id="proceedToExtendBtn" onclick="proceedToExtend()">
+          <i class="fas fa-arrow-right me-1"></i> Proceed to Extend Leave
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STEP 2 — Extend Leave Modal
+════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="extendLeaveModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-calendar-plus me-2"></i>Extend Leave
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step-dot done" id="extStepDot1">✓</div>
+          <div class="step-line"></div>
+          <div class="step-dot active" id="extStepDot2">2</div>
+        </div>
+        <p class="text-muted small mb-3">
+          <strong>Step 2:</strong> Choose the leave type and new end date.
+        </p>
+
+        <input type="hidden" id="extendArmyNumber">
+        <input type="hidden" id="currentToDate">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Personnel</label>
+          <p id="extendPersonnelInfo" class="text-muted mb-0"></p>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Current Leave End Date</label>
+          <p id="extendCurrentDate" class="fw-bold text-danger mb-0"></p>
+        </div>
+
+        <!-- Leave Type -->
+        <div class="mb-3">
+          <label for="extendLeaveType" class="form-label fw-semibold">
+            Leave Type to Extend <span class="text-danger">*</span>
+          </label>
+          <select id="extendLeaveType" class="form-select" required>
+            <option value="">— Select Leave Type —</option>
+            <option value="AL">AL — Annual Leave</option>
+            <option value="CL">CL — Casual Leave</option>
+            <option value="AAL">AAL — Additional Annual Leave</option>
+            <option value="PL">PL — Paternity Leave</option>
+          </select>
+          <div class="form-text text-muted">
+            Selected days will be added to the existing count for that leave type.
+          </div>
+        </div>
+
+        <!-- New end date -->
+        <div class="mb-3">
+          <label for="newToDate" class="form-label fw-semibold">
+            New End Date <span class="text-danger">*</span>
+          </label>
+          <input type="date" class="form-control" id="newToDate" required>
+          <div class="form-text text-muted">Must be after the current end date.</div>
+        </div>
+
+        <div id="extendError" class="alert alert-danger d-none"></div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="backToHistory()">
+          <i class="fas fa-arrow-left me-1"></i> Back
+        </button>
+        <button type="button" class="btn btn-warning fw-bold" id="confirmExtendBtn" onclick="submitExtendLeave()">
+          <i class="fas fa-check me-1"></i> Extend Leave
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ─── state ────────────────────────────────────────────────────
+  let _currentRow = {};   // {armyNumber, name, toDate}
+
+  // ─── utilities ───────────────────────────────────────────────
+  function showAlert(message, type = 'success') {
+    const box = document.getElementById('alertBox');
+    box.className = `alert alert-${type} shadow`;
+    box.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>${message}`;
+    box.style.display = 'block';
+    setTimeout(() => { box.style.display = 'none'; }, 4000);
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ─── LOAD MAIN LEAVE DATA ────────────────────────────────────
+  async function loadLeaveData() {
+    const tbody = document.getElementById('leaveTableBody');
+    tbody.innerHTML = `
+      <tr id="loadingRow"><td colspan="10">
+        <div class="ml-spinner">
+          <div class="spinner-border text-primary mb-2" role="status"></div>
+          <p>Loading leave records…</p>
+        </div>
+      </td></tr>`;
+
+    try {
+      const res  = await fetch('/onco/api/on_leave_persons');
+      const json = await res.json();
+
+      if (json.status !== 'success') {
+        tbody.innerHTML = `<tr><td colspan="10"><div class="ml-empty"><i class="fas fa-exclamation-circle text-danger"></i><p>${json.message}</p></div></td></tr>`;
+        return;
+      }
+
+      const data = json.data;
+      document.getElementById('totalOnLeave').textContent = data.length;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="10"><div class="ml-empty">
+            <i class="fas fa-check-circle text-success"></i>
+            <p class="fw-semibold">No personnel currently on leave.</p>
+          </div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.id = `row-${row.army_number}`;
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><strong>${row.army_number}</strong></td>
+          <td>${row.name}</td>
+          <td>${row.rank || '—'}</td>
+          <td>${row.company}</td>
+          <td><span class="leave-type-badge">${row.leave_type}</span></td>
+          <td>${formatDate(row.from_date)}</td>
+          <td id="toDate-${row.army_number}">${formatDate(row.to_date)}</td>
+          <td><span class="days-badge" id="days-${row.army_number}">${row.leave_days} days</span></td>
+          <td>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn-remove" onclick="removeLeave('${row.army_number}', '${row.name}')">
+                <i class="fas fa-user-minus me-1"></i>Remove
+              </button>
+              <button class="btn-extend" onclick="openHistoryModal('${row.army_number}', '${row.name}', '${row.to_date}')">
+                <i class="fas fa-calendar-plus me-1"></i>Extend Leave
+              </button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="ml-empty"><i class="fas fa-exclamation-triangle text-warning"></i><p>Error: ${err.message}</p></div></td></tr>`;
+    }
+  }
+
+  // ─── REMOVE LEAVE ─────────────────────────────────────────────
+  async function removeLeave(armyNumber, name) {
+    if (!confirm(`Remove ${name} (${armyNumber}) from leave? This will set their leave status to inactive.`)) return;
+
+    try {
+      const res  = await fetch('/onco/remove_leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ army_number: armyNumber })
+      });
+      const json = await res.json();
+
+      if (json.status === 'success') {
+        const row = document.getElementById(`row-${armyNumber}`);
+        if (row) {
+          row.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(30px)';
+          setTimeout(() => {
+            row.remove();
+            const remaining = document.querySelectorAll('#leaveTableBody tr[id^="row-"]').length;
+            document.getElementById('totalOnLeave').textContent = remaining;
+            if (remaining === 0) {
+              document.getElementById('leaveTableBody').innerHTML = `
+                <tr><td colspan="10"><div class="ml-empty">
+                  <i class="fas fa-check-circle text-success"></i>
+                  <p class="fw-semibold">No personnel currently on leave.</p>
+                </div></td></tr>`;
+            }
+          }, 400);
+        }
+        showAlert(`${name} successfully removed from leave.`, 'success');
+      } else {
+        showAlert(json.message || 'Failed to remove leave.', 'danger');
+      }
+    } catch (err) {
+      showAlert('Network error: ' + err.message, 'danger');
+    }
+  }
+
+
+  // ─────────────────────────────────────────────────────────────
+  // STEP 1 — Open History Modal
+  // ─────────────────────────────────────────────────────────────
+
+  async function openHistoryModal(armyNumber, name, toDate) {
+    // Save state
+    _currentRow = { armyNumber, name, toDate };
+
+    // Reset modal UI
+    document.getElementById('histPersonnelBadge').textContent = `— ${name} (${armyNumber})`;
+    document.getElementById('histLoading').classList.remove('d-none');
+    document.getElementById('histContent').classList.add('d-none');
+    document.getElementById('histError').classList.add('d-none');
+    document.getElementById('histTableBody').innerHTML = '';
+    document.getElementById('histSummaryGrid').innerHTML = '';
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('leaveHistoryModal')).show();
+
+    // Fetch history
+    try {
+      const res  = await fetch(`/apply_leave/leave_history/${armyNumber}`);
+      const rows = await res.json();
+
+      document.getElementById('histLoading').classList.add('d-none');
+
+      if (!Array.isArray(rows)) throw new Error('Unexpected response format.');
+
+      // ── Current year aggregation ──
+      const currentYear = new Date().getFullYear().toString();
+      let totals = { AL: 0, CL: 0, AAL: 0, PL: 0 };
+
+      rows.forEach(r => {
+        if (r.year === currentYear) {
+          totals.AL  += parseInt(r.AL  || 0);
+          totals.CL  += parseInt(r.CL  || 0);
+          totals.AAL += parseInt(r.AAL || 0);
+          totals.PL  += parseInt(r.PL  || 0);
+        }
+      });
+
+      // Build summary cards
+      const grid = document.getElementById('histSummaryGrid');
+      const types = [
+        { key: 'AL',  cls: 'al',  label: 'AL',  name: 'Annual Leave'            },
+        { key: 'CL',  cls: 'cl',  label: 'CL',  name: 'Casual Leave'            },
+        { key: 'AAL', cls: 'aal', label: 'AAL', name: 'Additional Annual Leave' },
+        { key: 'PL',  cls: 'pl',  label: 'PL',  name: 'Paternity Leave'         },
+      ];
+      grid.innerHTML = types.map(t => `
+        <div class="hist-stat-card ${t.cls}">
+          <div class="stat-val">${totals[t.key]}</div>
+          <div class="stat-label">${t.label}</div>
+          <div class="stat-name">${t.name}</div>
+        </div>`).join('');
+
+      // Build table rows
+      const tbody = document.getElementById('histTableBody');
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">No records found.</td></tr>`;
+      } else {
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td><span class="year-badge">${r.year || '—'}</span></td>
+            <td>${r.AL  ?? '—'}</td>
+            <td>${r.CL  ?? '—'}</td>
+            <td>${r.AAL ?? '—'}</td>
+            <td>${r.PL  ?? '—'}</td>
+            <td>${formatDate(r.leave_start_date)}</td>
+            <td>${formatDate(r.leave_end_date)}</td>
+            <td>${r.remarks || '—'}</td>
+          </tr>`).join('');
+      }
+
+      document.getElementById('histContent').classList.remove('d-none');
+
+    } catch (err) {
+      document.getElementById('histLoading').classList.add('d-none');
+      const errBox = document.getElementById('histError');
+      errBox.textContent = 'Failed to load history: ' + err.message;
+      errBox.classList.remove('d-none');
+    }
+  }
+
+
+  // ─────────────────────────────────────────────────────────────
+  // STEP 1 → STEP 2 : Proceed button
+  // ─────────────────────────────────────────────────────────────
+
+  function proceedToExtend() {
+    // Close history modal
+    bootstrap.Modal.getInstance(document.getElementById('leaveHistoryModal')).hide();
+
+    // Pre-fill extend modal
+    document.getElementById('extendArmyNumber').value      = _currentRow.armyNumber;
+    document.getElementById('currentToDate').value         = _currentRow.toDate;
+    document.getElementById('extendPersonnelInfo').textContent = `${_currentRow.name} (${_currentRow.armyNumber})`;
+    document.getElementById('extendCurrentDate').textContent   = formatDate(_currentRow.toDate);
+    document.getElementById('newToDate').value  = '';
+    document.getElementById('newToDate').min    = _currentRow.toDate;
+    document.getElementById('extendLeaveType').value = '';
+    document.getElementById('extendError').classList.add('d-none');
+
+    // Short delay so first modal fully hides
+    setTimeout(() => {
+      new bootstrap.Modal(document.getElementById('extendLeaveModal')).show();
+    }, 350);
+  }
+
+
+  // ─────────────────────────────────────────────────────────────
+  // STEP 2 — Back button
+  // ─────────────────────────────────────────────────────────────
+
+  function backToHistory() {
+    bootstrap.Modal.getInstance(document.getElementById('extendLeaveModal')).hide();
+    setTimeout(() => {
+      new bootstrap.Modal(document.getElementById('leaveHistoryModal')).show();
+    }, 350);
+  }
+
+
+  // ─────────────────────────────────────────────────────────────
+  // STEP 2 — Submit extend
+  // ─────────────────────────────────────────────────────────────
+
+  async function submitExtendLeave() {
+    const armyNumber  = document.getElementById('extendArmyNumber').value;
+    const current     = document.getElementById('currentToDate').value;
+    const newDate     = document.getElementById('newToDate').value;
+    const leaveType   = document.getElementById('extendLeaveType').value;
+    const errBox      = document.getElementById('extendError');
+
+    errBox.classList.add('d-none');
+
+    if (!leaveType) {
+      errBox.textContent = 'Please select a leave type.';
+      errBox.classList.remove('d-none');
+      return;
+    }
+    if (!newDate) {
+      errBox.textContent = 'Please select a new end date.';
+      errBox.classList.remove('d-none');
+      return;
+    }
+    if (newDate <= current) {
+      errBox.textContent = 'New end date must be after the current end date.';
+      errBox.classList.remove('d-none');
+      return;
+    }
+
+    const btn = document.getElementById('confirmExtendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving…';
+
+    try {
+      const res  = await fetch('/onco/extend_leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          army_number: armyNumber,
+          new_to_date: newDate,
+          leave_type:  leaveType        // ← new field sent to backend
+        })
+      });
+      const json = await res.json();
+
+      if (json.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('extendLeaveModal')).hide();
+
+        // Update table cells
+        const toDateCell = document.getElementById(`toDate-${armyNumber}`);
+        const daysCell   = document.getElementById(`days-${armyNumber}`);
+        if (toDateCell) toDateCell.textContent = formatDate(json.new_to_date);
+        if (daysCell)   daysCell.textContent   = `${json.leave_days} days`;
+
+        showAlert(`Leave extended successfully (${leaveType}). New duration: ${json.leave_days} days.`, 'success');
+      } else {
+        errBox.textContent = json.message || 'Failed to extend leave.';
+        errBox.classList.remove('d-none');
+      }
+    } catch (err) {
+      errBox.textContent = 'Network error: ' + err.message;
+      errBox.classList.remove('d-none');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check me-1"></i>Extend Leave';
+    }
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', loadLeaveData);
+</script>
+{% endblock %}

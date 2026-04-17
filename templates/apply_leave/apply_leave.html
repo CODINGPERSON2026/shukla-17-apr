@@ -1,0 +1,1251 @@
+{% extends "baseView.html" %}
+{% block content %}
+<style>
+  .card {
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+  /* Leave History Modal Styles */
+  #leaveHistoryModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #leaveHistoryModal.show { display: flex; }
+  .lh-card {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: lhSlideIn .3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes lhSlideIn {
+    from { transform: translateY(40px) scale(.96); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .lh-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: #fff;
+    padding: 1.4rem 1.75rem;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .lh-header h4 { margin: 0; font-weight: 700; }
+  .lh-close {
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lh-close:hover { background: rgba(255,255,255,.35); }
+  .lh-body { padding: 1.5rem 1.75rem; }
+  .year-block {
+    margin-bottom: 1.6rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  }
+  .year-heading {
+    background: linear-gradient(90deg, #eff6ff, #dbeafe);
+    padding: .75rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    border-bottom: 1px solid #bfdbfe;
+  }
+  .year-heading .badge-year {
+    background: #2563eb;
+    color: #fff;
+    border-radius: 8px;
+    padding: .25rem .75rem;
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  .lh-table { width: 100%; border-collapse: collapse; }
+  .lh-table thead th {
+    background: #f8fafc;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: #64748b;
+    padding: .65rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .lh-table tbody td {
+    padding: .75rem 1rem;
+    text-align: center;
+    font-size: .93rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .lh-table tbody td:first-child { text-align: left; font-weight: 600; }
+  .pill-total, .pill-taken, .pill-balance {
+    border-radius: 999px;
+    padding: .2rem .7rem;
+    font-weight: 700;
+    font-size: .85rem;
+    display: inline-block;
+  }
+  .pill-total { background: #dbeafe; color: #1d4ed8; }
+  .pill-taken { background: #fce7f3; color: #be185d; }
+  .pill-balance { background: #d1fae5; color: #065f46; }
+  .btn-process {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: .35rem .9rem;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-process:hover { opacity: .88; transform: scale(1.03); }
+  .lh-empty {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: #94a3b8;
+    font-size: 1rem;
+  }
+  /* Consistent Action Buttons */
+  #checkLeaveHistoryBtn, #openLeaveModalBtn {
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .55rem 1.3rem;
+    font-weight: 600;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+ 
+  #checkLeaveHistoryBtn:hover, #openLeaveModalBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  }
+  .date-hint { font-size: .76rem; color: #64748b; margin-top: .3rem; }
+  .date-hint.error { color: #dc2626; }
+
+  /* LEAVE APPLICATION MODAL */
+  #leaveApplicationModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #leaveApplicationModal.show { display: flex; }
+  .leave-app-card {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 1100px;
+    max-height: 94vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.3);
+    animation: modalSlideIn .3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes modalSlideIn {
+    from { transform: translateY(50px) scale(.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .leave-app-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: #fff;
+    padding: 1.5rem 2rem;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .leave-app-header h4 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.3rem;
+  }
+  .leave-app-close {
+    background: rgba(255,255,255,.2);
+    border: none;
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .leave-app-close:hover {
+    background: rgba(255,255,255,.35);
+    transform: rotate(90deg);
+  }
+  .leave-app-body { padding: 2rem; }
+
+  /* Multiple Leave Blocks */
+  .leave-block {
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    transition: all .2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .leave-block:hover {
+    border-color: #2563eb;
+    box-shadow: 0 6px 20px rgba(37,99,235,0.12);
+  }
+  .leave-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    font-size: 1.1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .remove-leave-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .remove-leave-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+  }
+ 
+  .add-leave-btn {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: white;
+    border: none;
+    padding: .8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all .2s;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+  }
+  .add-leave-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+    background: linear-gradient(135deg, #1e40af, #1e3a5f);
+  }
+
+  /* Transport Section - Enhanced with Multiple Legs */
+  .transport-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #bae6fd;
+    border-radius: 16px;
+    padding: 1.8rem;
+    margin: 2rem 0;
+  }
+  .transport-title {
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 1.2rem;
+  }
+  .journey-card {
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    background: white;
+  }
+  .journey-title {
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .leg-row {
+    background: #f8fafc;
+    border: 1px solid #e0f2fe;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Address While on Leave Section */
+  .address-section {
+    background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+    border: 2px solid #a3e4c5;
+    border-radius: 16px;
+    padding: 1.8rem;
+    margin: 2rem 0;
+  }
+  .address-title {
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Summary Section */
+  .summary-section {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 2px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+ 
+  .summary-title {
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+ 
+  .total-days-badge {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: white;
+    padding: .75rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    display: inline-block;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+  }
+  /* Form Labels */
+  .form-label {
+    font-weight: 600;
+    color: #1e3a5f;
+    margin-bottom: 0.5rem;
+  }
+ 
+  .form-control, .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s ease;
+  }
+ 
+  .form-control:focus, .form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    outline: none;
+  }
+  /* Submit Button */
+  #applyLeaveBtn {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 4px 15px rgba(37,99,235,0.25);
+  }
+ 
+  #applyLeaveBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37,99,235,0.35);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+  }
+  /* Summary Items */
+  .summary-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #bfdbfe;
+  }
+ 
+  .summary-badge {
+    background: #2563eb;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+</style>
+
+<!-- Loader -->
+<div id="loadingOverlay" class="position-fixed top-50 start-50 translate-middle d-none" style="z-index:9999;">
+  <div class="spinner-border text-primary"></div>
+</div>
+
+<div class="content-wrapper">
+  {% set header = "Leave Management" %}
+  {% set subscript = "Search employee → Select employee → Apply Combined Leave" %}
+  {% include 'navbar/navbar.html' %}
+
+  <!-- SEARCH -->
+  <div class="card p-4 mb-4">
+    <h5>🔍 Search Employee</h5>
+    <div class="input-group">
+      <input type="text" id="searchArmyNumber" class="form-control" placeholder="Enter Army Number">
+      <button class="btn btn-primary" id="searchBtn">Search</button>
+    </div>
+  </div>
+ 
+  <!-- RESULTS -->
+  <div id="resultsSection" class="card p-4 mb-4" style="display:none;">
+    <h5>👤 Select Employee</h5>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Army No</th>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Trade</th>
+          <th>Section</th>
+          <th>Company</th>
+        </tr>
+      </thead>
+      <tbody id="resultsTable"></tbody>
+    </table>
+    <div id="leaveHistoryBtnWrapper" style="display:none; margin-top:1.5rem;">
+      <div style="display: flex; gap: 12px;">
+        <button id="checkLeaveHistoryBtn" onclick="openLeaveHistory()">📋 Check Leave History</button>
+        <button id="openLeaveModalBtn" onclick="openLeaveApplicationModal()">✨ Apply Combined Leave</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVE APPLICATION MODAL -->
+<div id="leaveApplicationModal" onclick="closeModalOnBackdrop(event)">
+  <div class="leave-app-card">
+    <div class="leave-app-header">
+      <h4>✨ Combined Leave Application</h4>
+      <button class="leave-app-close" onclick="closeLeaveApplicationModal()">✕</button>
+    </div>
+    <div class="leave-app-body">
+      <div id="leaveBlocksContainer"></div>
+      <button type="button" class="add-leave-btn mb-4" onclick="addLeaveBlock()">
+        ➕ Add Another Leave Type
+      </button>
+
+      <!-- Transport Section - Multiple Stations/Legs -->
+      <div class="transport-section">
+        <div class="transport-title">🛤️ Mode of Transport</div>
+        
+        <!-- Onward Journey -->
+        <div class="journey-card">
+          <div class="journey-title">→ Onward Journey</div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Mode of Travel</label>
+              <select id="onwardMode" class="form-select" onchange="handleOnwardModeChange()">
+                <option value="">Select Mode</option>
+                <option value="Air">By Air</option>
+                <option value="Train">By Train</option>
+              </select>
+            </div>
+            <div class="col-md-3" id="onwardAirTypeDiv" style="display:none;">
+              <label class="form-label">Air Type</label>
+              <select id="onwardAirType" class="form-select">
+                <option value="Charter">Charter</option>
+                <option value="Civil">Civil</option>
+              </select>
+            </div>
+            <div class="col-md-3" id="onwardTrainTypeDiv" style="display:none;">
+              <label class="form-label">Train Warrant</label>
+              <select id="onwardTrainType" class="form-select">
+                <option value="CV Warrant">CV Warrant</option>
+                <option value="Free">Free</option>
+              </select>
+            </div>
+          </div>
+          <div id="onwardLegsContainer"></div>
+          <button type="button" onclick="addOnwardLeg()" class="btn btn-outline-primary btn-sm">
+            ➕ Add Another Station / Leg
+          </button>
+        </div>
+
+        <!-- Return Journey -->
+        <div class="journey-card">
+          <div class="journey-title">← Return Journey</div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Mode of Travel</label>
+              <select id="returnMode" class="form-select" onchange="handleReturnModeChange()">
+                <option value="">Select Mode</option>
+                <option value="Air">By Air</option>
+                <option value="Train">By Train</option>
+              </select>
+            </div>
+            <div class="col-md-3" id="returnAirTypeDiv" style="display:none;">
+              <label class="form-label">Air Type</label>
+              <select id="returnAirType" class="form-select">
+                <option value="Charter">Charter</option>
+                <option value="Civil">Civil</option>
+              </select>
+            </div>
+            <div class="col-md-3" id="returnTrainTypeDiv" style="display:none;">
+              <label class="form-label">Train Warrant</label>
+              <select id="returnTrainType" class="form-select">
+                <option value="CV Warrant">CV Warrant</option>
+                <option value="Free">Free</option>
+              </select>
+            </div>
+          </div>
+          <div id="returnLegsContainer"></div>
+          <button type="button" onclick="addReturnLeg()" class="btn btn-outline-primary btn-sm">
+            ➕ Add Another Station / Leg
+          </button>
+        </div>
+      </div>
+
+      <!-- Address While on Leave - NEW SECTION -->
+      <div class="address-section">
+        <div class="address-title">🏠 Address While on Leave</div>
+        <div class="form-check mb-3">
+          <input type="checkbox" id="sameAsPermanent" class="form-check-input" checked>
+          <label class="form-check-label" for="sameAsPermanent">
+            Same as Permanent Address
+          </label>
+        </div>
+        <div id="addressFieldsContainer" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Address Line 1</label>
+            <input type="text" id="leaveAddressLine1" class="form-control" placeholder="House No, Street">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Address Line 2 <small class="text-muted">(optional)</small></label>
+            <input type="text" id="leaveAddressLine2" class="form-control" placeholder="Area / Landmark">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">City / Town</label>
+            <input type="text" id="leaveCity" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">State</label>
+            <input type="text" id="leaveState" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Pin Code</label>
+            <input type="text" id="leavePincode" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Mobile Number (while on leave)</label>
+            <input type="tel" id="leaveMobile" class="form-control" placeholder="10-digit number">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Alternate Contact <small class="text-muted">(optional)</small></label>
+            <input type="tel" id="leaveAlternateContact" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Common Prefix & Suffix & Summary -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">📅 Prefix Date <small class="text-muted">(before first leave)</small></label>
+          <input type="date" id="prefixDate" class="form-control">
+          <div class="date-hint" id="prefixHint"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">📅 Suffix Date <small class="text-muted">(after last leave)</small></label>
+          <input type="date" id="suffixDate" class="form-control">
+          <div class="date-hint" id="suffixHint"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">📊 Total Days</label>
+          <input type="number" id="days" class="form-control" readonly style="font-size:1.2rem; font-weight:700; background:#eff6ff; border-color:#2563eb;">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="total-days-badge" id="totalDaysBadge">0 Days</div>
+        </div>
+      </div>
+
+      <div class="summary-section">
+        <div class="summary-title">
+          <span>📊 Leave Summary</span>
+        </div>
+        <div id="leaveSummary"></div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">📝 Reason for Combined Leave</label>
+          <textarea id="reason" class="form-control" rows="3" placeholder="Enter detailed reason for the combined leave application..."></textarea>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button id="applyLeaveBtn" class="w-100">
+            ✅ Submit Leave Application
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVE HISTORY MODAL -->
+<div id="leaveHistoryModal" onclick="closeModalOnBackdrop(event)">
+  <div class="lh-card">
+    <div class="lh-header">
+      <h4>📋 Leave History</h4>
+      <button class="lh-close" onclick="closeLeaveHistory()">✕</button>
+    </div>
+    <div class="lh-body" id="leaveHistoryBody">
+      <div class="lh-empty">Loading…</div>
+    </div>
+  </div>
+</div>
+
+{% include 'modals/success-modal/modal.html' %}
+
+<script>
+  let selectedPersonArmyNumber = null;
+  let personnel_name = null;
+ 
+  const showLoading = () => loadingOverlay.classList.remove("d-none");
+  const hideLoading = () => loadingOverlay.classList.add("d-none");
+
+  /* ====================== MODAL CONTROLS ====================== */
+  function openLeaveApplicationModal() {
+    if (!selectedPersonArmyNumber) {
+      alert("Please select an employee first.");
+      return;
+    }
+   
+    // Reset form
+    document.getElementById('leaveBlocksContainer').innerHTML = '';
+    document.getElementById('prefixDate').value = '';
+    document.getElementById('suffixDate').value = '';
+    document.getElementById('days').value = '';
+    document.getElementById('reason').value = '';
+    document.getElementById('leaveSummary').innerHTML = '';
+    document.getElementById('totalDaysBadge').textContent = '0 Days';
+
+    // Reset Transport
+    document.getElementById('onwardMode').value = '';
+    document.getElementById('returnMode').value = '';
+    document.getElementById('onwardAirTypeDiv').style.display = 'none';
+    document.getElementById('onwardTrainTypeDiv').style.display = 'none';
+    document.getElementById('returnAirTypeDiv').style.display = 'none';
+    document.getElementById('returnTrainTypeDiv').style.display = 'none';
+    document.getElementById('onwardLegsContainer').innerHTML = '';
+    document.getElementById('returnLegsContainer').innerHTML = '';
+    addOnwardLeg();   // Add first leg
+    addReturnLeg();   // Add first leg
+
+    // Reset Address While on Leave
+    document.getElementById('sameAsPermanent').checked = true;
+    toggleAddressFields();
+
+    // Add first leave block
+    addLeaveBlock();
+   
+    // Show modal
+    document.getElementById('leaveApplicationModal').classList.add('show');
+  }
+ 
+  function closeLeaveApplicationModal() {
+    document.getElementById('leaveApplicationModal').classList.remove('show');
+  }
+
+  /* ====================== TRANSPORT - MODE CHANGE ====================== */
+  function handleOnwardModeChange() {
+    const mode = document.getElementById('onwardMode').value;
+    document.getElementById('onwardAirTypeDiv').style.display = mode === 'Air' ? 'block' : 'none';
+    document.getElementById('onwardTrainTypeDiv').style.display = mode === 'Train' ? 'block' : 'none';
+  }
+
+  function handleReturnModeChange() {
+    const mode = document.getElementById('returnMode').value;
+    document.getElementById('returnAirTypeDiv').style.display = mode === 'Air' ? 'block' : 'none';
+    document.getElementById('returnTrainTypeDiv').style.display = mode === 'Train' ? 'block' : 'none';
+  }
+
+  /* ====================== TRANSPORT - MULTIPLE LEGS ====================== */
+  function addOnwardLeg() {
+    const container = document.getElementById('onwardLegsContainer');
+    const legIndex = container.children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'leg-row';
+    div.innerHTML = `
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">From Station</label>
+          <input type="text" class="form-control onward-from" placeholder="e.g. Srinagar">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">To Station</label>
+          <input type="text" class="form-control onward-to" placeholder="e.g. New Delhi">
+        </div>
+        ${legIndex > 1 ? `
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeOnwardLeg(this)">Remove</button>
+        </div>` : ''}
+      </div>
+    `;
+    container.appendChild(div);
+  }
+
+  function removeOnwardLeg(btn) {
+    if (document.getElementById('onwardLegsContainer').children.length <= 1) {
+      alert("At least one leg is required for Onward Journey.");
+      return;
+    }
+    btn.closest('.leg-row').remove();
+  }
+
+  function addReturnLeg() {
+    const container = document.getElementById('returnLegsContainer');
+    const legIndex = container.children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'leg-row';
+    div.innerHTML = `
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">From Station</label>
+          <input type="text" class="form-control return-from" placeholder="e.g. New Delhi">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">To Station</label>
+          <input type="text" class="form-control return-to" placeholder="e.g. Srinagar">
+        </div>
+        ${legIndex > 1 ? `
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeReturnLeg(this)">Remove</button>
+        </div>` : ''}
+      </div>
+    `;
+    container.appendChild(div);
+  }
+
+  function removeReturnLeg(btn) {
+    if (document.getElementById('returnLegsContainer').children.length <= 1) {
+      alert("At least one leg is required for Return Journey.");
+      return;
+    }
+    btn.closest('.leg-row').remove();
+  }
+
+  function getOnwardLegs() {
+    const legs = [];
+    document.querySelectorAll('#onwardLegsContainer .leg-row').forEach(row => {
+      const from = row.querySelector('.onward-from').value.trim();
+      const to = row.querySelector('.onward-to').value.trim();
+      if (from && to) legs.push({ from, to });
+    });
+    return legs;
+  }
+
+  function getReturnLegs() {
+    const legs = [];
+    document.querySelectorAll('#returnLegsContainer .leg-row').forEach(row => {
+      const from = row.querySelector('.return-from').value.trim();
+      const to = row.querySelector('.return-to').value.trim();
+      if (from && to) legs.push({ from, to });
+    });
+    return legs;
+  }
+
+  /* ====================== ADDRESS WHILE ON LEAVE ====================== */
+  function toggleAddressFields() {
+    const isSame = document.getElementById('sameAsPermanent').checked;
+    document.getElementById('addressFieldsContainer').style.display = isSame ? 'none' : 'flex';
+  }
+
+  /* ====================== SEARCH ====================== */
+  searchBtn.onclick = async () => {
+    if (!searchArmyNumber.value.trim()) return alert("Enter Army Number");
+    showLoading();
+    const res = await fetch(`/apply_leave/search_personnel?query=${searchArmyNumber.value}`);
+    const data = await res.json();
+    resultsSection.style.display = "block";
+    resultsTable.innerHTML = "";
+    leaveHistoryBtnWrapper.style.display = "none";
+    if (data.exists) {
+      const leave = data.existing_leave;
+      let html = `<tr><td colspan="7" style="text-align:center; padding:1.5rem;">`;
+      if (leave.request_status === "Approved") {
+        html += `✅ <b>${leave.leave_type}</b> leave APPROVED for <b>${leave.army_number}</b>.<br><br>
+                 <button class="btn btn-success" onclick="downloadCertificate('${leave.army_number}')">Download Certificate</button>`;
+      } else if (leave.request_status === "Pending") {
+        html += `⏳ <b>${leave.leave_type}</b> leave is PENDING.<br><br>
+                 <button class="btn btn-danger btn-sm" onclick="deleteLeaveRequest('${leave.army_number}')">Delete Request</button>`;
+      } else if (leave.request_status === "Rejected") {
+        html += `❌ <b>${leave.leave_type}</b> leave REJECTED.<br><br>
+                 <button class="btn btn-danger btn-sm" onclick="deleteLeaveRequest('${leave.army_number}')">Delete Request</button>`;
+      }
+      html += `</td></tr>`;
+      resultsTable.innerHTML = html;
+      hideLoading();
+      return;
+    }
+    data.forEach(p => {
+      const r = resultsTable.insertRow();
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "selectPerson";
+      radio.onchange = () => {
+        selectedPersonArmyNumber = p.army_number;
+        personnel_name = p.name;
+        leaveHistoryBtnWrapper.style.display = "block";
+      };
+      r.insertCell().appendChild(radio);
+      r.insertCell().textContent = p.army_number;
+      r.insertCell().textContent = p.rank;
+      r.insertCell().textContent = p.name;
+      r.insertCell().textContent = p.trade;
+      r.insertCell().textContent = p.section;
+      r.insertCell().textContent = p.company;
+    });
+   
+    hideLoading();
+  };
+
+ function downloadCertificate(armyNumber) {
+    console.log("Downloading for:", armyNumber);
+    window.open(`/apply_leave/download_certificate/${armyNumber}?t=${Date.now()}`, '_blank');
+}
+  /* ====================== MULTIPLE LEAVE BLOCKS ====================== */
+  let leaveBlocks = [];
+
+  function addLeaveBlock() {
+    const container = document.getElementById('leaveBlocksContainer');
+    const index = leaveBlocks.length;
+   
+    const block = document.createElement('div');
+    block.className = 'leave-block';
+    block.innerHTML = `
+      <div class="leave-block-header">
+        <span>📋 Leave ${index + 1} <small id="leaveTypeDisplay${index}" style="font-weight:normal; margin-left:10px; color:#64748b;"></small></span>
+        ${index > 0 ? `<button class="remove-leave-btn" onclick="removeLeaveBlock(this)">×</button>` : ''}
+      </div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Leave Type</label>
+          <select class="form-select leave-type-select" data-index="${index}">
+            <option value="">Select Type</option>
+            <option value="AL">AL - Annual Leave</option>
+            <option value="CL">CL - Casual Leave</option>
+            <option value="AAL">AAL - Additional Annual Leave</option>
+            <option value="PL">PL - Paternity Leave</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-control from-date" data-index="${index}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-control to-date" data-index="${index}">
+        </div>
+      </div>
+    `;
+    container.appendChild(block);
+    leaveBlocks.push({ index });
+   
+    if (index > 0) {
+      setTimeout(() => autoFillNextStartDate(index), 100);
+    }
+
+    block.querySelectorAll('select, input').forEach(el => {
+      el.addEventListener('change', calculateTotalDays);
+    });
+   
+    const typeSelect = block.querySelector('.leave-type-select');
+    typeSelect.addEventListener('change', function() {
+      const displaySpan = document.getElementById(`leaveTypeDisplay${index}`);
+      if (displaySpan) {
+        displaySpan.textContent = this.value ? `— ${this.value}` : '';
+      }
+    });
+  }
+
+  function removeLeaveBlock(btn) {
+    if (leaveBlocks.length <= 1) {
+      alert("At least one leave type is required.");
+      return;
+    }
+    btn.closest('.leave-block').remove();
+    leaveBlocks.pop();
+   
+    const blocks = document.querySelectorAll('.leave-block');
+    blocks.forEach((block, idx) => {
+      block.querySelector('.leave-block-header span').innerHTML = `📋 Leave ${idx + 1} <small id="leaveTypeDisplay${idx}" style="font-weight:normal; margin-left:10px; color:#64748b;"></small>`;
+      const select = block.querySelector('.leave-type-select');
+      select.dataset.index = idx;
+      const displaySpan = document.getElementById(`leaveTypeDisplay${idx}`);
+      if (displaySpan && select.value) {
+        displaySpan.textContent = `— ${select.value}`;
+      }
+    });
+   
+    calculateTotalDays();
+  }
+ 
+  function autoFillNextStartDate(currentIndex) {
+    const blocks = document.querySelectorAll('.leave-block');
+    if (currentIndex === 0 || currentIndex >= blocks.length) return;
+   
+    const prevBlock = blocks[currentIndex - 1];
+    const prevToDate = prevBlock.querySelector('.to-date').value;
+    const nextFromInput = blocks[currentIndex].querySelector('.from-date');
+    if (prevToDate) {
+      nextFromInput.value = prevToDate;
+    }
+    calculateTotalDays();
+  }
+
+  /* ====================== CALCULATION ====================== */
+  function daysBetween(d1, d2) {
+    return Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+  }
+
+  function calculateTotalDays() {
+    const prefixVal = prefixDate.value;
+    const suffixVal = suffixDate.value;
+    let totalDays = 0;
+    let summaryHTML = '';
+   
+    const blocks = document.querySelectorAll('.leave-block');
+   
+    blocks.forEach((block, i) => {
+      const leaveType = block.querySelector('.leave-type-select').value;
+      const fromVal = block.querySelector('.from-date').value;
+      const toVal = block.querySelector('.to-date').value;
+     
+      if (!leaveType || !fromVal || !toVal) return;
+     
+      const from = new Date(fromVal);
+      const to = new Date(toVal);
+     
+      if (to < from) return;
+     
+      const days = daysBetween(from, to) + 1;
+      totalDays += days;
+     
+      summaryHTML += `
+        <div class="summary-item">
+          <strong>Leave ${i+1}:</strong> ${leaveType} — ${fromVal} to ${toVal}
+          <span class="summary-badge">${days} days</span>
+        </div>
+      `;
+    });
+
+    let prefixDays = 0;
+    if (prefixVal && blocks.length > 0) {
+      const firstFrom = blocks[0].querySelector('.from-date').value;
+      if (firstFrom) {
+        const firstFromDate = new Date(firstFrom);
+        const prefix = new Date(prefixVal);
+        if (prefix < firstFromDate) {
+          prefixDays = daysBetween(prefix, firstFromDate);
+          summaryHTML += `
+            <div class="summary-item" style="color: #2563eb;">
+              <strong>📅 Prefix:</strong> ${prefixVal}
+              <span class="summary-badge" style="background: #3b82f6;">+${prefixDays} days</span>
+            </div>
+          `;
+          totalDays += prefixDays;
+        }
+      }
+    }
+   
+    let suffixDays = 0;
+    if (suffixVal && blocks.length > 0) {
+      const lastTo = blocks[blocks.length-1].querySelector('.to-date').value;
+      if (lastTo) {
+        const lastToDate = new Date(lastTo);
+        const suffix = new Date(suffixVal);
+        if (suffix > lastToDate) {
+          suffixDays = daysBetween(lastToDate, suffix);
+          summaryHTML += `
+            <div class="summary-item" style="color: #2563eb;">
+              <strong>📅 Suffix:</strong> ${suffixVal}
+              <span class="summary-badge" style="background: #3b82f6;">+${suffixDays} days</span>
+            </div>
+          `;
+          totalDays += suffixDays;
+        }
+      }
+    }
+   
+    document.getElementById('days').value = totalDays;
+    document.getElementById('totalDaysBadge').textContent = `${totalDays} Days`;
+   
+    if (summaryHTML) {
+      summaryHTML += `<hr style="border-top: 2px solid #bfdbfe; margin: 1rem 0;"><div style="font-size: 1.1rem; font-weight: 700; color: #1e3a5f;">🎯 Total Period Away: ${totalDays} days</div>`;
+    } else {
+      summaryHTML = '<div style="color: #64748b; text-align: center; padding: 1rem;">Add leave details to see summary</div>';
+    }
+   
+    document.getElementById('leaveSummary').innerHTML = summaryHTML;
+  }
+ 
+  [prefixDate, suffixDate].forEach(el => el.addEventListener('change', calculateTotalDays));
+
+  /* ====================== SUBMIT ====================== */
+  applyLeaveBtn.onclick = async () => {
+    const blocks = document.querySelectorAll('.leave-block');
+    let leaveData = [];
+    for (let block of blocks) {
+      const type = block.querySelector('.leave-type-select').value;
+      const from = block.querySelector('.from-date').value;
+      const to = block.querySelector('.to-date').value;
+     
+      if (type && from && to) {
+        leaveData.push({ leave_type: type, from_date: from, to_date: to });
+      }
+    }
+   
+    if (leaveData.length === 0) {
+      alert("Please fill at least one leave type");
+      return;
+    }
+
+    const prefixVal = prefixDate.value || null;
+    const suffixVal = suffixDate.value || null;
+    const totalDays = parseInt(days.value) || 0;
+    const reasonText = reason.value.trim();
+
+    if (!reasonText) {
+      alert("Please enter a reason for the leave application");
+      return;
+    }
+
+    // Transport Data with multiple legs
+    const transportData = {
+      onward: {
+        mode: document.getElementById('onwardMode').value,
+        air_type: document.getElementById('onwardMode').value === 'Air' ? document.getElementById('onwardAirType').value : null,
+        train_type: document.getElementById('onwardMode').value === 'Train' ? document.getElementById('onwardTrainType').value : null,
+        legs: getOnwardLegs()
+      },
+      return: {
+        mode: document.getElementById('returnMode').value,
+        air_type: document.getElementById('returnMode').value === 'Air' ? document.getElementById('returnAirType').value : null,
+        train_type: document.getElementById('returnMode').value === 'Train' ? document.getElementById('returnTrainType').value : null,
+        legs: getReturnLegs()
+      }
+    };
+
+    // Address While on Leave
+    const addressData = {
+      same_as_permanent: document.getElementById('sameAsPermanent').checked,
+      address_line1: document.getElementById('leaveAddressLine1').value.trim(),
+      address_line2: document.getElementById('leaveAddressLine2').value.trim(),
+      city: document.getElementById('leaveCity').value.trim(),
+      state: document.getElementById('leaveState').value.trim(),
+      pincode: document.getElementById('leavePincode').value.trim(),
+      mobile: document.getElementById('leaveMobile').value.trim(),
+      alternate_contact: document.getElementById('leaveAlternateContact').value.trim() || null
+    };
+
+    showLoading();
+   
+    try {
+      const res = await fetch("/apply_leave/submit_leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          person_id: selectedPersonArmyNumber,
+          leave_type: leaveData.map(l => l.leave_type).join('+'),
+          from_date: leaveData[0].from_date,
+          to_date: leaveData[leaveData.length-1].to_date,
+          actual_leave_days: totalDays,
+          total_days: totalDays,
+          prefix_days: prefixVal ? daysBetween(new Date(prefixVal), new Date(leaveData[0].from_date)) : 0,
+          suffix_days: suffixVal ? daysBetween(new Date(leaveData[leaveData.length-1].to_date), new Date(suffixVal)) : 0,
+          prefix_date: prefixVal,
+          suffix_date: suffixVal,
+          reason: reasonText,
+          name: personnel_name,
+          combined_leaves: leaveData,
+          transport: transportData,
+          address_while_on_leave: addressData
+        })
+      });
+      const response = await res.json();
+      if (response.status === 'success') {
+        closeLeaveApplicationModal();
+        showStatusModal("Combined leave request submitted successfully", "Green", 2000);
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        alert(response.error || "Submission failed");
+      }
+    } catch (err) {
+      alert("Error submitting leave");
+    } finally {
+      hideLoading();
+    }
+  };
+
+  /* ====================== HISTORY & DELETE ====================== */
+  async function deleteLeaveRequest(armyNumber) {
+    if (!confirm("Are you sure you want to delete this leave request?")) return;
+    showLoading();
+    try {
+      const res = await fetch(`/apply_leave/delete_leave/${armyNumber}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.status === "success") {
+        showStatusModal("Leave request deleted successfully", "Green", 2000);
+        setTimeout(() => location.reload(), 2000);
+      } else {
+        alert(data.error || "Failed to delete request");
+      }
+    } catch (err) {
+      alert("Error deleting leave request");
+    } finally {
+      hideLoading();
+    }
+  }
+ 
+  async function openLeaveHistory() {
+    if (!selectedPersonArmyNumber) {
+      alert("Please select an employee first.");
+      return;
+    }
+    document.getElementById('leaveHistoryModal').classList.add("show");
+    leaveHistoryBody.innerHTML = '<div class="lh-empty">⏳ Loading history…</div>';
+    try {
+      const res = await fetch(`/apply_leave/leave_history/${selectedPersonArmyNumber}`);
+      const data = await res.json();
+      renderLeaveHistory(data);
+    } catch (err) {
+      leaveHistoryBody.innerHTML = '<div class="lh-empty text-danger">❌ Failed to load history.</div>';
+    }
+  }
+
+  function closeLeaveHistory() {
+    document.getElementById('leaveHistoryModal').classList.remove("show");
+  }
+ 
+  function closeModalOnBackdrop(e) {
+    if (e.target.id === 'leaveHistoryModal') closeLeaveHistory();
+    if (e.target.id === 'leaveApplicationModal') closeLeaveApplicationModal();
+  }
+
+  function renderLeaveHistory(records) {
+    if (!records || records.length === 0) {
+      leaveHistoryBody.innerHTML = '<div class="lh-empty">📭 No leave history found for this employee.</div>';
+      return;
+    }
+    const ENTITLEMENTS = { AL: 60, CL: 30, AAL: 20 };
+    let html = '';
+    records.forEach(row => {
+      const year = row.year || '—';
+      const alTotal = row.AL ?? 0;
+      const clTotal = row.CL ?? 0;
+      const aalTotal = row.AAL ?? 0;
+      const remarks = row.remarks || '';
+      const leaveTypes = [
+        { label: 'AL – Annual Leave', total: ENTITLEMENTS.AL, taken: alTotal },
+        { label: 'CL – Casual Leave', total: ENTITLEMENTS.CL, taken: clTotal },
+        { label: 'AAL – Additional Annual Leave', total: ENTITLEMENTS.AAL, taken: aalTotal },
+      ];
+      html += `
+        <div class="year-block">
+          <div class="year-heading">
+            <span class="badge-year">${year}</span>
+            <span style="color:#1e40af; font-weight:600; font-size:.9rem;">Leave Summary</span>
+          </div>
+          <table class="lh-table">
+            <thead>
+              <tr>
+                <th>Leave Type</th>
+                <th>Total Entitled</th>
+                <th>Taken</th>
+                <th>Balance</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+     
+      leaveTypes.forEach(lt => {
+        const balance = lt.total - lt.taken;
+        html += `
+        <tr>
+          <td>${lt.label}</td>
+          <td><span class="pill-total">${lt.total}</span></td>
+          <td><span class="pill-taken">${lt.taken}</span></td>
+          <td><span class="pill-balance">${balance}</span></td>
+          <td>
+            <button class="btn-process" onclick="processLeaveFromHistory('${lt.label.split('–')[0].trim()}', ${balance})">
+              Process
+            </button>
+          </td>
+        </tr>
+        `;
+      });
+      html += `</tbody></table>`;
+     
+      if (remarks) {
+        html += `<div style="padding:.6rem 1.2rem; font-size:.83rem; color:#64748b; border-bottom:1px solid #f1f5f9;">
+                   📝 <em>${remarks}</em>
+                 </div>`;
+      }
+      html += `</div>`;
+    });
+   
+    leaveHistoryBody.innerHTML = html;
+  }
+
+  function processLeaveFromHistory(leaveTypeCode, balance) {
+    closeLeaveHistory();
+    openLeaveApplicationModal();
+   
+    setTimeout(() => {
+      const firstSelect = document.querySelector('.leave-type-select');
+      if (firstSelect) {
+        firstSelect.value = leaveTypeCode;
+        firstSelect.dispatchEvent(new Event('change'));
+      }
+    }, 300);
+  }
+
+  // Address toggle listener (runs once)
+  document.addEventListener('DOMContentLoaded', () => {
+    const sameCheckbox = document.getElementById('sameAsPermanent');
+    if (sameCheckbox) {
+      sameCheckbox.addEventListener('change', toggleAddressFields);
+    }
+  });
+</script>
+
+{% include 'apply_leave/leave_dashboard.html' %}
+{% endblock %}

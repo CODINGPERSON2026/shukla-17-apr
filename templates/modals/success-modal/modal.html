@@ -1,0 +1,145 @@
+<!-- ====== Google-Pay-style Tick Modal (Fully Dynamic) ====== -->
+<style>
+    .gp-modal .modal-content {
+      border-radius: 10px;
+      padding: 18px 24px;
+      text-align: center;
+      border: none;
+    }
+
+    .gp-modal .modal-body {
+      padding: 10px 0 8px 0;
+    }
+
+    .gp-title {
+      margin-top: 6px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .gp-btn {
+      border-radius: 6px;
+      width: 70px;
+      border: none;
+      color: #fff;
+    }
+
+    .gp-btn:hover { opacity: .95; }
+
+    .gp-tick {
+      width: 88px;
+      height: 88px;
+      margin: 6px auto;
+      display:block;
+    }
+
+    .animate-circle .gp-circle {
+      animation: gp-draw-circle 0.6s ease-out forwards;
+    }
+
+    .animate-check .gp-check {
+      animation: gp-draw-check 0.35s ease-out forwards 0.55s;
+    }
+
+    @keyframes gp-draw-circle {
+      from { stroke-dashoffset: 260; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes gp-draw-check {
+      from { stroke-dashoffset: 80; }
+      to { stroke-dashoffset: 0; }
+    }
+
+    .animate-pop {
+      animation: gp-pop .28s cubic-bezier(.2,.9,.2,1);
+    }
+
+    @keyframes gp-pop {
+      0%   { transform: scale(.95); opacity: 0; }
+      60%  { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+</style>
+<style>
+  #customDeleteSuccessModal {
+    z-index: 1095; /* higher than bootstrap modal (1055) */
+  }
+</style>
+
+<!-- Modal -->
+<div class="modal fade" id="customDeleteSuccessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered gp-modal">
+    <div class="modal-content">
+
+      <div class="modal-body">
+        
+        <svg class="gp-tick" viewBox="0 0 100 100" aria-hidden="true" id="gpTickSvg">
+          <circle class="gp-circle" cx="50" cy="50" r="40" fill="none"
+                  stroke="#34a853" stroke-width="5"
+                  stroke-linecap="round"
+                  stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+          
+          <path class="gp-check" d="M34 52 L45 63 L68 40" fill="none"
+                stroke="#34a853" stroke-width="5" 
+                stroke-linecap="round" stroke-linejoin="round"
+                stroke-dasharray="80" stroke-dashoffset="80"/>
+        </svg>
+
+        <div class="gp-title" id="gpTitleText">Success</div>
+      </div>
+
+      <div class="modal-footer justify-content-center" style="border:none; padding-top:6px;">
+        <button type="button" id="gpBtn" class="btn gp-btn" data-bs-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+  function showStatusModal(message = "Done", color = "#34a853", autoCloseMs = 0) {
+
+    const modalEl = document.getElementById("customDeleteSuccessModal");
+    const titleEl = document.getElementById("gpTitleText");
+    const btnEl = document.getElementById("gpBtn");
+    const svg = document.getElementById("gpTickSvg");
+    const circle = svg.querySelector(".gp-circle");
+    const check = svg.querySelector(".gp-check");
+
+    // Set text & colors
+    titleEl.textContent = message;
+    titleEl.style.color = color;
+    btnEl.style.backgroundColor = color;
+    circle.style.stroke = color;
+    check.style.stroke = color;
+
+    // 🔹 SHOW / HIDE OK BUTTON
+    if (autoCloseMs > 0) {
+      btnEl.style.display = "none";   // ⛔ hide when auto close
+    } else {
+      btnEl.style.display = "inline-block"; // ✅ show when manual
+    }
+
+    // Reset animation
+    circle.style.strokeDashoffset = circle.getAttribute("stroke-dasharray");
+    check.style.strokeDashoffset = check.getAttribute("stroke-dasharray");
+    svg.classList.remove("animate-circle", "animate-check", "animate-pop");
+    void svg.offsetWidth;
+    svg.classList.add("animate-circle", "animate-check", "animate-pop");
+
+    const bsModal = new bootstrap.Modal(modalEl, {
+      backdrop: false,
+      keyboard: true,
+      focus: false
+    });
+
+    bsModal.show();
+
+    // Auto close
+    if (autoCloseMs > 0) {
+      setTimeout(() => bsModal.hide(), autoCloseMs);
+    }
+  }
+</script>

@@ -1,0 +1,2574 @@
+{% extends 'baseView.html' %}
+
+{% block content %}
+<style>
+    /* Weight Management Page Styles - Using Theme Variables from baseView.html */
+    /* Decorative navbar */
+    .secondary-navbar {
+        margin-top: 4px;
+        height: 80px;
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        background: linear-gradient(
+            90deg,
+            #ff9933 0%,
+            #ff9933 55%,
+            #ffffff 60%,
+            #ffffff 80%,
+            #138808 85%,
+            #138808 100%
+        );
+        padding: 15px 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+    }
+
+    .secondary-navbar ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .secondary-navbar li {
+        margin: 0 15px;
+    }
+
+    .secondary-navbar a {
+        text-decoration: none;
+        color: #000;
+        font-weight: bold;
+        font-size: 18px;
+        position: relative;
+    }
+
+    .secondary-navbar a::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -3px;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(
+            90deg,
+            #000000 0%,
+            #ff9933 33.33%,
+            #ffffff 33.33% 66.66%,
+            #138808 66.66% 100%
+        );
+        transition: width 0.3s ease-in-out;
+    }
+
+    .secondary-navbar a:hover::after {
+        width: 100%;
+    }
+
+    .navbar-logo {
+        height: 90px;
+        width: auto;
+        max-width: 100px;
+    }
+
+    /* Validation Popup Styles */
+    .validation-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .validation-popup-content {
+        background: var(--card-background);
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 4px 6px var(--shadow);
+        width: 300px;
+        color: var(--text-primary);
+    }
+
+    .validation-popup-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .validation-popup-close {
+        margin-top: 15px;
+        padding: 5px 15px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .validation-popup-close:hover {
+        background: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px var(--shadow);
+    }
+
+    /* Weight Container */
+    .weight-container {
+        position: relative;
+        padding: 20px;
+        background: var(--background);
+        min-height: 100vh;
+        transition: all 0.3s ease;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 20px 25px;
+        background: var(--card-background);
+        border-radius: 20px;
+        box-shadow: 0 8px 25px var(--shadow);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+
+    .header-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .company-filter label {
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    .company-select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-background);
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .company-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.1);
+    }
+
+    /* Cards */
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+        transition: all 0.4s ease;
+    }
+
+    .cards.hidden {
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transform: translateY(-10px);
+    }
+
+    .card {
+        background: var(--card-background);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 8px 25px var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+    }
+
+    .card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.2);
+    }
+
+    .card:hover::before {
+        opacity: 1;
+    }
+
+    .card:hover::after {
+        opacity: 1;
+    }
+
+    .card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .card h2 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover h2 {
+        transform: scale(1.05);
+    }
+
+    .card p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 5px 0 0 0;
+    }
+
+    .company-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        align-self: flex-start;
+    }
+
+    .actions {
+        margin-top: 10px;
+    }
+
+    .btn-success,
+    .btn-danger,
+    .btn-safe,
+    .btn-category,
+    .btn-primary {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-success:hover,
+    .btn-danger:hover,
+    .btn-safe:hover,
+    .btn-category:hover,
+    .btn-primary:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .btn-safe {
+        background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+    }
+
+    .btn-category {
+        background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+    }
+
+    .info-tooltip {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+
+    .info-icon {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: help;
+    }
+
+    .tooltip-text {
+        visibility: hidden;
+        position: absolute;
+        background: var(--text-primary);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        width: 200px;
+        right: 0;
+        top: 30px;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .info-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Toggle Button */
+    .cards-toggle-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    #toggle-cards-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        font-size: 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    #toggle-cards-btn:hover {
+        background: var(--secondary-color);
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px var(--shadow);
+    }
+
+    /* Charts Container */
+    .bar-charts-container {
+        display: flex;
+        gap: 25px;
+        margin-bottom: 35px;
+        background: var(--card-background);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px var(--shadow);
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+    }
+
+    .chart-column-wrapper {
+        flex: 1;
+    }
+
+    .chart-column-header {
+        text-align: center;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 10px 0;
+        border-radius: 8px;
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .chart-box {
+        background: var(--card-background);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px var(--shadow);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .chart-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px var(--shadow);
+    }
+
+    .chart-box h3 {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin: 0 0 15px 0;
+        font-weight: 700;
+    }
+
+    .chart-filter {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-filter label {
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .chart-select {
+        padding: 6px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--card-background);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .chart-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.1);
+    }
+
+    .vertical-divider {
+        width: 2px;
+        background: var(--border-color);
+        margin: 0 10px;
+    }
+
+    /* Table Wrapper */
+    .table-wrapper {
+        background: var(--card-background);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 40px var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-top: 25px;
+        display: none;
+        backdrop-filter: blur(10px);
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .close-btn {
+        background: var(--danger-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--shadow);
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-background);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+    }
+
+    .modern-table thead th {
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 16px 12px;
+    }
+
+    .modern-table th,
+    .modern-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table th {
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .modern-table tbody tr {
+        transition: all 0.3s ease;
+        color: var(--text-primary);
+    }
+
+    .modern-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .modern-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .modern-table tbody td {
+        font-size: 0.9rem;
+    }
+
+    .view-person-btn {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white !important;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .view-person-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .view-person-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    }
+
+    .view-person-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .view-person-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .view-person-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Person Details Modal */
+    .person-details-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(8px);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .person-details-modal[style*="flex"] {
+        display: flex !important;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .person-details-content {
+        background: var(--card-background);
+        border-radius: 24px;
+        padding: 32px;
+        max-width: 750px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid var(--border-color);
+        position: relative;
+        animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Custom scrollbar for modal */
+    .person-details-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .person-details-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .person-details-content::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    .person-details-content::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+
+    .person-details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .person-details-header h3 {
+        color: var(--text-primary);
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .close-person-modal {
+        font-size: 1.75rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(0, 0, 0, 0.05);
+        border: none;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        line-height: 1;
+    }
+
+    .close-person-modal:hover {
+        color: white;
+        background: var(--danger-color);
+        transform: rotate(90deg) scale(1.1);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .close-person-modal:active {
+        transform: rotate(90deg) scale(0.95);
+    }
+
+    .person-details-section {
+        margin-bottom: 25px;
+    }
+
+    .person-details-section h4 {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .status-badge-large {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-fit {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .status-unfit {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .status-shape {
+        background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+        color: white;
+    }
+
+    .status-category {
+        background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+        color: white;
+    }
+
+    .reason-box {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border-left: 4px solid var(--primary-color);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    .reason-box h5 {
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .reason-box p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-background);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(var(--primary-color), 0.1);
+    }
+
+    .error-message {
+        display: block;
+        color: var(--danger-color);
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 8px;
+    }
+
+    .radio-group label {
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .btn-cancel,
+    .button-update-cancel {
+        padding: 10px 20px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover,
+    .button-update-cancel:hover {
+        background: var(--border-color);
+    }
+
+    .btn-submit {
+        padding: 10px 20px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--shadow);
+    }
+
+    /* Toast Notification */
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--success-color);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px var(--shadow);
+        z-index: 2000;
+        display: none;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toast-icon {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    /* Fullscreen Loader */
+    .fullscreen-loader {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 6px solid var(--border-color);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .table-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .bar-charts-container {
+            flex-direction: column;
+        }
+
+        .vertical-divider {
+            display: none;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .header-controls {
+            flex-direction: column;
+        }
+
+        .cards {
+            grid-template-columns: 1fr;
+        }
+
+        .table-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .h3, h3 {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<div class="wrapper">
+    {% set header = "Weight Management" %}
+    {% set subscript = "View Weight Analysis → Update weight" %}
+    {% include 'navbar/navbar.html' %}
+</div>
+
+<!-- Link external CSS and JS -->
+<link rel="stylesheet" href="/static/weight_ms/home.css">
+<script src="/static/Chart.umd.min.js"></script>
+
+
+
+<div class="weight-container" style="position: relative;">
+    <!-- Fullscreen Loader -->
+    <div class="fullscreen-loader" id="fullscreen-loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Validation Popup Modal -->
+    <div id="validation-popup" class="validation-popup" style="display: none;">
+        <div class="validation-popup-content">
+            <div class="validation-popup-icon">⚠️</div>
+            <div class="validation-popup-message" id="validation-message"></div>
+            <button class="validation-popup-close" onclick="closeValidationPopup()">OK</button>
+        </div>
+    </div>
+
+    
+    <div class="dashboard-header">
+        <div class="header-controls">
+            <div class="company-filter">
+                <label for="company-select">Filter by Company:</label>
+                <select id="company-select" class="company-select">
+                    <option value="All">15 CESR</option>
+                </select>
+                <script>
+                    // Pass company from template to JavaScript
+                    window.userCompanyFromTemplate = {{ company|tojson|safe if company else 'null' }};
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <div class="cards-toggle-container">
+        <button id="toggle-cards-btn">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+
+    <!-- Add User Modal -->
+
+
+    <!-- Success Toast -->
+    <div id="success-toast" class="toast" style="display: none;">
+        <div class="toast-content">
+            <span class="toast-icon">✓</span>
+            <span class="toast-message" id="message-text">Successfully</span>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="cards" id="summary-cards">
+        <div class="card card-info">
+            <div class="card-content">
+                <div>
+                    <h2 id="total-count">—</h2>
+                    <p>Total Personnel</p>
+                </div>
+                <div id="company-badge" class="company-badge">15 CESR</div>
+            </div>
+        </div>
+        <div class="card card-success">
+            <div class="card-content">
+                <div>
+                    <h2 id="auth-count">—</h2>
+                    <p>Fit Count</p>
+                </div>
+                <div class="actions">
+                    <button id="load-auth-btn" class="btn-success">View Fit Details</button>
+                </div>
+                <div class="info-tooltip">
+                    <span class="info-icon">i</span>
+                    <span class="tooltip-text">Fit count shows how many are within the authorized weight range.</span>
+                </div>
+            </div>
+        </div>
+        <div class="card card-unauth">
+            <div class="card-content">
+                <div>
+                    <h2 id="unauth-count">—</h2>
+                    <p>Unfit Count</p>
+                </div>
+                <div class="actions">
+                    <button id="load-unauth-btn" class="btn-danger">View Unfit Details</button>
+                </div>
+                <div class="info-tooltip">
+                    <span class="info-icon">i</span>
+                    <span class="tooltip-text">Unfit count shows how many are not within the authorized weight range.</span>
+                </div>
+            </div>
+        </div>
+        <div class="card card-safe">
+            <div class="card-content">
+                <div>
+                    <h2 id="safe-count">—</h2>
+                    <p>Shape I Count</p>
+                </div>
+                <div class="actions">
+                    <button id="load-safe-btn" class="btn-safe">View Shape I Details</button>
+                </div>
+                <div class="info-tooltip">
+                    <span class="info-icon">i</span>
+                    <span class="tooltip-text">Number of soldiers in Shape-1 status.</span>
+                </div>
+            </div>
+        </div>
+        <div class="card card-category">
+            <div class="card-content">
+                <div>
+                    <h2 id="category-count">—</h2>
+                    <p>Category Count</p>
+                </div>
+                <div class="actions">
+                    <button id="load-category-btn" class="btn-category">Category Details</button>
+                </div>
+                <div class="info-tooltip">
+                    <span class="info-icon">i</span>
+                    <span class="tooltip-text">Number of soldiers not in Shape-1 status.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Container -->
+    <div class="bar-charts-container" id="bar-charts-container">
+        <!-- Left column charts -->
+        <div class="chart-column-wrapper">
+            <div class="chart-column-header">
+                Weight Based Analysis
+            </div>
+            <div class="chart-column">
+                <div class="chart-box">
+                    <h3>Fitness Analysis</h3>
+                    <div class="bar-chart-wrapper" style="height: 300px;">
+                        <canvas id="fitUnfitChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>JCO vs OR Analysis</h3>
+                    <div class="chart-filter">
+                        <label for="jco-or-filter">Filter:</label>
+                        <select id="jco-or-filter" class="chart-select">
+                            <option value="Fit">FIT</option>
+                            <option value="UnFit">UNFIT</option>
+                        </select>
+                    </div>
+                    <div class="bar-chart-wrapper" style="height: 300px;">
+                        <canvas id="jcoOrFitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Vertical divider -->
+        <div class="vertical-divider"></div>
+        <!-- Right column charts -->
+        <div class="chart-column-wrapper">
+            <div class="chart-column-header">
+                Shape Based Analysis
+            </div>
+            <div class="chart-column">
+                <div class="chart-box">
+                    <h3>Shape vs Category Analysis</h3>
+                    <div class="bar-chart-wrapper" style="height: 300px;">
+                        <canvas id="safeCategoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>JCO vs OR Analysis</h3>
+                    <div class="chart-filter">
+                        <label for="jco-safe-or-filter">Filter:</label>
+                        <select id="jco-safe-or-filter" class="chart-select">
+                            <option value="shape">SHAPE I</option>
+                            <option value="category">CATEGORY</option>
+                        </select>
+                    </div>
+                    <div class="bar-chart-wrapper" style="height: 300px;">
+                        <canvas id="jcoSafeOrCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Wrapper -->
+    <div class="table-wrapper" id="table-wrapper" style="position: relative;">
+        <div class="table-spinner" id="table-spinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+        <div class="chart-box" id="unfit-deviation-chart-box" style="display: none; margin-bottom: 20px;">
+            <h3>Unfit Deviation Analysis (Click a bar to view persons)</h3>
+            <div class="bar-chart-wrapper" style="height: 320px;">
+                <canvas id="unfitDeviationLineChart"></canvas>
+            </div>
+        </div>
+        <div class="table-controls">
+            <button id="close-table-btn" class="close-btn">Close Details</button>
+            <div class="company-filter">
+                <label for="deviation-filter">Filter by Deviation:</label>
+                <select id="deviation-filter" class="deviation-filter">
+                    <option value="all">All Deviations</option>
+                    <option value="0-10">0% to 10%</option>
+                    <option value="10-20">10% to 20%</option>
+                    <option value="more-than-20">More than 20%</option>
+                </select>
+            </div>
+            <div class="company-filter">
+                <label for="rank-filter">Filter by Rank:</label>
+                <select id="rank-filter" class="rank-filter">
+                    <option value="all">All Ranks</option>
+                    <option value="JCO">JCO</option>
+                    <option value="other">Other than JCO</option>
+                </select>
+            </div>
+        </div>
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>Army No.</th>
+                    <th>Name</th>
+                    <th>Rank</th>
+                    <th>Company</th>
+                    <th>Age</th>
+                    <th>Height (cm)</th>
+                    <th>Authorized Range (kg)</th>
+                    <th>Actual (kg)</th>
+                    <th>Deviation (kg)</th>
+                    <th>Deviation (%)</th>
+                    <th>Status</th>
+                    <th>Status Type</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Person Details Modal -->
+<div id="person-details-modal" class="person-details-modal">
+    <div class="person-details-content">
+        <div class="person-details-header">
+            <h3>Personnel Details</h3>
+            <button type="button" class="close-person-modal" id="person-details-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div id="person-details-body">
+            <div style="text-align: center; padding: 40px;">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: var(--text-secondary);">Loading details...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+  function closePersonDetailsModal() {
+    var modal = document.getElementById('person-details-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+  }
+  window.closePersonDetailsModal = closePersonDetailsModal;
+  var closeBtn = document.getElementById('person-details-modal-close');
+  var modal = document.getElementById('person-details-modal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closePersonDetailsModal();
+    });
+  }
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        closePersonDetailsModal();
+      }
+    });
+  }
+})();
+</script>
+
+{% include 'weight_system/modals/modal.html'%}
+<script>
+    // Toggle cards visibility
+    document.getElementById('toggle-cards-btn').addEventListener('click', function () {
+        const cards = document.getElementById('summary-cards');
+        const btn = this;
+    
+        if (cards.classList.contains('hidden')) {
+            cards.classList.remove('hidden');
+            btn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        } else {
+            cards.classList.add('hidden');
+            btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        }
+    });
+const ADMIN_ROLES = ["Admin", "2IC", "Center"];
+const ALL_COMPANIES = ["1 Company", "2 Company", "3 Company", "HQ company"];
+const ROWS_PER_PAGE = 10;
+
+let fitCount = 0;
+let unFitCount = 0;
+let safeCount = 0;
+let categoryCount = 0;
+let currentCompany = "All";
+let tableData = [];
+let displayedData = [];
+let currentStatusClass = "";
+let currentPage = 1;
+let isLoading = false;
+let hasMoreData = true;
+let unfitDeviationChartInstance = null;
+
+
+// ============================================================
+// UTILITY
+// ============================================================
+function showLoader(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? "flex" : "none";
+}
+
+function showValidationPopup(message) {
+    const popup = document.getElementById("validation-popup");
+    const messageEl = document.getElementById("validation-message");
+    if (!popup || !messageEl) return;
+    messageEl.textContent = message;
+    popup.style.display = "flex";
+}
+
+function closeValidationPopup() {
+    const popup = document.getElementById("validation-popup");
+    if (popup) popup.style.display = "none";
+}
+
+function showSuccessToast(message) {
+    const toast = document.getElementById("success-toast");
+    const toastMessage = document.getElementById("message-text");
+    if (!toast || !toastMessage) return;
+    toastMessage.textContent = message;
+    toast.style.display = "block";
+    setTimeout(() => { toast.style.display = "none"; }, 3000);
+}
+
+function getDeviationBadgeClass(deviationPercent) {
+    if (deviationPercent === null || deviationPercent === undefined) return "deviation-normal";
+    const abs = Math.abs(deviationPercent);
+    if (abs > 10) return "deviation-overweight";
+    if (abs > 0) return "deviation-underweight";
+    return "deviation-normal";
+}
+
+function formatDeviation(deviation) {
+    if (deviation === null || deviation === undefined) return "N/A";
+    return `${deviation > 0 ? "+" : ""}${deviation}`;
+}
+
+function escapeHtml(s) {
+    if (s == null) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function toNum(v) {
+    return v !== null && v !== undefined && !isNaN(Number(v)) ? Number(v) : null;
+}
+
+
+// ============================================================
+// COMPANY DROPDOWN
+// Reads {{ company }} from Jinja via window.userCompanyFromTemplate.
+// Admin / 2IC / Center → all 4 companies shown, dropdown enabled.
+// Anyone else        → only their company shown, dropdown disabled.
+// ============================================================
+function loadCompanies() {
+    const companySelect = document.getElementById("company-select");
+    if (!companySelect) return;
+
+    const userCompany = window.userCompanyFromTemplate || null;
+    companySelect.innerHTML = "";
+
+    const isAdmin = !userCompany || ADMIN_ROLES.includes(userCompany);
+
+    if (isAdmin) {
+        // "All Companies" as first/default option
+        const allOpt = document.createElement("option");
+        allOpt.value = "All";
+        allOpt.textContent = "All Companies";
+        companySelect.appendChild(allOpt);
+
+        ALL_COMPANIES.forEach(name => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            companySelect.appendChild(opt);
+        });
+
+        companySelect.disabled = false;
+        companySelect.value = "All";
+        currentCompany = "All";
+    } else {
+        // Non-admin — only their own company, locked
+        const opt = document.createElement("option");
+        opt.value = userCompany;
+        opt.textContent = userCompany;
+        companySelect.appendChild(opt);
+        companySelect.disabled = true;
+        currentCompany = userCompany;
+    }
+
+    companySelect.dispatchEvent(new Event("change"));
+}
+
+
+// ============================================================
+// CHARTS
+// ============================================================
+async function fetchBarGraphData() {
+    try {
+        const jcoOrFilter = document.getElementById("jco-or-filter").value;
+        const jcoSafeOrFilter = document.getElementById("jco-safe-or-filter").value;
+        const base = "/weight_system/api/bar-graph-data";
+        const params = new URLSearchParams({ fitUnfitFilter: jcoOrFilter, safeCategoryFilter: jcoSafeOrFilter });
+        if (currentCompany !== "All") params.set("company", currentCompany);
+        const res = await fetch(`${base}?${params}`);
+        if (!res.ok) throw new Error("Failed to fetch bar graph data");
+        const data = await res.json();
+        drawBarGraphs(data);
+    } catch (err) {
+        console.error("Error fetching bar graph data:", err);
+        drawBarGraphs({
+            fitUnfit: { labels: ["Fit", "Unfit"], data: [110, 42] },
+            safeCategory: { labels: ["Shape I", "Category"], data: [34, 118] },
+            jcoOrFit: { labels: ["JCO Fit", "OR Fit"], data: [50, 60] },
+            jcoSafeOrCategory: { labels: ["JCO Shape I", "OR Category"], data: [34, 118] }
+        });
+    }
+}
+
+function destroyChart(name) {
+    if (window[name]) {
+        try { window[name].destroy(); } catch (_) {}
+        window[name] = null;
+    }
+}
+
+function destroyUnfitDeviationChart() {
+    if (unfitDeviationChartInstance) {
+        try { unfitDeviationChartInstance.destroy(); } catch (_) {}
+        unfitDeviationChartInstance = null;
+    }
+}
+
+function makeBarOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed.y}` }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, ticks: { color: "#4a5568" }, grid: { color: "rgba(0,0,0,0.05)" } },
+            x: { ticks: { color: "#4a5568" }, grid: { display: false } }
+        },
+        animation: { duration: 800, easing: "easeOutQuart" }
+    };
+}
+
+function makeDonutOptions(legendPosition = "bottom") {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: legendPosition,
+                labels: { color: "#4a5568", font: { size: 12 }, boxWidth: 15 }
+            },
+            tooltip: {
+                callbacks: { label: ctx => `${ctx.label}: ${ctx.parsed}` }
+            }
+        },
+        animation: { duration: 1000, easing: "easeOutQuart" }
+    };
+}
+
+function drawBarGraphs(data) {
+    destroyChart("fitUnfitChartInstance");
+    destroyChart("safeCategoryChartInstance");
+    destroyChart("jcoOrFitChartInstance");
+    destroyChart("jcoSafeOrCategoryChartInstance");
+
+    const jcoOrFilter = document.getElementById("jco-or-filter").value;
+    const jcoSafeOrFilter = document.getElementById("jco-safe-or-filter").value;
+
+    // Fit / Unfit bar
+    const fitUnfitCanvas = document.getElementById("fitUnfitChart");
+    if (fitUnfitCanvas) {
+        window.fitUnfitChartInstance = new Chart(fitUnfitCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: data.fitUnfit?.labels || ["Fit", "Unfit"],
+                datasets: [{
+                    data: data.fitUnfit?.data || [0, 0],
+                    backgroundColor: ["#38a169", "#e53e3e"],
+                    borderColor: ["#2f855a", "#c53030"],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barPercentage: 0.7
+                }]
+            },
+            options: makeBarOptions()
+        });
+    }
+
+    // Shape / Category bar
+    const safeCategoryCanvas = document.getElementById("safeCategoryChart");
+    if (safeCategoryCanvas) {
+        window.safeCategoryChartInstance = new Chart(safeCategoryCanvas.getContext("2d"), {
+            type: "bar",
+            data: {
+                labels: ["Shape I", "Category"],
+                datasets: [{
+                    data: data.safeCategory?.data || [0, 0],
+                    backgroundColor: ["#3182ce", "#d69e2e"],
+                    borderColor: ["#2c5282", "#b7791f"],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barPercentage: 0.7
+                }]
+            },
+            options: makeBarOptions()
+        });
+    }
+
+    // JCO vs OR fit donut
+    const jcoOrFitCanvas = document.getElementById("jcoOrFitChart");
+    if (jcoOrFitCanvas) {
+        window.jcoOrFitChartInstance = new Chart(jcoOrFitCanvas.getContext("2d"), {
+            type: "doughnut",
+            data: {
+                labels: [`JCO ${jcoOrFilter}`, `OR ${jcoOrFilter}`],
+                datasets: [{
+                    data: data.jcoOrFit?.data || [0, 0],
+                    backgroundColor: ["#2b6cb0", "#ed8936"],
+                    borderColor: ["#2c5282", "#dd6b20"],
+                    borderWidth: 1
+                }]
+            },
+            options: makeDonutOptions("bottom")
+        });
+    }
+
+    // JCO vs OR shape/category donut
+    const jcoSafeCanvas = document.getElementById("jcoSafeOrCategoryChart");
+    if (jcoSafeCanvas) {
+        window.jcoSafeOrCategoryChartInstance = new Chart(jcoSafeCanvas.getContext("2d"), {
+            type: "doughnut",
+            data: {
+                labels: ["JCO", "OR"],
+                datasets: [{
+                    data: data.jcoSafeOrCategory?.data || [0, 0],
+                    backgroundColor: ["#3182ce", "#d69e2e"],
+                    borderColor: ["#2c5282", "#b7791f"],
+                    borderWidth: 1
+                }]
+            },
+            options: makeDonutOptions("top")
+        });
+    }
+}
+
+function updateDoughnutCharts() {
+    const jcoOrFilter = document.getElementById("jco-or-filter").value;
+    const jcoSafeOrFilter = document.getElementById("jco-safe-or-filter").value;
+    const params = new URLSearchParams({ fitUnfitFilter: jcoOrFilter, safeCategoryFilter: jcoSafeOrFilter });
+    if (currentCompany !== "All") params.set("company", currentCompany);
+
+    fetch(`/weight_system/api/bar-graph-data?${params}`)
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to fetch bar graph data");
+            return res.json();
+        })
+        .then(data => {
+            destroyChart("jcoOrFitChartInstance");
+            destroyChart("jcoSafeOrCategoryChartInstance");
+
+            const jcoOrFitCanvas = document.getElementById("jcoOrFitChart");
+            if (jcoOrFitCanvas) {
+                window.jcoOrFitChartInstance = new Chart(jcoOrFitCanvas.getContext("2d"), {
+                    type: "doughnut",
+                    data: {
+                        labels: [
+                            `JCO ${jcoOrFilter.charAt(0).toUpperCase() + jcoOrFilter.slice(1)}`,
+                            `OR ${jcoOrFilter.charAt(0).toUpperCase() + jcoOrFilter.slice(1)}`
+                        ],
+                        datasets: [{
+                            data: data.jcoOrFit?.data || [0, 0],
+                            backgroundColor: ["#2b6cb0", "#ed8936"],
+                            borderColor: ["#2c5282", "#dd6b20"],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: makeDonutOptions("bottom")
+                });
+            }
+
+            const jcoSafeCanvas = document.getElementById("jcoSafeOrCategoryChart");
+            if (jcoSafeCanvas) {
+                window.jcoSafeOrCategoryChartInstance = new Chart(jcoSafeCanvas.getContext("2d"), {
+                    type: "doughnut",
+                    data: {
+                        labels: data.jcoSafeOrCategory?.labels || ["JCO", "OR"],
+                        datasets: [{
+                            data: data.jcoSafeOrCategory?.data || [0, 0],
+                            backgroundColor: ["#3182ce", "#d69e2e"],
+                            borderColor: ["#2c5282", "#b7791f"],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: makeDonutOptions("top")
+                });
+            }
+        })
+        .catch(err => {
+            console.error("Error updating doughnut charts:", err);
+            showValidationPopup("Failed to update chart data. Please try again.");
+        });
+}
+
+function resetChartVisibility() {
+    const el = document.getElementById("bar-charts-container");
+    if (el) el.style.display = "block";
+}
+
+
+// ============================================================
+// SUMMARY CARDS
+// ============================================================
+async function fetchSummary(company = "All") {
+    showLoader("fullscreen-loader", true);
+    currentCompany = company;
+
+    const badge = document.getElementById("company-badge");
+    if (badge) {
+        if (company === "All") {
+            badge.textContent = "15 CESR";
+        } else {
+            const num = company.match(/\d+/);
+            badge.textContent = num ? `${num[0]} Company` : company;
+        }
+    }
+
+    try {
+        const params = company !== "All" ? `?company=${encodeURIComponent(company)}` : "";
+        const [summaryRes, statusRes] = await Promise.all([
+            fetch(`/weight_system/api/summary${params}`).then(r => {
+                if (!r.ok) throw new Error("Failed to fetch summary");
+                return r.json();
+            }),
+            fetch(`/weight_system/api/status-summary${params}`).then(r => {
+                if (!r.ok) throw new Error("Failed to fetch status summary");
+                return r.json();
+            }),
+            fetchBarGraphData()
+        ]);
+
+        document.getElementById("total-count").textContent = summaryRes.total ?? 0;
+        document.getElementById("unauth-count").textContent = summaryRes.unFit ?? 0;
+        document.getElementById("auth-count").textContent = summaryRes.Fit ?? 0;
+        document.getElementById("safe-count").textContent = statusRes.safe_count ?? 0;
+        document.getElementById("category-count").textContent = statusRes.category_count ?? 0;
+
+        unFitCount = summaryRes.unFit ?? 0;
+        fitCount = summaryRes.Fit ?? 0;
+        safeCount = statusRes.safe_count ?? 0;
+        categoryCount = statusRes.category_count ?? 0;
+
+        resetChartVisibility();
+    } catch (err) {
+        console.error("Error fetching summary:", err);
+        ["total-count", "unauth-count", "auth-count", "safe-count", "category-count"]
+            .forEach(id => { document.getElementById(id).textContent = "0"; });
+        // Still try charts on failure, await so finally waits for it too
+        await fetchBarGraphData().catch(e => console.error("Chart fallback failed:", e));
+    } finally {
+        // Reached only after ALL promises settled — cards, counts, and charts
+        showLoader("fullscreen-loader", false);
+    }
+}
+
+
+// ============================================================
+// TABLE FILTERS
+// ============================================================
+function filterTableByDeviation(rows, range) {
+    if (range === "all") return rows;
+    return rows.filter(row => {
+        const abs = Math.abs(row.weight_deviation_percent);
+        if (range === "0-10") return abs > 0 && abs <= 10;
+        if (range === "10-20") return abs > 10 && abs <= 20;
+        if (range === "more-than-20") return abs > 20;
+        return true;
+    });
+}
+
+function filterTableByRank(rows, rankFilter) {
+    if (rankFilter === "all") return rows;
+    if (rankFilter === "JCO") return rows.filter(r => r.rank === "JCO");
+    if (rankFilter === "other") return rows.filter(r => r.rank !== "JCO");
+    return rows;
+}
+
+function applyUnfitFilters(rows) {
+    const deviationFilter = document.getElementById("deviation-filter");
+    const rankFilter = document.getElementById("rank-filter");
+    let filtered = filterTableByDeviation(rows, deviationFilter.value);
+    filtered = filterTableByRank(filtered, rankFilter.value);
+    return filtered;
+}
+
+function getUnfitDeviationCounts(rows) {
+    const counts = {
+        all: rows.length,
+        "0-10": 0,
+        "10-20": 0,
+        "more-than-20": 0
+    };
+
+    rows.forEach(row => {
+        const abs = Math.abs(Number(row.weight_deviation_percent) || 0);
+        if (abs > 0 && abs <= 10) counts["0-10"]++;
+        else if (abs > 10 && abs <= 20) counts["10-20"]++;
+        else if (abs > 20) counts["more-than-20"]++;
+    });
+
+    return counts;
+}
+
+function renderUnfitDeviationChart(rows) {
+    const chartBox = document.getElementById("unfit-deviation-chart-box");
+    const canvas = document.getElementById("unfitDeviationLineChart");
+    if (!chartBox || !canvas) return;
+
+    chartBox.style.display = "block";
+    destroyUnfitDeviationChart();
+
+    const counts = getUnfitDeviationCounts(rows);
+    const bars = [
+        { key: "all", label: "Total Unfit", value: counts.all, color: "#e11d48" },
+        { key: "0-10", label: "0% to 10%", value: counts["0-10"], color: "#0284c7" },
+        { key: "10-20", label: "10% to 20%", value: counts["10-20"], color: "#f59e0b" },
+        { key: "more-than-20", label: "More than 20%", value: counts["more-than-20"], color: "#7c3aed" }
+    ];
+
+    unfitDeviationChartInstance = new Chart(canvas.getContext("2d"), {
+        type: "bar",
+        data: {
+            labels: bars.map(b => b.label),
+            datasets: [{
+                label: "Count",
+                data: bars.map(b => b.value),
+                backgroundColor: bars.map(b => b.color),
+                borderColor: bars.map(b => b.color),
+                borderWidth: 1,
+                borderRadius: 6,
+                barPercentage: 0.65,
+                categoryPercentage: 0.7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => `${bars[ctx.dataIndex].label}: ${ctx.parsed.y}` }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 } }
+            },
+            onClick: (event) => {
+                const points = unfitDeviationChartInstance.getElementsAtEventForMode(
+                    event,
+                    "nearest",
+                    { intersect: false },
+                    true
+                );
+                if (!points.length) return;
+                const { index } = points[0];
+                const selectedRange = bars[index].key;
+                const deviationFilter = document.getElementById("deviation-filter");
+                deviationFilter.value = selectedRange === "all" ? "all" : selectedRange;
+                deviationFilter.dispatchEvent(new Event("change"));
+            }
+        }
+    });
+}
+
+
+// ============================================================
+// TABLE RENDERING
+// ============================================================
+function renderTableRows(rows, statusClass, append = false) {
+    const tbody = document.querySelector("#table-wrapper tbody");
+    if (!append) tbody.innerHTML = "";
+
+    if (!rows.length && !append) {
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">No records found</td></tr>';
+        return;
+    }
+
+    rows.forEach(r => {
+        const lower = r.lower_limit ? r.lower_limit.toFixed(2) : "—";
+        const upper = r.upper_limit ? r.upper_limit.toFixed(2) : "—";
+        const deviationBadgeClass = getDeviationBadgeClass(r.weight_deviation_percent);
+        const deviationPercentText = formatDeviation(r.weight_deviation_percent);
+        const deviationKgText = formatDeviation(r.weight_deviation_kg);
+
+        let buttonStatusClass = statusClass;
+        if (statusClass === "status" && r.status_type) {
+            buttonStatusClass = r.status_type;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${escapeHtml(r.army_number)}</td>
+            <td>${escapeHtml(r.name)}</td>
+            <td>${escapeHtml(r.rank)}</td>
+            <td>${escapeHtml(r.company)}</td>
+            <td>${escapeHtml(r.age)}</td>
+            <td>${escapeHtml(r.height_cm)}</td>
+            <td>${lower} - ${upper}</td>
+            <td>${escapeHtml(r.actual_weight)}</td>
+            <td><span class="deviation-badge ${deviationBadgeClass}">${deviationKgText} kg</span></td>
+            <td><span class="deviation-badge ${deviationBadgeClass}">${deviationPercentText}%</span></td>
+            <td><span class="status-badge ${statusClass}">${escapeHtml(r.status?.toUpperCase())}</span></td>
+            <td><span class="status-type-badge">${escapeHtml(r.status_type?.toUpperCase())}</span></td>
+            <td><button type="button" class="view-person-btn"
+                    data-army-number="${escapeHtml(r.army_number)}"
+                    data-status-class="${escapeHtml(buttonStatusClass)}">View</button></td>
+        `;
+        tbody.appendChild(tr);
+
+        tr.querySelector(".view-person-btn").addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showPersonModalWithData({ ...r }, buttonStatusClass);
+        });
+    });
+}
+
+
+// ============================================================
+// TABLE FETCH
+// ============================================================
+async function fetchAndShow(url, statusClass) {
+    const wrapper = document.getElementById("table-wrapper");
+    const tbody = wrapper.querySelector("tbody");
+    const barChartsContainer = document.getElementById("bar-charts-container");
+    const deviationFilter = document.getElementById("deviation-filter");
+    const rankFilter = document.getElementById("rank-filter");
+    const unfitChartBox = document.getElementById("unfit-deviation-chart-box");
+
+    barChartsContainer.style.display = "none";
+    deviationFilter.style.display = statusClass === "unauth" ? "block" : "none";
+    rankFilter.style.display = "block";
+    if (unfitChartBox) unfitChartBox.style.display = "none";
+    destroyUnfitDeviationChart();
+
+    tbody.innerHTML = "";
+    tableData = [];
+    displayedData = [];
+    currentPage = 1;
+    hasMoreData = true;
+    wrapper.style.display = "block";
+    showLoader("table-spinner", true);
+    isLoading = true;
+
+    try {
+        const params = currentCompany !== "All" ? `?company=${encodeURIComponent(currentCompany)}` : "";
+        const res = await fetch(`${url}${params}`);
+        if (!res.ok) throw new Error("Failed to fetch table data");
+        const data = await res.json();
+
+        tableData = data.rows || [];
+        currentStatusClass = statusClass;
+
+        if (!tableData.length) {
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">No records found</td></tr>';
+            hasMoreData = false;
+            return;
+        }
+
+        let rows = tableData.slice(0, ROWS_PER_PAGE);
+        if (statusClass === "unauth") rows = applyUnfitFilters(rows);
+        else rows = filterTableByRank(rows, rankFilter.value);
+
+        displayedData = rows;
+        renderTableRows(rows, statusClass);
+        hasMoreData = tableData.length > ROWS_PER_PAGE;
+    } catch (err) {
+        console.error("Error fetching table data:", err);
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">Error loading data</td></tr>';
+        hasMoreData = false;
+    } finally {
+        showLoader("table-spinner", false);
+        isLoading = false;
+    }
+}
+
+async function fetchAndShowUnfitWithGraph() {
+    const wrapper = document.getElementById("table-wrapper");
+    const tbody = wrapper.querySelector("tbody");
+    const barChartsContainer = document.getElementById("bar-charts-container");
+    const deviationFilter = document.getElementById("deviation-filter");
+    const rankFilter = document.getElementById("rank-filter");
+    const unfitChartBox = document.getElementById("unfit-deviation-chart-box");
+
+    barChartsContainer.style.display = "none";
+    deviationFilter.style.display = "block";
+    rankFilter.style.display = "block";
+    if (unfitChartBox) unfitChartBox.style.display = "none";
+
+    deviationFilter.value = "all";
+    tbody.innerHTML = "";
+    tableData = [];
+    displayedData = [];
+    currentPage = 1;
+    hasMoreData = true;
+    currentStatusClass = "unauth";
+    wrapper.style.display = "block";
+    const tableEl = wrapper.querySelector(".modern-table");
+    const controlsEl = wrapper.querySelector(".table-controls");
+    if (tableEl) tableEl.style.display = "none";
+    if (controlsEl) controlsEl.style.display = "none";
+    showLoader("table-spinner", true);
+    isLoading = true;
+
+    try {
+        const params = currentCompany !== "All" ? `?company=${encodeURIComponent(currentCompany)}` : "";
+        const res = await fetch(`/weight_system/api/unauthorized${params}`);
+        if (!res.ok) throw new Error("Failed to fetch unfit data");
+        const data = await res.json();
+
+        tableData = data.rows || [];
+
+        if (!tableData.length) {
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">No records found</td></tr>';
+            hasMoreData = false;
+            return;
+        }
+
+        renderUnfitDeviationChart(tableData);
+        displayedData = [];
+        hasMoreData = tableData.length > ROWS_PER_PAGE;
+    } catch (err) {
+        console.error("Error fetching unfit table data:", err);
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">Error loading data</td></tr>';
+        hasMoreData = false;
+    } finally {
+        showLoader("table-spinner", false);
+        isLoading = false;
+    }
+}
+
+async function fetchStatusData(statusType) {
+    const wrapper = document.getElementById("table-wrapper");
+    const tbody = wrapper.querySelector("tbody");
+    const barChartsContainer = document.getElementById("bar-charts-container");
+    const deviationFilter = document.getElementById("deviation-filter");
+    const rankFilter = document.getElementById("rank-filter");
+    const unfitChartBox = document.getElementById("unfit-deviation-chart-box");
+
+    barChartsContainer.style.display = "none";
+    deviationFilter.style.display = "none";
+    rankFilter.style.display = "block";
+    if (unfitChartBox) unfitChartBox.style.display = "none";
+    destroyUnfitDeviationChart();
+
+    tbody.innerHTML = "";
+    tableData = [];
+    displayedData = [];
+    currentPage = 1;
+    hasMoreData = true;
+    wrapper.style.display = "block";
+    showLoader("table-spinner", true);
+    isLoading = true;
+
+    try {
+        const params = new URLSearchParams({ status_type: statusType });
+        if (currentCompany !== "All") params.set("company", currentCompany);
+        const res = await fetch(`/weight_system/api/status-data?${params}`);
+        if (!res.ok) throw new Error("Failed to fetch status data");
+        const data = await res.json();
+
+        tableData = data.rows || [];
+        currentStatusClass = "status";
+
+        if (!tableData.length) {
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">No records found</td></tr>';
+            hasMoreData = false;
+            return;
+        }
+
+        const rows = filterTableByRank(tableData.slice(0, ROWS_PER_PAGE), rankFilter.value);
+        displayedData = rows;
+        renderTableRows(rows, "status");
+        hasMoreData = tableData.length > ROWS_PER_PAGE;
+    } catch (err) {
+        console.error("Error fetching status data:", err);
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:#718096;padding:2rem;">Error loading data</td></tr>';
+        hasMoreData = false;
+    } finally {
+        showLoader("table-spinner", false);
+        isLoading = false;
+    }
+}
+
+function loadMoreRows() {
+    if (!hasMoreData || isLoading) return;
+    isLoading = true;
+
+    const deviationFilter = document.getElementById("deviation-filter");
+    const rankFilter = document.getElementById("rank-filter");
+    const start = currentPage * ROWS_PER_PAGE;
+    const end = start + ROWS_PER_PAGE;
+    let nextRows = tableData.slice(start, end);
+
+    if (currentStatusClass === "unauth") nextRows = applyUnfitFilters(nextRows);
+    else nextRows = filterTableByRank(nextRows, rankFilter.value);
+
+    if (!nextRows.length) {
+        hasMoreData = false;
+        isLoading = false;
+        return;
+    }
+
+    displayedData = [...displayedData, ...nextRows];
+    renderTableRows(nextRows, currentStatusClass, true);
+    currentPage++;
+    hasMoreData = end < tableData.length;
+    isLoading = false;
+}
+
+function closeTable() {
+    const wrapper = document.getElementById("table-wrapper");
+    wrapper.style.display = "none";
+    wrapper.querySelector("tbody").innerHTML = "";
+    const tableEl = wrapper.querySelector(".modern-table");
+    const controlsEl = wrapper.querySelector(".table-controls");
+    if (tableEl) tableEl.style.display = "";
+    if (controlsEl) controlsEl.style.display = "";
+    const unfitChartBox = document.getElementById("unfit-deviation-chart-box");
+    if (unfitChartBox) unfitChartBox.style.display = "none";
+    destroyUnfitDeviationChart();
+    tableData = [];
+    displayedData = [];
+    currentPage = 1;
+    hasMoreData = true;
+    resetChartVisibility();
+}
+
+function handleScroll() {
+    const wrapper = document.getElementById("table-wrapper");
+    if (wrapper.style.display === "none") return;
+    const { scrollTop, scrollHeight, clientHeight } = wrapper;
+    if (scrollTop + clientHeight >= scrollHeight - 50 && !isLoading && hasMoreData) {
+        loadMoreRows();
+    }
+}
+
+
+// ============================================================
+// PERSON DETAILS MODAL
+// ============================================================
+function normalizePersonData(data) {
+    return {
+        army_number: data.army_number,
+        name: data.name,
+        rank: data.rank,
+        company: data.company,
+        age: toNum(data.age) ?? data.age,
+        height_cm: toNum(data.height_cm) ?? data.height_cm,
+        actual_weight: toNum(data.actual_weight) ?? data.actual_weight,
+        status_type: data.status_type,
+        category_type: data.category_type,
+        restrictions: data.restrictions,
+        ideal_weight: toNum(data.ideal_weight) ?? data.ideal_weight,
+        lower_limit: toNum(data.lower_limit) ?? data.lower_limit,
+        upper_limit: toNum(data.upper_limit) ?? data.upper_limit,
+        status: data.status,
+        weight_deviation_percent: toNum(data.weight_deviation_percent) ?? data.weight_deviation_percent,
+        weight_deviation_kg: toNum(data.weight_deviation_kg) ?? data.weight_deviation_kg
+    };
+}
+
+function showPersonModalWithData(data, statusClass) {
+    const modal = document.getElementById("person-details-modal");
+    const body = document.getElementById("person-details-body");
+    if (!modal || !body) return;
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    renderPersonDetails(normalizePersonData(data), statusClass);
+}
+window.showPersonModalWithData = showPersonModalWithData;
+
+function closePersonDetailsModal() {
+    const modal = document.getElementById("person-details-modal");
+    if (modal) modal.style.display = "none";
+    document.body.style.overflow = "auto";
+}
+window.closePersonDetailsModal = closePersonDetailsModal;
+
+function renderPersonDetails(data, statusClass) {
+    const body = document.getElementById("person-details-body");
+    if (!body) return;
+
+    const idealWeight = toNum(data.ideal_weight);
+    const lowerLimit = toNum(data.lower_limit);
+    const upperLimit = toNum(data.upper_limit);
+    const actualWeight = toNum(data.actual_weight);
+    const ideal = idealWeight != null ? idealWeight.toFixed(2) : "—";
+    const lower = lowerLimit != null ? lowerLimit.toFixed(2) : "—";
+    const upper = upperLimit != null ? upperLimit.toFixed(2) : "—";
+    const deviationPercentText = formatDeviation(data.weight_deviation_percent);
+    const deviationKgText = formatDeviation(data.weight_deviation_kg);
+    const age = data.age ?? "—";
+    const heightCm = data.height_cm ?? "—";
+    const status = data.status || "—";
+    const statusType = String(data.status_type || "—");
+    const restrictions = data.restrictions || null;
+    const categoryType = data.category_type;
+
+    // Build reason text
+    let reasonTitle = "";
+    let reasonText = "";
+
+    if (statusClass === "unauth") {
+        reasonTitle = "Why is this person UNFIT?";
+        if (lowerLimit != null && actualWeight != null && actualWeight < lowerLimit) {
+            const diff = (lowerLimit - actualWeight).toFixed(2);
+            reasonText = `This person is UNDERWEIGHT by ${diff} kg (${deviationPercentText}%). Their actual weight (${actualWeight} kg) is below the minimum authorized weight (${lower} kg) for their age (${age} years) and height (${heightCm} cm).`;
+        } else if (upperLimit != null && actualWeight != null && actualWeight > upperLimit) {
+            const diff = (actualWeight - upperLimit).toFixed(2);
+            reasonText = `This person is OVERWEIGHT by ${diff} kg (${deviationPercentText}%). Their actual weight (${actualWeight} kg) exceeds the maximum authorized weight (${upper} kg) for their age (${age} years) and height (${heightCm} cm).`;
+        } else {
+            reasonText = `This person is UNFIT. Their weight (${actualWeight} kg) does not fall within the authorized range (${lower} kg – ${upper} kg).`;
+        }
+    } else if (statusClass === "auth") {
+        reasonTitle = "Why is this person FIT?";
+        reasonText = `This person's weight (${actualWeight} kg) falls within the authorized range (${lower} kg – ${upper} kg) for their age (${age} years) and height (${heightCm} cm). Ideal weight: ${ideal} kg.`;
+    } else if (statusClass === "shape") {
+        reasonTitle = "Why is this person in SHAPE I?";
+        reasonText = `This person is classified as SHAPE I — medically fit for all duties. `;
+        if (status === "Fit") {
+            reasonText += `Their weight (${actualWeight} kg) is within the authorized range (${lower} kg – ${upper} kg).`;
+        } else {
+            reasonText += `However, they are currently UNFIT based on weight criteria (deviation: ${deviationPercentText}%).`;
+        }
+    } else if (statusClass === "category") {
+        const catLabel = categoryType ? String(categoryType).charAt(0).toUpperCase() + String(categoryType).slice(1) : "Unknown";
+        reasonTitle = "Why is this person in CATEGORY?";
+        reasonText = `This person is classified as CATEGORY (${catLabel}) with medical restrictions. `;
+        if (restrictions) reasonText += `Restrictions: ${restrictions}. `;
+        reasonText += `Fitness status: ${status}. `;
+        if (status === "UnFit") {
+            reasonText += `They are UNFIT with a deviation of ${deviationPercentText}%.`;
+        } else if (status === "Fit") {
+            reasonText += `Their weight (${actualWeight} kg) is within the authorized range (${lower} kg – ${upper} kg).`;
+        }
+    }
+
+    const statusBadgeClass = status === "Fit" ? "status-fit" : "status-unfit";
+    const statusTypeBadgeClass = statusType === "shape" ? "status-shape" : "status-category";
+
+    body.innerHTML = `
+        <div class="person-details-section">
+            <h4>Personal Information</h4>
+            <div class="detail-row"><div class="detail-label">Army Number:</div><div class="detail-value">${escapeHtml(data.army_number)}</div></div>
+            <div class="detail-row"><div class="detail-label">Name:</div><div class="detail-value">${escapeHtml(data.name)}</div></div>
+            <div class="detail-row"><div class="detail-label">Rank:</div><div class="detail-value">${escapeHtml(data.rank)}</div></div>
+            <div class="detail-row"><div class="detail-label">Company:</div><div class="detail-value">${escapeHtml(data.company)}</div></div>
+            <div class="detail-row"><div class="detail-label">Age:</div><div class="detail-value">${escapeHtml(age)} years</div></div>
+        </div>
+
+        <div class="person-details-section">
+            <h4>Physical Measurements</h4>
+            <div class="detail-row"><div class="detail-label">Height:</div><div class="detail-value">${escapeHtml(heightCm)} cm</div></div>
+            <div class="detail-row"><div class="detail-label">Actual Weight:</div><div class="detail-value"><strong>${escapeHtml(actualWeight)} kg</strong></div></div>
+            <div class="detail-row"><div class="detail-label">Ideal Weight:</div><div class="detail-value">${ideal} kg</div></div>
+            <div class="detail-row"><div class="detail-label">Authorized Range:</div><div class="detail-value">${lower} kg – ${upper} kg</div></div>
+        </div>
+
+        <div class="person-details-section">
+            <h4>Fitness Status</h4>
+            <div class="detail-row">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value"><span class="status-badge-large ${statusBadgeClass}">${escapeHtml(status)}</span></div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Status Type:</div>
+                <div class="detail-value"><span class="status-badge-large ${statusTypeBadgeClass}">${escapeHtml(statusType.toUpperCase())}</span></div>
+            </div>
+            ${categoryType ? `
+            <div class="detail-row">
+                <div class="detail-label">Category Type:</div>
+                <div class="detail-value">${escapeHtml(String(categoryType).charAt(0).toUpperCase() + String(categoryType).slice(1))}</div>
+            </div>` : ""}
+            <div class="detail-row">
+                <div class="detail-label">Weight Deviation:</div>
+                <div class="detail-value">${deviationKgText} kg (${deviationPercentText}%)</div>
+            </div>
+        </div>
+
+        ${reasonText ? `
+        <div class="person-details-section">
+            <div class="reason-box">
+                <h5>${escapeHtml(reasonTitle)}</h5>
+                <p>${escapeHtml(reasonText)}</p>
+            </div>
+        </div>` : ""}
+
+        ${restrictions ? `
+        <div class="person-details-section">
+            <h4>Restrictions</h4>
+            <div class="reason-box"><p>${escapeHtml(restrictions)}</p></div>
+        </div>` : ""}
+    `;
+}
+
+
+// ============================================================
+// FORM VALIDATION
+// ============================================================
+function validateAlpha(input) {
+    const errorEl = document.getElementById(input.id + "-error");
+    const ok = /^[a-zA-Z\s]*$/.test(input.value);
+    errorEl.textContent = ok ? "" : "Only letters and spaces are allowed";
+    input.style.borderColor = ok ? "" : "#e53e3e";
+    return ok;
+}
+
+function validateAlphaNumeric(input) {
+    const errorEl = document.getElementById(input.id + "-error");
+    const ok = /^[a-zA-Z0-9]*$/.test(input.value);
+    errorEl.textContent = ok ? "" : "Only letters and numbers are allowed";
+    input.style.borderColor = ok ? "" : "#e53e3e";
+    return ok;
+}
+
+function validateNumeric(input) {
+    const errorEl = document.getElementById(input.id + "-error");
+    const val = input.value;
+    if (!/^[0-9.]*$/.test(val)) {
+        errorEl.textContent = "Only numbers are allowed";
+        input.style.borderColor = "#e53e3e";
+        return false;
+    }
+    if (val && (isNaN(parseFloat(val)) || !isFinite(val))) {
+        errorEl.textContent = "Please enter a valid number";
+        input.style.borderColor = "#e53e3e";
+        return false;
+    }
+    errorEl.textContent = "";
+    input.style.borderColor = "";
+    return true;
+}
+
+function validateRestrictions(input) {
+    const errorEl = document.getElementById(input.id + "-error");
+    const ok = input.value.length <= 500;
+    errorEl.textContent = ok ? "" : "Restrictions cannot exceed 500 characters";
+    input.style.borderColor = ok ? "" : "#e53e3e";
+    return ok;
+}
+
+
+// ============================================================
+
+
+// ============================================================
+// UPDATE USER MODAL
+// ============================================================
+function openUpdateUserModal() {
+    const modal = document.getElementById("update-user-modal");
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    document.getElementById("update-user-form").style.display = "block";
+    document.getElementById("edit-user-form").style.display = "none";
+    document.getElementById("update-army-number").value = "";
+}
+
+function closeUpdateUserModal() {
+    document.getElementById("update-user-modal").style.display = "none";
+    document.body.style.overflow = "auto";
+    resetEditForm();
+}
+
+function resetEditForm() {
+    document.getElementById("edit-user-form").reset();
+    document.querySelectorAll("#edit-user-form .error-message").forEach(el => el.textContent = "");
+    document.querySelectorAll("#edit-user-form input, #edit-user-form select, #edit-user-form textarea")
+        .forEach(el => el.style.borderColor = "");
+    document.getElementById("edit-category-options").style.display = "none";
+    document.getElementById("edit-restrictions-group").style.display = "none";
+    document.querySelector('input[name="edit-status_type"][value="safe"]').checked = true;
+}
+
+async function handleUpdateUserSearch(event) {
+    event.preventDefault();
+    const armyNumber = document.getElementById("update-army-number").value.trim();
+    if (!armyNumber) { showValidationPopup("Please enter an Army Number."); return; }
+
+    try {
+        const res = await fetch(`/weight_system/api/user/${encodeURIComponent(armyNumber)}`);
+        const user = await res.json();
+        if (user.error) { alert(user.error); return; }
+
+        document.getElementById("update-user-form").style.display = "none";
+        document.getElementById("edit-user-form").style.display = "block";
+        document.getElementById("edit-name").value = user.name;
+        document.getElementById("edit-army_number").value = user.army_number;
+        document.getElementById("edit-age").value = user.age;
+        document.getElementById("edit-rank").value = user.rank;
+        document.getElementById("edit-height_cm").value = user.height_cm;
+        document.getElementById("edit-actual_weight").value = user.actual_weight;
+        document.getElementById("edit-company").value = user.company;
+        document.querySelector(`input[name="edit-status_type"][value="${user.status_type}"]`).checked = true;
+
+        if (user.category_type) {
+            document.getElementById("edit-category-options").style.display = "flex";
+            document.querySelector(`input[name="edit-category_type"][value="${user.category_type}"]`).checked = true;
+            document.getElementById("edit-restrictions-group").style.display = "block";
+        } else {
+            document.getElementById("edit-category-options").style.display = "none";
+            document.getElementById("edit-restrictions-group").style.display = "none";
+        }
+        document.getElementById("edit-restrictions").value = user.restrictions || "";
+    } catch (err) {
+        console.error("Error fetching user:", err);
+        showValidationPopup("User not found or error occurred. Please try again.");
+    }
+}
+
+async function handleUpdateUserSubmit(event) {
+    event.preventDefault();
+
+    const fields = [
+        { id: "edit-name", validator: validateAlpha },
+        { id: "edit-age", validator: validateNumeric },
+        { id: "edit-rank", validator: validateAlpha },
+        { id: "edit-height_cm", validator: validateNumeric },
+        { id: "edit-actual_weight", validator: validateNumeric }
+    ];
+
+    let isValid = fields.every(f => f.validator(document.getElementById(f.id)));
+
+    const companySelect = document.getElementById("edit-company");
+    const companyError = document.getElementById("edit-company-error");
+    if (!companySelect.value) {
+        companyError.textContent = "Please select a company";
+        companySelect.style.borderColor = "#e53e3e";
+        isValid = false;
+    } else {
+        companyError.textContent = "";
+        companySelect.style.borderColor = "";
+    }
+
+    const statusType = document.querySelector('input[name="edit-status_type"]:checked').value;
+    let categoryType = null;
+    let restrictions = null;
+
+    if (statusType === "category") {
+        const isCategorySelected = Array.from(document.getElementsByName("edit-category_type")).some(r => r.checked);
+        if (!isCategorySelected) {
+            document.getElementById("edit-restrictions-error").textContent = "Please select a category type";
+            isValid = false;
+        } else {
+            categoryType = document.querySelector('input[name="edit-category_type"]:checked').value;
+            const restInput = document.getElementById("edit-restrictions");
+            if (!validateRestrictions(restInput)) {
+                isValid = false;
+            } else {
+                restrictions = restInput.value.trim();
+            }
+        }
+    }
+
+    if (!isValid) return;
+
+    const formData = {
+        army_number: document.getElementById("edit-army_number").value.trim(),
+        name: document.getElementById("edit-name").value.trim(),
+        rank: document.getElementById("edit-rank").value.trim(),
+        age: parseInt(document.getElementById("edit-age").value),
+        height_cm: parseInt(document.getElementById("edit-height_cm").value),
+        actual_weight: parseFloat(document.getElementById("edit-actual_weight").value),
+        company: document.getElementById("edit-company").value,
+        status_type: statusType,
+        category_type: categoryType,
+        restrictions
+    };
+
+    try {
+        const res = await fetch("/weight_system/api/update-user", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData)
+        });
+        const result = await res.json();
+        if (res.ok) {
+            showSuccessToast("User updated successfully.");
+            closeUpdateUserModal();
+            setTimeout(() => fetchSummary(currentCompany), 1500);
+        } else {
+            showValidationPopup("Error updating user: " + (result.error || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Error updating user:", err);
+        showValidationPopup("Error updating user. Please try again.");
+    }
+}
+
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Filters
+    document.getElementById("deviation-filter").innerHTML = `
+        <option value="all">All Deviations</option>
+        <option value="0-10">0% to 10%</option>
+        <option value="10-20">10% to 20%</option>
+        <option value="more-than-20">More than 20%</option>
+    `;
+    document.getElementById("rank-filter").innerHTML = `
+        <option value="all">All Ranks</option>
+        <option value="JCO">JCO</option>
+        <option value="other">Other than JCO</option>
+    `;
+
+    // Summary card buttons
+    document.getElementById("load-unauth-btn").addEventListener("click", fetchAndShowUnfitWithGraph);
+    document.getElementById("load-auth-btn").addEventListener("click", () => fetchAndShow("/weight_system/api/authorized", "auth"));
+    document.getElementById("load-safe-btn").addEventListener("click", () => fetchStatusData("shape"));
+    document.getElementById("load-category-btn").addEventListener("click", () => fetchStatusData("category"));
+    document.getElementById("close-table-btn").addEventListener("click", closeTable);
+    document.getElementById("table-wrapper").addEventListener("scroll", handleScroll);
+
+    // Company dropdown
+    document.getElementById("company-select").addEventListener("change", e => {
+        fetchSummary(e.target.value);
+        closeTable();
+    });
+
+    // Table filters
+    document.getElementById("deviation-filter").addEventListener("change", e => {
+        if (currentStatusClass !== "unauth") return;
+        showLoader("table-spinner", true);
+        setTimeout(() => {
+            const wrapper = document.getElementById("table-wrapper");
+            const tableEl = wrapper.querySelector(".modern-table");
+            const controlsEl = wrapper.querySelector(".table-controls");
+            if (tableEl) tableEl.style.display = "table";
+            if (controlsEl) controlsEl.style.display = "flex";
+            const rows = applyUnfitFilters(tableData.slice(0, currentPage * ROWS_PER_PAGE));
+            displayedData = rows;
+            renderTableRows(rows, currentStatusClass);
+            hasMoreData = tableData.length > currentPage * ROWS_PER_PAGE;
+            showLoader("table-spinner", false);
+        }, 300);
+    });
+
+    document.getElementById("rank-filter").addEventListener("change", e => {
+        showLoader("table-spinner", true);
+        setTimeout(() => {
+            let rows = tableData.slice(0, currentPage * ROWS_PER_PAGE);
+            if (currentStatusClass === "unauth") rows = applyUnfitFilters(rows);
+            else rows = filterTableByRank(rows, e.target.value);
+            displayedData = rows;
+            renderTableRows(rows, currentStatusClass);
+            hasMoreData = tableData.length > currentPage * ROWS_PER_PAGE;
+            showLoader("table-spinner", false);
+        }, 300);
+    });
+
+    // Chart filters
+    document.getElementById("jco-or-filter").addEventListener("change", updateDoughnutCharts);
+    document.getElementById("jco-safe-or-filter").addEventListener("change", updateDoughnutCharts);
+
+   
+
+   
+
+    // Person details modal close
+    const personModal = document.getElementById("person-details-modal");
+    const personModalClose = document.getElementById("person-details-modal-close");
+    if (personModalClose) {
+        personModalClose.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); closePersonDetailsModal(); });
+    }
+    if (personModal) {
+        personModal.addEventListener("click", e => { if (e.target === personModal) closePersonDetailsModal(); });
+    }
+
+    // Toggle cards
+    document.getElementById("toggle-cards-btn").addEventListener("click", function () {
+        const cards = document.getElementById("summary-cards");
+        const isHidden = cards.classList.toggle("hidden");
+        this.innerHTML = isHidden
+            ? '<i class="fas fa-chevron-up"></i>'
+            : '<i class="fas fa-chevron-down"></i>';
+    });
+
+    // Init
+    loadCompanies();
+    // fetchSummary() is triggered by loadCompanies() via the 'change' event dispatch
+});
+</script>
+{% endblock %}

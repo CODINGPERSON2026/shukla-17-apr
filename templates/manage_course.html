@@ -1,0 +1,766 @@
+{% extends "baseView.html" %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --army-green: #2d4a1e;
+    --army-olive: #4a5e2a;
+    --army-tan: #c8b87a;
+    --army-gold: #d4a017;
+    --army-dark: #1a2410;
+    --card-bg: #ffffff;
+    --border-color: #d1cdb8;
+    --text-primary: #1a2410;
+    --text-secondary: #4a5e2a;
+    --danger-red: #c0392b;
+    --success-green: #27ae60;
+  }
+
+  /* ── CONTROLS BAR ── */
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+
+  .search-box i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--army-olive);
+    font-size: 0.9rem;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background: #fff;
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .search-box input:focus {
+    border-color: var(--army-olive);
+    box-shadow: 0 0 0 3px rgba(74, 94, 42, 0.15);
+  }
+
+  .filter-select {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: #fff;
+    color: var(--text-primary);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 140px;
+  }
+
+  .filter-select:focus {
+    border-color: var(--army-olive);
+  }
+
+  .stat-pill {
+    background: var(--army-green);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* ── TABLE CARD ── */
+  .table-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(26, 36, 16, 0.08);
+    overflow: hidden;
+  }
+
+  /* ── TABLE ── */
+  .course-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.93rem;
+  }
+
+  .course-table thead {
+    background: linear-gradient(90deg, var(--army-dark), var(--army-green));
+  }
+
+  .course-table thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 0.78rem;
+    letter-spacing: 1.2px;
+    color: var(--army-tan);
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+    border: none;
+  }
+
+  .course-table tbody tr {
+    border-bottom: 1px solid #ede9d8;
+    transition: background 0.15s;
+  }
+
+  .course-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .course-table tbody tr:hover {
+    background: #f5f2e4;
+  }
+
+  .course-table td {
+    padding: 13px 16px;
+    vertical-align: middle;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* ── ARMY NUMBER BADGE ── */
+  .army-num {
+    font-size: 0.82rem;
+    color: var(--army-olive);
+    background: #edf2e4;
+    padding: 3px 9px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  /* ── RANK BADGE ── */
+  .rank-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, var(--army-green), var(--army-olive));
+    color: #fff;
+    text-transform: uppercase;
+  }
+
+  /* ── COMPANY BADGE ── */
+  .company-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: #fff8e6;
+    color: #8a6200;
+    border: 1px solid #e0c96e;
+  }
+
+  /* ── DATE CELL ── */
+  .date-cell {
+    font-size: 0.82rem;
+    color: #555;
+  }
+
+  /* ── STATUS BADGE ── */
+  .status-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #eaf7ee;
+    color: var(--success-green);
+    border: 1px solid #a3ddb1;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .status-completed {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f0f0f0;
+    color: #777;
+    border: 1px solid #ccc;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  /* ── REMOVE BUTTON ── */
+  .btn-remove {
+    background: linear-gradient(135deg, #c0392b, #962d22);
+    color: #fff;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-remove:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(192, 57, 43, 0.35);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9e9a88;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 14px;
+    color: #c8c4b0;
+  }
+
+  .empty-state p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LOADING SHIMMER ── */
+  .shimmer-row td {
+    padding: 14px 16px;
+  }
+
+  .shimmer-block {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eeebe0 25%, #e0ddd0 50%, #eeebe0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ── CONFIRM MODAL ── */
+  .confirm-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 36, 16, 0.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .confirm-overlay.active {
+    display: flex;
+  }
+
+  .confirm-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 36px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border-top: 5px solid var(--danger-red);
+    animation: popIn 0.2s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .confirm-box .confirm-icon {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: #fdecea;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+
+  .confirm-box .confirm-icon i {
+    font-size: 1.6rem;
+    color: var(--danger-red);
+  }
+
+  .confirm-box h5 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--text-primary);
+  }
+
+  .confirm-box p {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 0 0 22px;
+    line-height: 1.5;
+  }
+
+  .confirm-box p strong {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .btn-cancel-confirm {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.2s;
+  }
+
+  .btn-cancel-confirm:hover {
+    border-color: #aaa;
+    background: #f5f5f5;
+  }
+
+  .btn-confirm-remove {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--danger-red), #962d22);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-confirm-remove:hover {
+    box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+  }
+
+  /* ── TOAST ── */
+  .toast-msg {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .toast-msg.success { background: var(--success-green); }
+  .toast-msg.error   { background: var(--danger-red); }
+
+  .toast-msg.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 768px) {
+    .controls-bar { gap: 10px; }
+    .course-table thead { display: none; }
+    .course-table tbody tr {
+      display: block;
+      margin-bottom: 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .course-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid #ede9d8;
+    }
+    .course-table td::before {
+      content: attr(data-label);
+      font-size: 0.72rem;
+      color: var(--army-olive);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+    .course-table td:last-child { border-bottom: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set header = "15 CORPS ENGINEERING SIGNAL REGIMENT" %}
+{% set subscript = "Manage Personnel on Courses" %}
+{% include 'navbar/navbar.html' %}
+
+<!-- CONFIRM OVERLAY -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <i class="fas fa-user-times"></i>
+    </div>
+    <h5>Remove From Course?</h5>
+    <p>You are about to remove <strong id="confirmName">—</strong> from the course. This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel-confirm" onclick="closeConfirm()">CANCEL</button>
+      <button class="btn-confirm-remove" onclick="confirmRemove()">
+        <i class="fas fa-trash-alt"></i> REMOVE
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-msg" id="toastMsg">
+  <i class="fas fa-check-circle" id="toastIcon"></i>
+  <span id="toastText"></span>
+</div>
+
+<div class="p-3">
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search by name, army number, course..." oninput="filterTable()">
+    </div>
+    <select class="filter-select" id="companyFilter" onchange="filterTable()">
+      <option value="">ALL COMPANIES</option>
+    </select>
+    <div class="stat-pill" id="totalCount">LOADING...</div>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <table class="course-table" id="courseTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ARMY NO.</th>
+          <th>NAME</th>
+          <th>RANK</th>
+          <th>COMPANY</th>
+          <th>COURSE NAME</th>
+          <th>INSTITUTE</th>
+          <th>START DATE</th>
+          <th>STATUS</th>
+          <th>ACTION</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Shimmer rows -->
+        {% for i in range(5) %}
+        <tr class="shimmer-row">
+          <td><div class="shimmer-block" style="width:20px"></div></td>
+          <td><div class="shimmer-block" style="width:90px"></div></td>
+          <td><div class="shimmer-block" style="width:130px"></div></td>
+          <td><div class="shimmer-block" style="width:60px"></div></td>
+          <td><div class="shimmer-block" style="width:60px"></div></td>
+          <td><div class="shimmer-block" style="width:160px"></div></td>
+          <td><div class="shimmer-block" style="width:130px"></div></td>
+          <td><div class="shimmer-block" style="width:90px"></div></td>
+          <td><div class="shimmer-block" style="width:90px"></div></td>
+          <td><div class="shimmer-block" style="width:70px"></div></td>
+          <td><div class="shimmer-block" style="width:80px"></div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+  let allCourses = [];
+  let removeTargetId = null;
+  let removeTargetName = null;
+
+  // ── FORMAT DATE ──
+  function formatDate(dateStr) {
+    if (!dateStr || dateStr === '—') return '—';
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ── STATUS BADGE (FROM DATABASE STATUS COLUMN) ──
+  function getStatusBadge(status) {
+
+    if (!status) status = "active";
+
+    status = status.toLowerCase();
+
+    if (status === "active") {
+      return `<span class="status-active">
+                <i class="fas fa-circle" style="font-size:0.5rem"></i>ACTIVE
+              </span>`;
+    }
+
+    if (status === "completed") {
+      return `<span class="status-completed">
+                <i class="fas fa-check" style="font-size:0.65rem"></i>COMPLETED
+              </span>`;
+    }
+
+    return `<span class="status-completed">INACTIVE</span>`;
+  }
+
+  // ── POPULATE COMPANY FILTER ──
+  function populateCompanyFilter(courses) {
+    const companies = [...new Set(courses.map(c => c.company).filter(c => c && c !== '—'))].sort();
+    const sel = document.getElementById('companyFilter');
+
+    companies.forEach(coy => {
+      const opt = document.createElement('option');
+      opt.value = coy;
+      opt.textContent = coy;
+      sel.appendChild(opt);
+    });
+  }
+
+  // ── RENDER TABLE ──
+  function renderTable(courses) {
+
+    const tbody = document.getElementById('tableBody');
+    document.getElementById('totalCount').textContent = `TOTAL: ${courses.length}`;
+
+    if (courses.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="11">
+            <div class="empty-state">
+              <i class="fas fa-graduation-cap"></i>
+              <p>NO PERSONNEL CURRENTLY ON COURSE</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = courses.map((c, idx) => `
+      <tr data-id="${c.id}" data-company="${c.company}" data-search="${(c.name + c.army_number + c.course_name + c.rank + c.company).toLowerCase()}">
+        
+        <td data-label="#">${idx + 1}</td>
+
+        <td data-label="Army No">
+          <span class="army-num">${c.army_number}</span>
+        </td>
+
+        <td data-label="Name">
+          <strong>${c.name}</strong>
+        </td>
+
+        <td data-label="Rank">
+          <span class="rank-badge">${c.rank}</span>
+        </td>
+
+        <td data-label="Coy">
+          <span class="company-badge">${c.company}</span>
+        </td>
+
+        <td data-label="Course">
+          ${c.course_name}
+        </td>
+
+        <td data-label="Institute">
+          ${c.institute_name}
+        </td>
+
+        <td data-label="Start Date">
+          <span class="date-cell">${formatDate(c.course_starting_date)}</span>
+        </td>
+
+        <td data-label="Status">
+          ${getStatusBadge(c.status)}
+        </td>
+
+        <td data-label="Action">
+          <button class="btn-remove" onclick="askRemove(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+            <i class="fas fa-user-times"></i> REMOVE
+          </button>
+        </td>
+
+      </tr>
+    `).join('');
+  }
+
+  // ── FILTER ──
+  function filterTable() {
+
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const coy = document.getElementById('companyFilter').value;
+
+    const filtered = allCourses.filter(c => {
+
+      const matchSearch = (c.name + c.army_number + c.course_name + c.rank + c.company)
+        .toLowerCase()
+        .includes(query);
+
+      const matchCoy = !coy || c.company === coy;
+
+      return matchSearch && matchCoy;
+    });
+
+    renderTable(filtered);
+  }
+
+  // ── LOAD DATA ──
+  async function loadCourses() {
+
+    try {
+
+      const res = await fetch('/oncourses/get_courses');
+      const data = await res.json();
+
+      if (data.status !== 'success') throw new Error(data.message);
+
+      allCourses = data.data;
+
+      populateCompanyFilter(allCourses);
+
+      renderTable(allCourses);
+
+    } catch (err) {
+
+      console.error('Failed to load courses:', err);
+
+      document.getElementById('tableBody').innerHTML = `
+        <tr><td colspan="11">
+          <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>FAILED TO LOAD DATA. PLEASE REFRESH.</p>
+          </div>
+        </td></tr>`;
+
+      document.getElementById('totalCount').textContent = 'ERROR';
+    }
+  }
+
+  // ── CONFIRM REMOVE ──
+  function askRemove(id, name) {
+
+    removeTargetId = id;
+    removeTargetName = name;
+
+    document.getElementById('confirmName').textContent = name;
+
+    document.getElementById('confirmOverlay').classList.add('active');
+  }
+
+  function closeConfirm() {
+
+    document.getElementById('confirmOverlay').classList.remove('active');
+
+    removeTargetId = null;
+    removeTargetName = null;
+  }
+
+  async function confirmRemove() {
+
+    if (!removeTargetId) return;
+
+    const id = removeTargetId;
+    const name = removeTargetName;
+
+    closeConfirm();
+
+    try {
+
+      const res = await fetch(`/oncourses/remove_from_course/${id}`, {
+        method: 'DELETE'
+      });
+
+      const data = await res.json();
+
+      if (data.status !== 'success') throw new Error(data.message);
+
+      allCourses = allCourses.filter(c => c.id !== id);
+
+      filterTable();
+
+      showToast(`${name} removed from course.`, 'success');
+
+    } catch (err) {
+
+      console.error('Remove failed:', err);
+
+      showToast('Failed to remove. Please try again.', 'error');
+    }
+  }
+
+  // ── TOAST ──
+  function showToast(msg, type = 'success') {
+
+    const toast = document.getElementById('toastMsg');
+    const icon = document.getElementById('toastIcon');
+
+    document.getElementById('toastText').textContent = msg;
+
+    toast.className = `toast-msg ${type}`;
+
+    icon.className = type === 'success'
+      ? 'fas fa-check-circle'
+      : 'fas fa-times-circle';
+
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  // ── CLOSE OVERLAY ON OUTSIDE CLICK ──
+  document.getElementById('confirmOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeConfirm();
+  });
+
+  // ── INIT ──
+  document.addEventListener('DOMContentLoaded', loadCourses);
+
+</script>
+{% endblock %}

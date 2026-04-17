@@ -1,0 +1,298 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+  <!-- 🔙 BACK BUTTON -->
+  <div class="mb-3">
+    <a href="/account/" class="btn btn-outline-secondary">
+      ← Back to Grants
+    </a>
+  </div>
+ {%if role != 'CO'%}
+  <!-- ACTION BUTTONS -->
+  <div class="mb-4">
+    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addSoModal">
+      + Add Sanction Order
+    </button>
+
+    <button class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#addExpModal">
+      + Add Expenditure
+    </button>
+
+    <button class="btn btn-primary" onclick="openAllocationModal()">
+      + Add Additional Allocation
+    </button>
+    {% endif %}
+  </div>
+
+  <h4 class="mb-4">
+    {{ grant.name }} ({{ grant.code_head }})
+  </h4>
+
+  <!-- SUMMARY CARDS -->
+  <div class="row mb-4">
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6>Total Allotment</h6>
+        <h5>
+          ₹ {{ "{:,.2f}".format(grant.allotment or 0) }}
+        </h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6>Total Expenditure</h6>
+        <h5 class="text-danger">
+          ₹ {{ "{:,.2f}".format(total_exp or 0) }}
+        </h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6>Balance</h6>
+        <h5 class="{{ 'text-danger' if (balance or 0) < 0 else 'text-success' }}">
+          ₹ {{ "{:,.2f}".format(balance or 0) }}
+        </h5>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm p-3">
+        <h6>Utilization %</h6>
+        <h5>
+          {{ "{:.2f}".format(exp_percent or 0) }}%
+        </h5>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SANCTION ORDERS -->
+  <div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+      Sanction Orders
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-bordered mb-0 text-center">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>SO Number</th>
+            <th>Amount (₹)</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for so in sos %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ so.so_number }}</td>
+            <td>{{ "{:,.2f}".format(so.so_amount or 0) }}</td>
+            <td>{{ so.created_at.strftime("%d-%m-%Y") }}</td>
+          </tr>
+          {% endfor %}
+          {% if sos|length == 0 %}
+          <tr>
+            <td colspan="4">No Sanction Orders Added</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXPENDITURES -->
+  <div class="card">
+    <div class="card-header bg-dark text-white">
+      Expenditures
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-bordered mb-0 text-center">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Amount (₹)</th>
+            <th>Remarks</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenditures %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="text-danger">
+              {{ "{:,.2f}".format(e.amount or 0) }}
+            </td>
+            <td>{{ e.remarks }}</td>
+            <td>{{ e.created_at.strftime("%d-%m-%Y") }}</td>
+          </tr>
+          {% endfor %}
+          {% if expenditures|length == 0 %}
+          <tr>
+            <td colspan="4">No Expenditures Added</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- ADD SO -->
+<div class="modal fade" id="addSoModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Sanction Order</h5>
+      <form id="addSoForm">
+        <div class="mb-3">
+          <label>SO Number</label>
+          <input type="text" class="form-control" id="soNumber" required>
+        </div>
+        <div class="mb-3">
+          <label>SO Amount</label>
+          <input type="number" class="form-control" id="soAmount" required>
+        </div>
+        <button class="btn btn-success w-100">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXPENDITURE -->
+<div class="modal fade" id="addExpModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Expenditure</h5>
+      <form id="addExpForm">
+        <div class="mb-3">
+          <label>Amount</label>
+          <input type="number" class="form-control" id="expAmount" required>
+        </div>
+        <div class="mb-3">
+          <label>Remarks</label>
+          <input type="text" class="form-control" id="expRemarks">
+        </div>
+        <button class="btn btn-danger w-100">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ALLOCATION -->
+<div class="modal fade" id="allocationModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+      <h5>Add Additional Allocation</h5>
+
+      <div class="mb-3">
+        <label>Amount</label>
+        <input type="number" id="allocAmount" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label>Remarks</label>
+        <input type="text" id="allocRemarks" class="form-control">
+      </div>
+
+      <button class="btn btn-primary w-100"
+              onclick="submitAllocation({{ grant.id }})">
+        Submit
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const grantId = {{ grant.id }};
+
+/* ADD SO */
+document.getElementById("addSoForm")
+.addEventListener("submit", function(e){
+  e.preventDefault();
+
+  fetch(`/account/grants/${grantId}/add-so`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      so_number: document.getElementById("soNumber").value.trim(),
+      so_amount: Number(document.getElementById("soAmount").value)
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      alert("Sanction Order Added");
+      location.reload();
+    } else {
+      alert(data.message);
+    }
+  });
+});
+
+/* ADD EXPENDITURE */
+document.getElementById("addExpForm")
+.addEventListener("submit", function(e){
+  e.preventDefault();
+
+  fetch(`/account/grants/${grantId}/add-exp`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      amount: Number(document.getElementById("expAmount").value),
+      remarks: document.getElementById("expRemarks").value.trim()
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success){
+      alert("Expenditure Added");
+      location.reload();
+    } else {
+      alert(data.message);
+    }
+  });
+});
+
+/* ADD ALLOCATION */
+function openAllocationModal() {
+  new bootstrap.Modal(document.getElementById('allocationModal')).show();
+}
+
+function submitAllocation(grantId) {
+
+  let amount = Number(document.getElementById("allocAmount").value);
+  let remarks = document.getElementById("allocRemarks").value.trim();
+
+  if(!amount || amount <= 0){
+    alert("Enter valid allocation amount");
+    return;
+  }
+
+  fetch(`/account/grants/${grantId}/add-allocation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      amount: amount,
+      remarks: remarks
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert("Allocation Added Successfully");
+      location.reload();
+    } else {
+      alert(data.message);
+    }
+  });
+}
+</script>
+
+{% endblock %}

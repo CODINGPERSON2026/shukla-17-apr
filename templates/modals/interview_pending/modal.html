@@ -1,0 +1,719 @@
+
+<style>
+  :root {
+    --g900: #0d2b1a;
+    --g800: #14432a;
+    --g700: #1a5c38;
+    --g600: #207a49;
+    --g500: #27964e; /* primary */
+    --g400: #3ab366;
+    --g300: #72cc94;
+    --g200: #b8eacc;
+    --g100: #e2f5ea;
+    --g50:  #f2fbf5;
+
+    --ink:     #0f1f14;
+    --ink2:    #2d4035;
+    --muted:   #6b8a76;
+    --border:  #cde4d6;
+    --surface: #ffffff;
+    --bg:      #f4faf7;
+
+    --amber:  #d97706;
+    --red:    #b91c1c;
+    --shadow: rgba(20, 67, 42, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  
+
+
+  .demo-btn:hover { background: var(--g600); transform: translateY(-1px); }
+
+  /* ── MODAL ── */
+  #interviewModal .modal-dialog {
+    max-width: 1180px;
+    margin: 1rem auto;
+  }
+
+  #interviewModal .modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 32px 80px rgba(14, 43, 26, 0.18);
+  }
+
+  /* ── HEADER ── */
+  #interviewModal .modal-header {
+    background: var(--g800);
+    border: none;
+    padding: 0;
+    align-items: stretch;
+    gap: 0;
+    flex-wrap: nowrap;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* subtle texture */
+  #interviewModal .modal-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 0% 100%, rgba(58,179,102,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 100% 0%, rgba(39,150,78,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hdr-brand {
+    padding: 20px 28px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 210px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hdr-brand-sup {
+    
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--g300);
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 4px;
+  }
+
+  .hdr-brand-title {
+    
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+
+  .hdr-controls {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Search */
+  .hdr-search {
+    flex: 1;
+    position: relative;
+  }
+
+  .hdr-search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: rgba(255,255,255,0.4);
+    pointer-events: none;
+  }
+
+  .hdr-search input {
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    color: #fff;
+    
+    font-size: 14px;
+    padding: 10px 14px 10px 40px;
+    border-radius: 10px;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .hdr-search input::placeholder { color: rgba(255,255,255,0.35); }
+
+  .hdr-search input:focus {
+    background: rgba(255,255,255,0.13);
+    border-color: var(--g300);
+    box-shadow: 0 0 0 3px rgba(114, 204, 148, 0.15);
+  }
+
+  /* Select */
+  .hdr-select {
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    color: #fff;
+    
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 10px 34px 10px 13px;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.5)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    min-width: 148px;
+    transition: border-color 0.2s;
+  }
+
+  .hdr-select:focus { border-color: var(--g300); }
+  .hdr-select option { background: var(--g800); color: #fff; }
+
+  /* Count pill */
+  .hdr-pill {
+    
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(114,204,148,0.15);
+    border: 1px solid rgba(114,204,148,0.25);
+    color: var(--g300);
+    padding: 7px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+
+  /* Close */
+  .hdr-close {
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.45);
+    font-size: 18px;
+    padding: 0 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+  .hdr-close:hover { color: #fff; background: rgba(255,255,255,0.06); }
+
+  /* ── BODY ── */
+  #interviewModal .modal-body {
+    padding: 20px;
+    background: var(--bg);
+  }
+
+  /* ── SPINNER ── */
+  .im-spinner {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 90px 20px;
+    gap: 18px;
+  }
+
+  .im-spinner-track {
+    width: 42px;
+    height: 42px;
+    border: 3px solid var(--g100);
+    border-top-color: var(--g500);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .im-spinner-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── TABLE CARD ── */
+  .im-card {
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+
+  .im-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 560px;
+  }
+
+  .im-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
+  .im-scroll::-webkit-scrollbar-track { background: var(--g50); }
+  .im-scroll::-webkit-scrollbar-thumb { background: var(--g200); border-radius: 10px; }
+  .im-scroll::-webkit-scrollbar-thumb:hover { background: var(--g300); }
+
+  /* ── TABLE ── */
+  .im-table {
+    width: 100%;
+    min-width: 880px;
+    border-collapse: collapse;
+  }
+
+  .im-table thead th {
+    background: var(--g50);
+    color: var(--g700);
+    
+    font-size: 11.5px;
+    font-weight: 700; 
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 13px 18px;
+    border-bottom: 2px solid var(--g200);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    white-space: nowrap;
+  }
+
+  .im-table thead th:first-child { padding-left: 22px; }
+
+  .im-table tbody tr {
+    border-bottom: 1px solid #f0f7f2;
+    transition: background 0.15s;
+  }
+
+  .im-table tbody tr:last-child { border-bottom: none; }
+
+  .im-table tbody tr:hover { background: var(--g50); }
+
+  .im-table tbody td {
+    padding: 15px 18px;
+    font-size: 14px;
+    color: var(--ink2);
+    vertical-align: middle;
+    border: none;
+  }
+
+  .im-table tbody td:first-child { padding-left: 22px; }
+
+  /* Sr no */
+  .cell-sr {
+    
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Army no */
+  .cell-army {
+    
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--g700);
+    letter-spacing: 0.3px;
+  }
+
+  /* Rank */
+  .rank-chip {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: var(--g100);
+    color: var(--g700);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--g200);
+  }
+
+  /* Name */
+  .cell-name {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+
+  /* State */
+  .cell-state {
+    font-size: 13.5px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Company */
+  .company-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    color: var(--g600);
+    background: var(--g50);
+    border: 1px solid var(--g200);
+    padding: 4px 11px;
+    border-radius: 20px;
+  }
+
+  /* JCO */
+  .jco-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--g700);
+  }
+
+  .jco-live-dot {
+    width: 9px;
+    height: 9px;
+    background: var(--g400);
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(58,179,102,0.2);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(58,179,102,0.2); }
+    50%       { box-shadow: 0 0 0 6px rgba(58,179,102,0.08); }
+  }
+
+  .jco-temp {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--amber);
+    font-style: italic;
+  }
+
+  .jco-temp-dot {
+    width: 9px;
+    height: 9px;
+    background: var(--amber);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .jco-none {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: #aab8b0;
+    font-weight: 400;
+  }
+
+  .jco-none-dash {
+    width: 14px;
+    height: 2px;
+    background: #ccd8d0;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── EMPTY ── */
+  .im-empty {
+    padding: 80px 20px;
+    text-align: center;
+  }
+
+  .im-empty-icon { font-size: 52px; opacity: 0.25; margin-bottom: 16px; }
+
+  .im-empty-title {
+    
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--ink2);
+    margin-bottom: 6px;
+  }
+
+  .im-empty-sub { font-size: 14px; color: var(--muted); }
+
+  /* ── FOOTER ── */
+  #interviewModal .modal-footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .footer-ts {
+    
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .footer-legend {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .l-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .l-dot.live     { background: var(--g400); }
+  .l-dot.temp     { background: var(--amber); border-radius: 2px; }
+  .l-dot.none     { background: #ccd8d0; }
+
+  .btn-close-modal {
+    
+    font-weight: 600;
+    font-size: 13.5px;
+    background: var(--surface);
+    color: var(--ink2);
+    border: 1.5px solid var(--border);
+    padding: 8px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-close-modal:hover {
+    background: var(--g50);
+    border-color: var(--g300);
+    color: var(--g700);
+  }
+
+  /* ── ROW ANIMATION ── */
+  @keyframes rowFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .im-table tbody tr { animation: rowFade 0.2s ease both; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    #interviewModal .modal-header { flex-wrap: wrap; }
+    .hdr-brand { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); min-width: unset; }
+    .hdr-controls { flex-wrap: wrap; }
+    .hdr-pill { display: none; }
+    .footer-legend { display: none; }
+  }
+</style>
+
+
+
+<!-- ═══════ MODAL ═══════ -->
+<div class="modal fade" id="interviewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <!-- HEADER -->
+      <div class="modal-header">
+        <div class="hdr-brand">
+          <span class="hdr-brand-sup">Management System</span>
+          <span class="hdr-brand-title">Interview Pending</span>
+        </div>
+
+        <div class="hdr-controls">
+          <div class="hdr-search">
+            <span class="hdr-search-icon">🔍</span>
+            <input type="text" id="interview-search"
+              placeholder="Search by army number or name..."
+              autocomplete="off">
+          </div>
+
+          <select id="company-filter" class="hdr-select">
+            <option value="all">All Companies</option>
+            <option value="1 company">1 Company</option>
+            <option value="2 company">2 Company</option>
+            <option value="3 company">3 Company</option>
+            <option value="Hq company">HQ Company</option>
+          </select>
+
+          <div class="hdr-pill" id="personnel-count">— Records</div>
+        </div>
+
+        <button class="hdr-close" data-bs-dismiss="modal">✕</button>
+      </div>
+
+      <!-- BODY -->
+      <div class="modal-body">
+
+        <!-- Spinner -->
+        <div class="im-spinner" id="im-spinner">
+          <div class="im-spinner-track"></div>
+          <div class="im-spinner-label">Loading personnel data...</div>
+        </div>
+
+        <!-- Table -->
+        <div class="im-card" id="im-card">
+          <div class="im-scroll">
+            <table class="im-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Home State</th>
+                  <th>Company</th>
+                  <th>JCO Assigned</th>
+                </tr>
+              </thead>
+              <tbody id="interview-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer">
+        <div class="footer-ts" id="footer-ts">—</div>
+
+        <div class="footer-legend">
+          <div class="legend-item"><span class="l-dot live"></span> Live JCO</div>
+          <div class="legend-item"><span class="l-dot temp"></span> Temp Assigned</div>
+          <div class="legend-item"><span class="l-dot none"></span> No JCO</div>
+        </div>
+
+        <button class="btn-close-modal" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const searchInput   = document.getElementById("interview-search");
+  const companyFilter = document.getElementById("company-filter");
+  const tableBody     = document.getElementById("interview-table-body");
+  const spinner       = document.getElementById("im-spinner");
+  const card          = document.getElementById("im-card");
+  const countPill     = document.getElementById("personnel-count");
+  const footerTs      = document.getElementById("footer-ts");
+
+  function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/[&<>"']/g, m =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])
+    );
+  }
+
+  function setLoading(on) {
+    spinner.style.display = on ? 'flex' : 'none';
+    card.style.display    = on ? 'none' : 'block';
+  }
+
+  async function fetchInterviews(query = "") {
+    setLoading(true);
+    tableBody.innerHTML = "";
+
+    try {
+      const company = companyFilter.value;
+      const url = `/get_pending_interview_list?search=${encodeURIComponent(query)}&company=${encodeURIComponent(company)}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+
+      setLoading(false);
+
+      const pending = data.pending_interviews || [];
+      countPill.textContent = `${pending.length} Records`;
+      footerTs.textContent  = `Updated ${new Date().toLocaleTimeString()} · ${pending.length} personnel`;
+
+      if (pending.length === 0) {
+        tableBody.innerHTML = `
+          <tr><td colspan="7">
+            <div class="im-empty">
+              <div class="im-empty-icon">📋</div>
+              <div class="im-empty-title">No Records Found</div>
+              <div class="im-empty-sub">No pending interviews match your current filters.</div>
+            </div>
+          </td></tr>`;
+        return;
+      }
+
+      let html = "";
+
+      pending.forEach((item, i) => {
+        let jcoHTML = `<span class="jco-none"><span class="jco-none-dash"></span>No JCO from this State</span>`;
+
+        if (item.jco_name) {
+          if (item.jco_source === "assigned") {
+            jcoHTML = `<span class="jco-temp"><span class="jco-temp-dot"></span>${esc(item.jco_name)}</span>`;
+          } else {
+            jcoHTML = `<span class="jco-live"><span class="jco-live-dot"></span>${esc(item.jco_name)}</span>`;
+          }
+        }
+
+        html += `
+          <tr style="animation-delay:${i * 0.022}s">
+            <td><span class="cell-sr">${i + 1}</span></td>
+            <td><span class="cell-army">${esc(item.army_number)}</span></td>
+            <td><span class="rank-chip">${esc(item.rank)}</span></td>
+            <td><span class="cell-name">${esc(item.name)}</span></td>
+            <td><span class="cell-state">${esc(item.home_state)}</span></td>
+            <td><span class="company-chip">${esc(item.company)}</span></td>
+            <td>${jcoHTML}</td>
+          </tr>`;
+      });
+
+      tableBody.innerHTML = html;
+
+    } catch (err) {
+      setLoading(false);
+      tableBody.innerHTML = `
+        <tr><td colspan="7">
+          <div class="im-empty">
+            <div class="im-empty-icon">⚠️</div>
+            <div class="im-empty-title">Failed to Load</div>
+            <div class="im-empty-sub">Server error. Please try again.</div>
+          </div>
+        </td></tr>`;
+      countPill.textContent = "Error";
+      console.error(err);
+    }
+  }
+
+  const debouncedFetch = debounce(fetchInterviews, 450);
+
+  searchInput.addEventListener("input",    e  => debouncedFetch(e.target.value.trim()));
+  companyFilter.addEventListener("change", () => debouncedFetch(searchInput.value.trim()));
+
+  document.getElementById("interviewModal").addEventListener("shown.bs.modal", () => {
+    searchInput.focus();
+    fetchInterviews("");
+  });
+
+  // Wire existing card trigger if present
+  const trigger = document.getElementById("interview-card");
+  if (trigger) {
+    trigger.addEventListener("click", () => {
+      new bootstrap.Modal(document.getElementById("interviewModal")).show();
+    });
+  }
+});
+</script>
+</html>

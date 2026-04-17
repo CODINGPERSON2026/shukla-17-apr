@@ -1,0 +1,89 @@
+<div class="modal fade" id="coursesModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header">
+          <h5 class="modal-title">Courses</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead class="table-dark">
+                <tr>
+                  
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name </th>
+                  <th>Company </th>
+                  
+                  <th>Course Name</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Institute Name</th>
+                  
+                  
+                </tr>
+              </thead>
+              <tbody id="coursesTableBody">
+                <tr>
+                  <td colspan="8" class="text-center">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById("openCourses").addEventListener("click", () => {
+      const modal = new bootstrap.Modal(document.getElementById("coursesModal"));
+      modal.show();
+      loadCourses();
+    });
+    
+    function loadCourses() {
+      fetch("/api/get-all-courses")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById("coursesTableBody");
+          tbody.innerHTML = "";
+    
+          if (!data.length) {
+            tbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center text-muted">No courses found</td>
+            </tr>`;
+            return;
+          }
+          
+          data.forEach((row, index) => {
+            tbody.innerHTML += `
+            <tr>
+              
+              <td>${row.army_number}</td>
+              <td>${row.rank}</td>
+              <td>${row.name}</td>
+              <td>${row.company}</td>
+                <td>${row.course_name}</td>
+                <td>${row.from_date}</td>
+                <td>${row.to_date}</td>
+                <td>${row.institute_name}</td>
+                
+                
+              </tr>`;
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("coursesTableBody").innerHTML = `
+            <tr>
+              <td colspan="8" class="text-danger text-center">Error loading data</td>
+            </tr>`;
+        });
+    }
+    </script>
+      

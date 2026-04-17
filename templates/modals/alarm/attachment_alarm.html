@@ -1,0 +1,43 @@
+
+    
+    <!-- Attachment Alarm Badge -->
+    <span id="attachmentAlarmAlert" class="alert-gradient d-none" style="cursor:pointer;">
+        🔔 You have Attachment alarms!
+    </span>
+    
+    <script>
+    async function showAssignedAttachmentAlarms() {
+        try {
+            const res = await fetch('/stats/assigned_attachment_alarm');
+            if (!res.ok) throw new Error("Network error");
+    
+            const result = await res.json();
+            const alarmAlert = document.getElementById("attachmentAlarmAlert");
+    
+            if (result.rows && result.rows.length > 0) {
+                alarmAlert.classList.remove("d-none");
+                alarmAlert.classList.add("alert-pulse");
+                alarmAlert.innerText =
+                    `🔔 You have ${result.rows.length} Attachment alarm(s)!`;
+            } else {
+                alarmAlert.classList.add("d-none");
+                alarmAlert.classList.remove("alert-pulse");
+            }
+    
+        } catch (err) {
+            console.error("Error fetching attachment alarms:", err);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', showAssignedAttachmentAlarms);
+    
+    document.getElementById("attachmentAlarmAlert")
+        .addEventListener("click", function () {
+            const attachModal = new bootstrap.Modal(
+                document.getElementById('attachmentModal')
+            );
+            attachModal.show();
+            load_attachment_personnel();
+        });
+    </script>
+    

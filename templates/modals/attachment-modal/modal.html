@@ -1,0 +1,177 @@
+<!-- ================= BOOTSTRAP JS (REQUIRED) ================= -->
+
+
+<!-- ================= FULLSCREEN ATTACHMENT MODAL ================= -->
+<style>
+  .modal-content {
+    animation: slideUp 0.3s ease-in-out;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* .modal-header {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    border-bottom: none;
+  } */
+
+  .table th {
+    font-weight: 600;
+  }
+
+  .name-cell {
+    font-weight: 600;
+  }
+
+  .loading-state {
+    color: #0d6efd;
+  }
+
+  .empty-state {
+    color: #6c757d;
+    font-style: italic;
+  }
+
+  .error-state {
+    color: #dc3545;
+  }
+</style>
+
+<div class="modal fade" id="attachmentModal" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header text-white">
+        <h4 class="modal-title">📎 Attachment Details</h4>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover text-center align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Authority</th>
+                <th>From Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="attachmentTableBody">
+              <tr>
+                <td colspan="8" class="py-5 loading-state">
+                  <div class="spinner-border spinner-border-sm me-2"></div>
+                  Loading attachment details...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const modal = document.getElementById("attachmentModal");
+
+  modal.addEventListener("show.bs.modal", async function () {
+    console.log("✅ Attachment modal triggered");
+
+    const tbody = document.getElementById("attachmentTableBody");
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="py-5 loading-state">
+          <div class="spinner-border spinner-border-sm me-2"></div>
+          Fetching data...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const res = await fetch("/stats/attachment-details");
+      const data = await res.json();
+
+      tbody.innerHTML = "";
+
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-5 empty-state">
+              No attachment records found
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.forEach(p => {
+        tbody.insertAdjacentHTML("beforeend", `
+          <tr id="row-${p.army_number}">
+            <td>${p.army_number}</td>
+            <td>${p.rank || ""}</td>
+            <td class="name-cell">${p.name || ""}</td>
+            <td>${p.company || ""}</td>
+            <td>${p.location || ""}</td>
+            <td>${p.authority || ""}</td>
+            <td>${p.td_date || ""}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="deleteAttachment('${p.army_number}')">
+                Delete
+              </button>
+            </td>
+          </tr>
+        `);
+      });
+
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="py-5 error-state">
+            Failed to load attachment data
+          </td>
+        </tr>
+      `;
+    }
+  });
+});
+
+async function deleteAttachment(army_number) {
+  if (!confirm("Are you sure you want to delete this attachment?")) return;
+
+  try {
+    const res = await fetch(`/stats/delete-attachment/${army_number}`, {
+      method: "DELETE"
+    });
+
+    if (res.ok) {
+      document.getElementById(`row-${army_number}`)?.remove();
+    } else {
+      alert("Delete failed");
+    }
+  } catch {
+    alert("Server error");
+  }
+}
+</script>

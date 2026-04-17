@@ -1,0 +1,729 @@
+{% extends "baseView.html" %}
+{% block content %}
+<style>
+  /* @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap'); */
+
+  .spage {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ─── Page Header ─── */
+  .spage-header { margin-bottom: 32px; }
+  .spage-header-top {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 5px;
+  }
+  .spage-header-icon {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.1rem;
+    box-shadow: 0 4px 16px var(--shadow); flex-shrink: 0;
+  }
+  .spage-header h1 {
+    font-size: 1.65rem; font-weight: 800;
+    color: var(--text-primary); margin: 0; letter-spacing: -0.3px;
+  }
+  .spage-header p {
+    color: var(--text-secondary); font-size: 0.87rem; margin: 0 0 0 62px;
+  }
+
+  /* ─── Layout ─── */
+  .settings-layout {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  @media (max-width: 620px) {
+    .settings-layout { grid-template-columns: 1fr; }
+    .settings-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+    .snav-item { flex: 1 1 130px; }
+  }
+
+  /* ─── Sidebar Nav ─── */
+  .settings-nav {
+    position: sticky; top: 20px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .snav-group-label {
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--text-secondary); padding: 6px 14px 3px;
+    opacity: 0.6;
+  }
+  .snav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 14px; border-radius: 11px; cursor: pointer;
+    font-size: 0.87rem; font-weight: 600;
+    color: var(--text-secondary);
+    border: 1.5px solid transparent;
+    transition: all 0.2s ease; user-select: none; text-decoration: none;
+  }
+  .snav-item:hover {
+    background: var(--card-background);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+  .snav-item.active {
+    background: var(--card-background);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .snav-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    background: var(--border-color); color: var(--text-secondary);
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .snav-item.active .snav-icon,
+  .snav-item:hover .snav-icon {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+  }
+  .snav-divider { height: 1px; background: var(--border-color); margin: 7px 0; }
+
+  /* ─── Panels ─── */
+  .settings-section { display: none; animation: fadePanel 0.22s ease; }
+  .settings-section.active { display: block; }
+  @keyframes fadePanel {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Card ─── */
+  .scard {
+    background: var(--card-background);
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 22px var(--shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .scard-header {
+    padding: 20px 24px 17px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .scard-header-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 0.85rem; flex-shrink: 0;
+  }
+  .scard-header-text h3 {
+    font-size: 0.98rem; font-weight: 700;
+    color: var(--text-primary); margin: 0 0 2px;
+  }
+  .scard-header-text p {
+    font-size: 0.77rem; color: var(--text-secondary); margin: 0;
+  }
+  .scard-body { padding: 22px 24px; }
+
+  /* ─── Settings Row ─── */
+  .srow {
+    display: flex; align-items: center;
+    justify-content: space-between; padding: 13px 0;
+    border-bottom: 1px solid var(--border-color); gap: 20px;
+  }
+  .srow:last-child { border-bottom: none; padding-bottom: 0; }
+  .srow:first-child { padding-top: 0; }
+  .srow-label { flex: 1; }
+  .srow-label span {
+    display: block; font-size: 0.87rem; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 2px;
+  }
+  .srow-label small { font-size: 0.75rem; color: var(--text-secondary); }
+  .srow-control { flex-shrink: 0; }
+
+  /* ─── Toggle ─── */
+  .stoggle { position: relative; width: 46px; height: 26px; display: inline-block; }
+  .stoggle input { opacity: 0; width: 0; height: 0; }
+  .stoggle-slider {
+    position: absolute; inset: 0; background: var(--border-color);
+    border-radius: 99px; cursor: pointer; transition: background 0.25s;
+  }
+  .stoggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 4px; top: 4px;
+    background: white; border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .stoggle input:checked + .stoggle-slider {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  }
+  .stoggle input:checked + .stoggle-slider::before { transform: translateX(20px); }
+
+  /* ─── Theme Grid ─── */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .theme-tile {
+    position: relative;
+    border: 2px solid var(--border-color);
+    border-radius: 14px; padding: 14px 10px 12px;
+    cursor: pointer; transition: all 0.25s ease;
+    background: var(--card-background);
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px; user-select: none;
+  }
+  .theme-tile:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 18px var(--shadow);
+  }
+  .theme-tile.active {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .theme-tile.active .theme-tile-name { color: white; }
+  .theme-swatch {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .theme-tile-name {
+    font-size: 0.76rem; font-weight: 700;
+    color: var(--text-primary); letter-spacing: 0.02em;
+  }
+  .active-check {
+    position: absolute; top: 7px; right: 8px;
+    font-size: 0.65rem; color: white;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .theme-tile.active .active-check { opacity: 1; }
+  .swatch-light    { background: linear-gradient(135deg, #e8eaf6, #c5cae9); }
+  .swatch-military { background: linear-gradient(135deg, #3a4a2e, #6a8a3e); }
+  .swatch-ocean    { background: linear-gradient(135deg, #0a3f6a, #1a8fc0); }
+  .swatch-sunset   { background: linear-gradient(135deg, #c0390e, #f07040); }
+  .swatch-purple   { background: linear-gradient(135deg, #5b21b6, #9b5fc0); }
+
+  /* ─── Password Fields ─── */
+  .pw-field {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .pw-field label {
+    display: block; font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-secondary); margin-bottom: 7px;
+  }
+  .pw-inner { position: relative; display: flex; align-items: center; }
+  .pw-icon {
+    position: absolute; left: 13px;
+    color: var(--text-secondary); font-size: 0.88rem; pointer-events: none;
+  }
+  .pw-field input {
+    width: 100%;
+    padding: 11px 42px 11px 38px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 11px;
+    background: var(--card-background);
+    color: var(--text-primary);
+    font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pw-field input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  .pw-eye {
+    position: absolute; right: 12px; cursor: pointer;
+    color: var(--text-secondary); font-size: 0.88rem;
+    padding: 4px; transition: color 0.2s;
+  }
+  .pw-eye:hover { color: var(--primary-color); }
+  .pw-two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 500px) { .pw-two-col { grid-template-columns: 1fr; } }
+
+  /* Strength */
+  .strength-track {
+    height: 5px; background: var(--border-color);
+    border-radius: 99px; overflow: hidden; margin-bottom: 5px;
+  }
+  .strength-fill {
+    height: 100%; width: 0%; border-radius: 99px;
+    transition: width 0.3s, background 0.3s;
+  }
+  .strength-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px;
+  }
+  .strength-text {
+    font-size: 0.74rem; font-weight: 600;
+    color: var(--text-secondary); font-family: 'DM Mono', monospace;
+  }
+  .strength-hint { font-size: 0.72rem; color: var(--text-secondary); opacity: 0.6; }
+
+  /* Feedback */
+  .sfeedback {
+    display: none; align-items: center; gap: 9px;
+    padding: 10px 14px; border-radius: 10px;
+    font-size: 0.82rem; font-weight: 600; margin-bottom: 18px;
+  }
+  .sfeedback.error   { display: flex; background: rgba(220,38,38,0.08);  color: #dc2626; border: 1px solid rgba(220,38,38,0.2); }
+  .sfeedback.success { display: flex; background: rgba(22,163,74,0.08);  color: #16a34a; border: 1px solid rgba(22,163,74,0.2); }
+
+  /* Button */
+  .s-btn {
+    width: 100%; padding: 12px 20px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white; font-size: 0.9rem; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; letter-spacing: 0.03em;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .s-btn:hover  { opacity: 0.9; transform: translateY(-1px); }
+  .s-btn:active { transform: translateY(0); }
+  .s-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .s-btn .spinner {
+    display: none; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Misc */
+  .sbadge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 3px 9px; border-radius: 99px;
+    background: rgba(22,163,74,0.1); color: #16a34a;
+    border: 1px solid rgba(22,163,74,0.25);
+  }
+  .info-mono {
+    font-family: 'DM Mono', monospace; font-size: 0.79rem;
+    color: var(--text-secondary); background: var(--border-color);
+    padding: 3px 9px; border-radius: 6px;
+  }
+  .tip-icon { color: #16a34a; font-size: 0.85rem; }
+</style>
+
+<div class="spage">
+
+  <!-- Header -->
+  <div class="spage-header">
+    <div class="spage-header-top">
+      <div class="spage-header-icon"><i class="fas fa-sliders-h"></i></div>
+      <h1>Settings</h1>
+    </div>
+    <p>Manage your appearance, display, and account security preferences.</p>
+  </div>
+
+  <div class="settings-layout">
+
+    <!-- ─── Sidebar ─── -->
+    <nav class="settings-nav">
+      <div class="snav-group-label">Preferences</div>
+
+      <a class="snav-item active" data-section="appearance">
+        <div class="snav-icon"><i class="fas fa-palette"></i></div>
+        Appearance
+      </a>
+      <a class="snav-item" data-section="display">
+        <div class="snav-icon"><i class="fas fa-desktop"></i></div>
+        Display
+      </a>
+
+      <div class="snav-divider"></div>
+      <div class="snav-group-label">Account</div>
+
+      <a class="snav-item" data-section="security">
+        <div class="snav-icon"><i class="fas fa-lock"></i></div>
+        Security
+      </a>
+      <a class="snav-item" data-section="session">
+        <div class="snav-icon"><i class="fas fa-user-shield"></i></div>
+        Session
+      </a>
+    </nav>
+
+    <!-- ─── Panels ─── -->
+    <div>
+
+      <!-- ══ APPEARANCE ══ -->
+      <div class="settings-section active" id="section-appearance">
+        <div class="scard">
+          <div class="scard-header">
+            <div class="scard-header-icon"><i class="fas fa-palette"></i></div>
+            <div class="scard-header-text">
+              <h3>Theme</h3>
+              <p>Select a colour scheme for your dashboard.</p>
+            </div>
+          </div>
+          <div class="scard-body">
+            <div class="theme-grid" id="themeOptionsSettings">
+              <div class="theme-tile" data-theme="light">
+                <i class="fas fa-check-circle active-check"></i>
+                <div class="theme-swatch swatch-light"><i class="fas fa-sun" style="color:#5c6bc0"></i></div>
+                <span class="theme-tile-name">Light</span>
+              </div>
+              <div class="theme-tile" data-theme="military">
+                <i class="fas fa-check-circle active-check"></i>
+                <div class="theme-swatch swatch-military"><i class="fas fa-shield-alt" style="color:#a5d6a7"></i></div>
+                <span class="theme-tile-name">Military</span>
+              </div>
+              <div class="theme-tile" data-theme="ocean">
+                <i class="fas fa-check-circle active-check"></i>
+                <div class="theme-swatch swatch-ocean"><i class="fas fa-water" style="color:#80d8ff"></i></div>
+                <span class="theme-tile-name">Ocean</span>
+              </div>
+              <div class="theme-tile" data-theme="sunset">
+                <i class="fas fa-check-circle active-check"></i>
+                <div class="theme-swatch swatch-sunset"><i class="fas fa-fire" style="color:#ffccbc"></i></div>
+                <span class="theme-tile-name">Sunset</span>
+              </div>
+              <div class="theme-tile" data-theme="purple">
+                <i class="fas fa-check-circle active-check"></i>
+                <div class="theme-swatch swatch-purple"><i class="fas fa-gem" style="color:#e1bee7"></i></div>
+                <span class="theme-tile-name">Purple</span>
+              </div>
+              <div class="theme-tile" data-theme="dark">
+                 <i class="fas fa-check-circle active-check"></i>
+                 <div class="theme-swatch" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
+                   <i class="fas fa-moon" style="color:#cbd5f5"></i>
+                 </div>
+                 <span class="theme-tile-name">Dark</span>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DISPLAY ══ -->
+      <div class="settings-section" id="section-display">
+        <div class="scard">
+          <div class="scard-header">
+            <div class="scard-header-icon"><i class="fas fa-desktop"></i></div>
+            <div class="scard-header-text">
+              <h3>Display Preferences</h3>
+              <p>Control how information is presented on screen.</p>
+            </div>
+          </div>
+          <div class="scard-body">
+            <div class="srow">
+              <div class="srow-label">
+                <span>Compact Mode</span>
+                <small>Reduce padding for a denser data view.</small>
+              </div>
+              <div class="srow-control">
+                <label class="stoggle"><input type="checkbox" id="toggleCompact"><span class="stoggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>Animations</span>
+                <small>Enable smooth transitions and motion effects.</small>
+              </div>
+              <div class="srow-control">
+                <label class="stoggle"><input type="checkbox" id="toggleAnimations" checked><span class="stoggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>Show Rank Badges</span>
+                <small>Display rank insignia next to personnel names.</small>
+              </div>
+              <div class="srow-control">
+                <label class="stoggle"><input type="checkbox" id="toggleBadges" checked><span class="stoggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>24-Hour Clock</span>
+                <small>Use military time format across all timestamps.</small>
+              </div>
+              <div class="srow-control">
+                <label class="stoggle"><input type="checkbox" id="toggle24hr" checked><span class="stoggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SECURITY ══ -->
+      <div class="settings-section" id="section-security">
+
+        <!-- Change Password Card -->
+        <div class="scard">
+          <div class="scard-header">
+            <div class="scard-header-icon"><i class="fas fa-key"></i></div>
+            <div class="scard-header-text">
+              <h3>Change Password</h3>
+              <p>Update your account password. Use a strong, unique password.</p>
+            </div>
+          </div>
+          <div class="scard-body">
+
+            <div class="sfeedback" id="cpError">
+              <i class="fas fa-exclamation-circle"></i>
+              <span id="cpErrorText"></span>
+            </div>
+            <div class="sfeedback" id="cpSuccess">
+              <i class="fas fa-check-circle"></i>
+              <span id="cpSuccessText"></span>
+            </div>
+
+            <!-- Army Number -->
+            <div class="pw-field">
+              <label>Army Number</label>
+              <div class="pw-inner">
+                <i class="fas fa-id-badge pw-icon"></i>
+                <input type="text" id="cp-army-number" placeholder="Enter your army number">
+              </div>
+            </div>
+
+            <!-- New + Confirm -->
+            <div class="pw-two-col">
+              <div class="pw-field" style="margin-bottom:0">
+                <label>New Password</label>
+                <div class="pw-inner">
+                  <i class="fas fa-lock pw-icon"></i>
+                  <input type="password" id="cp-new-password" placeholder="New password" oninput="evalStrength(this.value)">
+                  <i class="fas fa-eye-slash pw-eye" id="toggleNewPw"></i>
+                </div>
+              </div>
+              <div class="pw-field" style="margin-bottom:0">
+                <label>Confirm Password</label>
+                <div class="pw-inner">
+                  <i class="fas fa-lock pw-icon"></i>
+                  <input type="password" id="cp-confirm-password" placeholder="Repeat password">
+                  <i class="fas fa-eye-slash pw-eye" id="toggleConfirmPw"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Strength -->
+            <div style="margin-top:14px;">
+              <div class="strength-track">
+                <div class="strength-fill" id="strengthFill"></div>
+              </div>
+              <div class="strength-row">
+                <span class="strength-text" id="strengthLabel">—</span>
+                <span class="strength-hint">min. 3 characters</span>
+              </div>
+            </div>
+
+            <button class="s-btn" id="changePwBtn">
+              <div class="spinner" id="btnSpinner"></div>
+              <i class="fas fa-save" id="btnIcon"></i>
+              <span id="btnText">Save New Password</span>
+            </button>
+          </div>
+        </div>
+
+       
+      </div>
+
+      <!-- ══ SESSION ══ -->
+      <div class="settings-section" id="section-session">
+        <div class="scard">
+          <div class="scard-header">
+            <div class="scard-header-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="scard-header-text">
+              <h3>Active Session</h3>
+              <p>Details about your current login session.</p>
+            </div>
+          </div>
+          <div class="scard-body">
+            <div class="srow">
+              <div class="srow-label">
+                <span>Status</span>
+                <small>Your current authentication state.</small>
+              </div>
+              <div class="srow-control">
+                <span class="sbadge"><i class="fas fa-circle" style="font-size:0.45rem"></i> Active</span>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>Session Started</span>
+                <small>When you logged into this session.</small>
+              </div>
+              <div class="srow-control">
+                <span class="info-mono" id="sessionTime">—</span>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>Browser / Device</span>
+                <small>Client used to access this session.</small>
+              </div>
+              <div class="srow-control">
+                <span class="info-mono" id="sessionBrowser">—</span>
+              </div>
+            </div>
+            <div class="srow">
+              <div class="srow-label">
+                <span>Auto-Logout on Idle</span>
+                <small>Automatically sign out after 30 min of inactivity.</small>
+              </div>
+              <div class="srow-control">
+                <label class="stoggle"><input type="checkbox" id="toggleAutoLogout" checked><span class="stoggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end panels -->
+  </div><!-- end layout -->
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  
+  document.querySelectorAll('.snav-item').forEach(item => {
+    item.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.snav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+      this.classList.add('active');
+      const sec = document.getElementById('section-' + this.dataset.section);
+      if (sec) sec.classList.add('active');
+    });
+  });
+
+  /* ── Theme ── */
+  const savedTheme = localStorage.getItem('dashboardTheme') || 'light';
+  document.querySelectorAll('.theme-tile').forEach(tile => {
+    if (tile.dataset.theme === savedTheme) tile.classList.add('active');
+    tile.addEventListener('click', function () {
+      const theme = this.dataset.theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('dashboardTheme', theme);
+      document.querySelectorAll('.theme-tile').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  /* ── Toggle persistence ── */
+  ['toggleCompact','toggleAnimations','toggleBadges','toggle24hr','toggleAutoLogout'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const saved = localStorage.getItem(id);
+    if (saved !== null) el.checked = saved === 'true';
+    el.addEventListener('change', () => localStorage.setItem(id, el.checked));
+  });
+
+  /* ── Eye toggles ── */
+  function eyeToggle(eyeId, inputId) {
+    const eye = document.getElementById(eyeId);
+    const inp = document.getElementById(inputId);
+    if (!eye || !inp) return;
+    eye.addEventListener('click', () => {
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      eye.classList.toggle('fa-eye');
+      eye.classList.toggle('fa-eye-slash');
+    });
+  }
+  eyeToggle('toggleNewPw', 'cp-new-password');
+  eyeToggle('toggleConfirmPw', 'cp-confirm-password');
+
+  /* ── Session info ── */
+  document.getElementById('sessionTime').textContent =
+    new Date().toLocaleString('en-IN', { hour12: false });
+  const ua = navigator.userAgent;
+  const browser = /Chrome/.test(ua) && !/Edge/.test(ua) ? 'Chrome'
+    : /Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari'
+    : /Edge/.test(ua) ? 'Edge' : 'Browser';
+  document.getElementById('sessionBrowser').textContent =
+    browser + ' / ' + (/Mobi/.test(ua) ? 'Mobile' : 'Desktop');
+
+  /* ── Change Password ── */
+  document.getElementById('changePwBtn').addEventListener('click', async function () {
+    clearFeedback();
+    const army   = document.getElementById('cp-army-number').value.trim();
+    const newPw  = document.getElementById('cp-new-password').value;
+    const confPw = document.getElementById('cp-confirm-password').value;
+
+    if (!army || !newPw || !confPw) return showError('Please fill in all fields.');
+    if (newPw !== confPw)           return showError('Passwords do not match.');
+    if (newPw.length < 3)          return showError('Password must be at least 3 characters.');
+
+    setLoading(true);
+    try {
+      const res  = await fetch('/change_password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ army_number: army, new_password: newPw })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showSuccess('Password updated successfully!');
+        document.getElementById('cp-army-number').value     = '';
+        document.getElementById('cp-new-password').value    = '';
+        document.getElementById('cp-confirm-password').value = '';
+        resetStrength();
+      } else {
+        showError(data.error || 'Failed to update password.');
+      }
+    } catch { showError('Network error. Please try again.'); }
+    finally  { setLoading(false); }
+  });
+
+  function clearFeedback() {
+    document.getElementById('cpError').className   = 'sfeedback';
+    document.getElementById('cpSuccess').className = 'sfeedback';
+  }
+  function showError(msg) {
+    document.getElementById('cpErrorText').textContent = msg;
+    document.getElementById('cpError').className = 'sfeedback error';
+  }
+  function showSuccess(msg) {
+    document.getElementById('cpSuccessText').textContent = msg;
+    document.getElementById('cpSuccess').className = 'sfeedback success';
+  }
+  function setLoading(on) {
+    const btn = document.getElementById('changePwBtn');
+    btn.disabled = on;
+    document.getElementById('btnSpinner').style.display = on ? 'block' : 'none';
+    document.getElementById('btnIcon').style.display    = on ? 'none'  : 'inline';
+    document.getElementById('btnText').textContent      = on ? 'Saving…' : 'Save New Password';
+  }
+  function resetStrength() {
+    document.getElementById('strengthFill').style.width = '0%';
+    document.getElementById('strengthLabel').textContent = '—';
+    document.getElementById('strengthLabel').style.color = '';
+  }
+});
+
+function evalStrength(val) {
+  const fill  = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  if (!val) { fill.style.width = '0%'; label.textContent = '—'; label.style.color = ''; return; }
+  let s = 0;
+  if (val.length >= 6)           s++;
+  if (val.length >= 10)          s++;
+  if (/[A-Z]/.test(val))         s++;
+  if (/[0-9]/.test(val))         s++;
+  if (/[^A-Za-z0-9]/.test(val))  s++;
+  const levels = [
+    { pct:'18%',  color:'#ef4444', text:'Very Weak'  },
+    { pct:'36%',  color:'#f97316', text:'Weak'        },
+    { pct:'56%',  color:'#eab308', text:'Fair'        },
+    { pct:'78%',  color:'#22c55e', text:'Strong'      },
+    { pct:'100%', color:'#16a34a', text:'Very Strong' },
+  ];
+  const lvl = levels[Math.min(s, 4)];
+  fill.style.width      = lvl.pct;
+  fill.style.background = lvl.color;
+  label.textContent     = lvl.text;
+  label.style.color     = lvl.color;
+}
+</script>
+{% endblock %}

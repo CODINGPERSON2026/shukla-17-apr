@@ -1,0 +1,171 @@
+<!-- ================= ALERT STYLE ================= -->
+<style>
+    .alert-gradient {
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #0d67dd, #09c2a3);
+        color: #fff;
+        padding: 2px 18px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+    }
+    /* Shine Effect */
+    .alert-gradient::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -60%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(120deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.45) 50%,
+                rgba(255, 255, 255, 0) 100%);
+        transform: skewX(-25deg);
+        animation: shine 2.5s infinite;
+    }
+
+    @keyframes shine {
+        0% {
+            left: -60%;
+        }
+
+        100% {
+            left: 120%;
+        }
+    }
+</style>
+
+
+<!-- ================= ALERT BADGE ================= -->
+<span id="agniveer_upcomming_test" class="alert-gradient d-none" style="cursor:pointer;">
+    🔔 Agniveer Test Alerts
+</span>
+
+<!-- ================= UPCOMING TEST MODAL ================= -->
+<div class="modal fade" id="upcomingTestModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">🔔 Upcoming Assistant Tests</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover text-center">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>Batch</th>
+                                <th>Test</th>
+                                <th>Test Date & Time</th>
+                                <th>Time Left</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcomingTestTable">
+                            <tr>
+                                <td colspan="4" class="text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= FETCH ALERT COUNT ================= -->
+<script>
+    async function showAssignedAlarms() {
+        try {
+            const res = await fetch('/agni/api/upcomming_test_alarms');
+            if (!res.ok) throw new Error("Network error");
+
+            const result = await res.json();
+            const alertBadge = document.getElementById("agniveer_upcomming_test");
+
+            if (result.rows && result.rows.length > 0) {
+                alertBadge.classList.remove("d-none");
+                alertBadge.classList.add("alert-pulse");
+                alertBadge.innerText =
+                    `🔔 ${result.rows.length} Upcoming Agniveer Test(s)`;
+            } else {
+                alertBadge.classList.add("d-none");
+                alertBadge.classList.remove("alert-pulse");
+            }
+        } catch (err) {
+            console.error("Error fetching assigned alarms:", err);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", showAssignedAlarms);
+</script>
+
+<!-- ================= OPEN MODAL ON CLICK ================= -->
+<script>
+    document.getElementById("agniveer_upcomming_test").addEventListener("click", function () {
+        const modal = new bootstrap.Modal(
+            document.getElementById("upcomingTestModal")
+        );
+        modal.show();
+        loadUpcomingTests();
+    });
+</script>
+
+<!-- ================= LOAD MODAL TABLE DATA ================= -->
+<script>
+    async function loadUpcomingTests() {
+        const tbody = document.getElementById("upcomingTestTable");
+        tbody.innerHTML = `<tr><td colspan="4">Loading...</td></tr>`;
+
+        try {
+            const res = await fetch('/agni/api/upcomming_test_alarms');
+            const result = await res.json();
+
+            if (!result.rows || result.rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4">No upcoming tests</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = "";
+
+            result.rows.forEach(row => {
+                const testTime = new Date(row.test_date);
+                const now = new Date();
+
+                const diffDays = Math.max(
+                    0,
+                    Math.ceil((testTime - now) / (1000 * 60 * 60 * 24))
+                );
+
+                let badgeClass = diffDays <= 1
+                    ? "bg-danger"
+                    : diffDays <= 2
+                        ? "bg-warning text-dark"
+                        : "bg-success";
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${row.batch}</td>
+                        <td>${row.test_name}</td>
+                        <td>${testTime.toLocaleString()}</td>
+                        <td>
+                            <span class="badge ${badgeClass}">
+                                ${diffDays} day(s)
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="4">Error loading data</td></tr>`;
+            console.error(err);
+        }
+    }
+</script>

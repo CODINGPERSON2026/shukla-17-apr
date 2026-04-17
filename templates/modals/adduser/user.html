@@ -1,0 +1,94 @@
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Add User</h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <div class="modal-body">
+          <form id="addUserForm">
+            <div class="row g-3">
+  
+              <div class="col-md-6">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" name="username" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="email" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" name="password" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label class="form-label">Role</label>
+                <input type="text" class="form-control" name="role" placeholder="Enter role" required>
+              </div>
+              
+  
+              <div class="col-md-6">
+                <label class="form-label">Company</label>
+                <input type="text" class="form-control" name="company">
+              </div>
+  
+              <div class="col-md-6">
+                <label class="form-label">Army Number</label>
+                <input type="text" class="form-control" name="army_number">
+              </div>
+  
+            </div>
+          </form>
+        </div>
+  
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" onclick="addUser()">Save</button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  <script>
+    function addUser() {
+        const form = document.getElementById("addUserForm");
+    
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+    
+        const data = Object.fromEntries(new FormData(form).entries());
+    
+        fetch("/users", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                  // IMPORTANT
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if (resp.success) {
+                alert("User added successfully");
+                form.reset();
+                bootstrap.Modal.getInstance(
+                    document.getElementById("addUserModal")
+                ).hide();
+            } else {
+                alert(resp.message || "Failed to add user");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Server error");
+        });
+    }
+    </script>
+    

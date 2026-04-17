@@ -1,0 +1,159 @@
+<!-- Personnel Modal -->
+ <Style>
+    .name-cell{
+    background-color:#1ca443;
+    font-weight:600;
+}
+ </Style>
+<div class="modal fade" id="personnelModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Personnel List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Search -->
+        <input type="text"
+               id="personnelSearch"
+               class="form-control mb-3"
+               placeholder="Search Army Number / Rank / Name">
+
+        <!-- Count -->
+        <p class="mb-2">
+          <strong>Total Found:</strong>
+          <span id="personnelCount">0</span>
+        </p>
+
+        <!-- Spinner -->
+        <div id="personnelLoader" class="text-center my-4 d-none">
+          <div class="spinner-border" role="status"></div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm">
+            <thead>
+              <tr>
+                <th>Army Number</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Home State</th>
+              </tr>
+            </thead>
+            <tbody id="personnelTableBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+
+let personnelModal = new bootstrap.Modal(
+  document.getElementById('personnelModal')
+);
+
+let debounceTimer = null;
+
+
+/* OPEN MODAL */
+function openPersonnelModal() {
+
+    personnelModal.show();
+
+    document.getElementById("personnelSearch").value = "";
+
+    fetchPersonnel("");
+
+}
+
+
+/* SEARCH INPUT LISTENER */
+document.getElementById("personnelSearch")
+.addEventListener("keyup", function(){
+
+    clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+
+        let query = this.value;
+        fetchPersonnel(query);
+
+    }, 300); // debounce delay
+
+});
+
+
+/* FETCH DATA */
+function fetchPersonnel(query) {
+
+    let loader = document.getElementById("personnelLoader");
+    let table = document.getElementById("personnelTableBody");
+
+    loader.classList.remove("d-none");
+    table.innerHTML = "";
+
+    fetch("/personnel_information/api/personnel?search=" + encodeURIComponent(query))
+    .then(res => res.json())
+    .then(data => {
+
+        loader.classList.add("d-none");
+
+        document.getElementById("personnelCount").innerText = data.count;
+
+        if(data.data.length === 0){
+
+            table.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center text-muted">
+                No personnel found
+              </td>
+            </tr>
+            `;
+            return;
+        }
+
+        data.data.forEach(p => {
+
+            let row = `
+            <tr>
+              <td>${p.army_number}</td>
+              <td>${p.rank}</td>
+               <td class="name-cell">${p.name}</td>
+              <td>${p.home_state}</td>
+            </tr>
+            `;
+
+            table.insertAdjacentHTML("beforeend", row);
+
+        });
+
+    })
+    .catch(err => {
+
+        loader.classList.add("d-none");
+
+        table.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center text-danger">
+            Failed to load data
+          </td>
+        </tr>
+        `;
+
+        console.error(err);
+
+    });
+
+}
+
+</script>

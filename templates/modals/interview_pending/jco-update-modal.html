@@ -1,0 +1,175 @@
+<div class="modal fade" id="kunbaInterviewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">KUNBA Interviews</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#pendingTab"
+                    type="button">
+              Pending Interviews
+            </button>
+          </li>
+
+          <li class="nav-item">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#completedTab"
+                    type="button">
+              Interview Completed
+            </button>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+
+          <!-- PENDING TAB -->
+          <div class="tab-pane fade show active" id="pendingTab">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Home State</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="kunbaInterviewTableBody">
+                <tr>
+                  <td colspan="5" class="text-center text-muted">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- COMPLETED TAB -->
+          <div class="tab-pane fade" id="completedTab">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Home State</th>
+                  <th>Completed On</th>
+                </tr>
+              </thead>
+              <tbody id="completedInterviewTableBody">
+                <tr>
+                  <td colspan="5" class="text-center text-muted">Loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% include 'modals/success-modal/modal.html' %}
+<script>
+  /* ================= PENDING ================= */
+  document.getElementById('kunbaInterviewModal')
+    .addEventListener('shown.bs.modal', loadKunbaInterviewData);
+  
+  async function loadKunbaInterviewData() {
+    const tbody = document.getElementById('kunbaInterviewTableBody');
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center">Loading...</td></tr>`;
+  
+    const res = await fetch('/interview_update/pending_interview_list');
+    const data = await res.json();
+  
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-success">No pending interviews</td></tr>`;
+      return;
+    }
+  
+    tbody.innerHTML = '';
+    data.forEach(p => {
+      tbody.innerHTML += `
+        <tr id="row-${p.id}">
+          <td>${p.army_number}</td>
+          <td>${p.rank}</td>
+          <td>${p.name}</td>
+          <td>${p.home_state}</td>
+          <td>
+            <button class="btn btn-sm btn-success"
+                    onclick="markInterviewDone(${p.id})">
+              Interview Done
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+  
+  async function markInterviewDone(id) {
+    if (!confirm("Mark interview as done?")) return;
+  
+    const res = await fetch('/interview_update/update_interview_status', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id })
+    });
+  
+    const result = await res.json();
+    if (result.success) {
+      showStatusModal("Interview Done", "Green", 2000);
+      document.getElementById(`row-${id}`).remove();
+    } else {
+      alert("Failed to update");
+    }
+  }
+  
+  let completedLoaded = false;
+  
+  document.querySelector('[data-bs-target="#completedTab"]')
+    .addEventListener('shown.bs.tab', loadCompletedInterviews);
+  
+  async function loadCompletedInterviews() {
+    if (completedLoaded) return;
+    completedLoaded = true;
+  
+    const tbody = document.getElementById('completedInterviewTableBody');
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center">Loading...</td></tr>`;
+  
+    const res = await fetch('/interview_update/completed_interview_list');
+    const data = await res.json();
+  
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No completed interviews</td></tr>`;
+      return;
+    }
+  
+    tbody.innerHTML = '';
+    data.forEach(p => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${p.army_number}</td>
+          <td>${p.rank}</td>
+          <td>${p.name}</td>
+          <td>${p.home_state}</td>
+          <td>${p.completed_on}</td>
+        </tr>
+      `;
+    });
+  }
+     
+  document.getElementById('kunbaInterviewModal')
+    .addEventListener('hidden.bs.modal', () => location.reload());
+  </script>
+  

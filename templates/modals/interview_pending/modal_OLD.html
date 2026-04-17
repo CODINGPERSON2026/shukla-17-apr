@@ -1,0 +1,579 @@
+<style>
+  /* Modern Modal Styling */
+  #interviewModal .modal-dialog {
+      max-width: 1200px;
+      margin: 1.5rem auto;
+  }
+
+  #interviewModal .modal-content {
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+  }
+
+  #interviewModal .modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px 24px;
+      border: none;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+  }
+
+  #interviewModal .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      white-space: nowrap;
+      font-family: Arial, sans-serif;
+  }
+
+  #interviewModal .modal-title::before {
+      content: "👥";
+      font-size: 20px;
+  }
+
+  .header-search-wrapper {
+      flex: 1;
+      max-width: 500px;
+      position: relative;
+  }
+
+  .header-search-wrapper::before {
+      content: "🔍";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      z-index: 1;
+  }
+
+  .header-search-wrapper input {
+      width: 100%;
+      padding: 10px 16px 10px 42px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 400;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      transition: all 0.3s;
+      font-family: Arial, sans-serif;
+  }
+
+  .header-search-wrapper input::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+  }
+
+  .header-search-wrapper input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  }
+
+  #interviewModal .btn-close {
+      filter: brightness(0) invert(1);
+      opacity: 0.9;
+      transition: all 0.2s;
+  }
+
+  #interviewModal .btn-close:hover {
+      opacity: 1;
+      transform: rotate(90deg);
+  }
+
+  #interviewModal .modal-body {
+      padding: 20px;
+      background: #f8f9fa;
+  }
+
+  /* Enhanced Search Bar */
+  .search-container {
+      display: none;
+  }
+
+  /* Enhanced Spinner */
+  .spinner-container {
+      text-align: center;
+      padding: 60px 20px;
+  }
+
+  .spinner-border {
+      width: 48px;
+      height: 48px;
+      border-width: 4px;
+      border-color: #667eea;
+      border-right-color: transparent;
+  }
+
+  .loading-text {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 16px;
+      font-weight: 400;
+  }
+
+  /* Table Container */
+  .table-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+  }
+
+  .table-scroll {
+      max-height: 600px;
+      overflow-y: auto;
+      overflow-x: auto;
+  }
+
+  /* Custom Scrollbar - Large and Easy to Grab */
+  .table-scroll::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+  }
+
+  .table-scroll::-webkit-scrollbar-track {
+      background: #e2e8f0;
+      border-radius: 8px;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+      border: 3px solid #e2e8f0;
+  }
+
+  .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+  }
+
+  .table-scroll::-webkit-scrollbar-corner {
+      background: #e2e8f0;
+  }
+
+  /* Enhanced Table Styling */
+  .custom-table {
+      margin: 0;
+      border: none;
+      min-width: 900px;
+      width: 100%;
+      font-family: Arial, sans-serif;
+  }
+
+  .custom-table thead th {
+      background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+      color: #1e293b;
+      font-weight: 500;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 12px 20px;
+      border: none;
+      border-bottom: 2px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      font-family: Arial, sans-serif;
+  }
+
+  .custom-table tbody tr {
+      transition: all 0.2s;
+      border-bottom: 1px solid #f1f5f9;
+  }
+
+  .custom-table tbody tr:hover {
+      background: linear-gradient(to right, #faf5ff, #f5f3ff) !important;
+      transform: scale(1.01);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  }
+
+  .custom-table tbody td {
+      padding: 20px 24px;
+      font-size: 17px;
+      color: #334155;
+      vertical-align: middle;
+      border: none;
+      font-weight: 400;
+      font-family: Arial, sans-serif;
+  }
+
+  .custom-table tbody tr:nth-child(even) {
+      background-color: #fafafa;
+  }
+
+  /* Badge-style cells */
+  .custom-table tbody td:first-child {
+      font-family: Arial, sans-serif;
+      font-weight: 500;
+      color: #475569;
+      font-size: 17px;
+  }
+
+  .custom-table tbody td:nth-child(2) {
+      font-weight: 500;
+      color: #0f172a;
+      font-size: 17px;
+  }
+
+  .custom-table tbody td:nth-child(3) {
+      font-weight: 400;
+      color: #1e293b;
+      font-size: 17px;
+  }
+
+  /* Company Badge */
+  .custom-table tbody td:nth-child(5) {
+      font-weight: 500;
+      font-size: 17px;
+  }
+
+  /* JCO Column Styling */
+  .custom-table tbody tr td:last-child {
+      font-weight: 600;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+
+  .live-jco {
+      color: #059669;
+  }
+
+  .live-jco::before {
+      content: "✓";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: #d1fae5;
+      color: #059669;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 20px;
+      font-size: 12px;
+      font-weight: bold;
+  }
+
+  .assigned-jco {
+      color: #d97706;
+  }
+
+  .assigned-jco::before {
+      content: "⏱";
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: #fef3c7;
+      color: #d97706;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 20px;
+      font-size: 12px;
+  }
+
+  /* Empty State */
+  .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+      font-family: Arial, sans-serif;
+  }
+
+  .empty-state-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+  }
+
+  .empty-state-text {
+      font-size: 18px;
+      font-weight: 400;
+      color: #6b7280;
+  }
+
+  .empty-state-subtext {
+      font-size: 16px;
+      font-weight: 300;
+      color: #9ca3af;
+      margin-top: 8px;
+  }
+
+  /* Error State */
+  .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      font-family: Arial, sans-serif;
+  }
+
+  .error-state-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+  }
+
+  .error-state-text {
+      font-size: 18px;
+      font-weight: 500;
+      color: #dc2626;
+  }
+
+  /* Stats Badge (Optional Enhancement) */
+  .stats-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+      from {
+          opacity: 0;
+          transform: translateY(10px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+  }
+
+  .custom-table tbody tr {
+      animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+      #interviewModal .modal-dialog {
+          margin: 0.5rem;
+          max-width: calc(100% - 1rem);
+      }
+
+      #interviewModal .modal-header {
+          flex-wrap: wrap;
+          padding: 12px 16px;
+      }
+
+      #interviewModal .modal-title {
+          font-size: 16px;
+          width: 100%;
+          margin-bottom: 10px;
+      }
+
+      .header-search-wrapper {
+          max-width: 100%;
+          order: 3;
+          width: 100%;
+      }
+
+      .btn-close {
+          order: 2;
+      }
+
+      #interviewModal .modal-body {
+          padding: 16px;
+      }
+
+      .custom-table thead th,
+      .custom-table tbody td {
+          padding: 16px 18px;
+          font-size: 16px;
+      }
+
+      .table-scroll {
+          max-height: 500px;
+      }
+  }
+ 
+
+
+
+</style>
+
+<div class="modal fade" id="interviewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+  <h5 class="modal-title">
+    Interview Management
+    <span class="stats-badge" id="personnel-count">—</span>
+  </h5>
+
+  <div class="header-search-wrapper">
+    <input type="text" class="form-control"
+      placeholder="Search by Army Number or Name..."
+      id="interview-search"
+      autocomplete="off">
+  </div>
+
+  <!-- NEW FILTER -->
+  <div class="header-filter-wrapper">
+    <select id="company-filter" class="form-select">
+      <option style="color: white;" value="all">All</option>
+      <option value="1 company">1 company</option>
+      <option value="2 company">2 company</option>
+      <option value="3 company">3 company</option>
+      <option value="Hq company">Hq company</option>
+    </select>
+  </div>
+
+  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+      <div class="modal-body">
+        <div class="spinner-container" id="spinner" style="display: none;">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div class="loading-text">Loading personnel data...</div>
+        </div>
+
+        <div class="table-container" id="table-container">
+          <div class="table-scroll">
+            <table class="table custom-table mb-0">
+              <thead>
+                <tr>
+                  <th>Army Number</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Home State</th>
+                  <th>Company</th>
+                  <th>JCO</th>
+                </tr>
+              </thead>
+              <tbody id="interview-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const searchInput = document.getElementById("interview-search");
+    const tableBody = document.getElementById("interview-table-body");
+    const spinner = document.getElementById("spinner");
+    const tableContainer = document.getElementById("table-container");
+    const personnelCount = document.getElementById("personnel-count");
+    const companyFilter = document.getElementById("company-filter");
+
+    function debounce(func, delay) {
+        let timer;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    async function fetchInterviews(query = "") {
+        spinner.style.display = "block";
+        tableContainer.style.display = "none";
+        tableBody.innerHTML = "";
+
+        try {
+
+            const company = companyFilter.value;
+
+const url = `/get_pending_interview_list?search=${encodeURIComponent(query)}&company=${encodeURIComponent(company)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            spinner.style.display = "none";
+            tableContainer.style.display = "block";
+
+            if (!data || (data.pending_interviews && data.pending_interviews.length === 0)) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-text">No personnel found</div>
+                            
+                        </td>
+                    </tr>
+                `;
+                personnelCount.textContent = "0 Personnel";
+                return;
+            }
+
+            const pending = data.pending_interviews || [];
+            personnelCount.textContent = `${pending.length} Personnel`;
+
+            // Populate table rows
+            pending.forEach((item, index) => {
+                let jcoDisplay = "—";
+                let jcoClass = "";
+
+                if (item.jco_name) {
+                    if (item.jco_source === "assigned") {
+                        jcoDisplay = item.jco_name;
+                        jcoClass = "assigned-jco";
+                    } else {
+                        jcoDisplay = item.jco_name;
+                        jcoClass = "live-jco";
+                    }
+                }
+
+                const row = document.createElement('tr');
+                row.style.animationDelay = `${index * 0.03}s`;
+                row.innerHTML = `
+                    <td>${item.army_number}</td>
+                    <td>${item.rank}</td>
+                    <td>${item.name}</td>
+                    <td>${item.home_state}</td>
+                    <td>${item.company}</td>
+                    <td class="${jcoClass}">${jcoDisplay}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+        } catch (err) {
+            spinner.style.display = "none";
+            tableContainer.style.display = "block";
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="error-state">
+                        <div class="error-state-icon">⚠️</div>
+                        <div class="error-state-text">Error loading data</div>
+                    </td>
+                </tr>
+            `;
+            personnelCount.textContent = "Error";
+            console.error(err);
+        }
+    }
+
+    const debouncedFetch = debounce(fetchInterviews, 500);
+
+    searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.trim();
+        debouncedFetch(query);
+    });
+companyFilter.addEventListener("change", () => {
+    const query = searchInput.value.trim();
+    debouncedFetch(query);
+});
+    // Auto-focus search when modal opens
+    document.getElementById("interviewModal").addEventListener("shown.bs.modal", () => {
+        searchInput.focus();
+        debouncedFetch("");
+    });
+
+    document.getElementById("interview-card").addEventListener("click", () => {
+        new bootstrap.Modal(document.getElementById("interviewModal")).show();
+    });
+});
+</script>

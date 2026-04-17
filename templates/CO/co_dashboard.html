@@ -1,0 +1,1528 @@
+{% extends "baseView.html" %} {% block content %}
+
+<style>
+  /* Dashboard-specific styles (theme variables inherited from baseView.html) */
+
+  /* Shimmer Effect */
+  .shimmer-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: var(--border-color);
+    border-radius: 12px;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      90deg,
+      var(--border-color) 25%,
+      var(--text-secondary) 50%,
+      var(--border-color) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .shimmer-card {
+    background: var(--card-background);
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .shimmer-circle,
+  .shimmer-line,
+  .shimmer-title,
+  .shimmer-number {
+    background: linear-gradient(
+      90deg,
+      var(--border-color) 25%,
+      var(--text-secondary) 50%,
+      var(--border-color) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 5px;
+  }
+
+  .shimmer-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .shimmer-line {
+    height: 10px;
+  }
+
+  .shimmer-line.short {
+    width: 60%;
+  }
+
+  .shimmer-line.medium {
+    width: 80%;
+  }
+
+  .shimmer-line.long {
+    width: 100%;
+  }
+
+  .shimmer-title {
+    height: 18px;
+    width: 90px;
+  }
+
+  .shimmer-number {
+    height: 30px;
+    width: 70px;
+    border-radius: 6px;
+  }
+
+  /* Action Buttons Progress Loader */
+  .action-btn-progress-loader {
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 4px 10px;
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .action-btn-progress-loader.loader-active {
+    opacity: 1;
+  }
+
+  .action-btn-progress-loader .loader-progress-bar {
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 50%,
+      var(--primary-color) 100%
+    );
+    background-size: 200% 100%;
+    width: 0%;
+    transition: width 0.5s ease-out;
+    animation: loader-shimmer-progress 1.5s infinite;
+    border-radius: 2px;
+  }
+
+  @keyframes loader-shimmer-progress {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Main Content */
+  .main-content {
+    padding: 1px;
+    min-height: 100vh;
+  }
+
+  /* Action Section */
+  .action-section {
+    background: var(--card-background);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px var(--shadow);
+    margin-bottom: 35px;
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(
+      90deg,
+      #ff9933 0%,
+      #ff9933 33%,
+      #ffffff 33%,
+      #ffffff 66%,
+      #138808 66%
+    );
+  }
+
+  /* ── REDESIGNED ACTION BUTTONS ── */
+  .action-buttons {
+    margin: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .action-buttons.show {
+    opacity: 1;
+  }
+
+  /* collapse toggle — unchanged look */
+  #show-btn {
+    border: none;
+    padding: 2px 6px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px var(--shadow);
+    background: var(--primary-color);
+    color: white;
+    flex-shrink: 0;
+  }
+
+  /* Base style for all new action buttons */
+  .cmd-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    border: 1.5px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    position: relative;
+  }
+  .cmd-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  /* Rejected Leaves — red */
+  .cmd-btn--danger {
+    background: rgba(220, 53, 69, 0.08);
+    border-color: rgba(220, 53, 69, 0.4);
+    color: #dc3545;
+  }
+  .cmd-btn--danger:hover {
+    background: rgba(220, 53, 69, 0.16);
+    border-color: #dc3545;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Add Event — primary */
+  .cmd-btn--primary {
+    background: rgba(13, 110, 253, 0.08);
+    border-color: rgba(13, 110, 253, 0.38);
+    color: var(--primary-color, #0d6efd);
+  }
+  .cmd-btn--primary:hover {
+    background: rgba(13, 110, 253, 0.15);
+    border-color: var(--primary-color, #0d6efd);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.18);
+    transform: translateY(-1px);
+  }
+
+  /* Messenger — blue */
+  .cmd-btn--messenger {
+    background: rgba(0, 132, 255, 0.08);
+    border-color: rgba(0, 132, 255, 0.38);
+    color: #0084ff;
+  }
+  .cmd-btn--messenger:hover {
+    background: rgba(0, 132, 255, 0.16);
+    border-color: #0084ff;
+    box-shadow: 0 4px 12px rgba(0, 132, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  /* Badge inside buttons */
+  .cmd-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    background: #dc3545;
+    color: #fff;
+    margin-left: 2px;
+  }
+
+  /* Flex spacer — pushes Chat AI to far right */
+  .btn-spacer {
+    flex: 1;
+    min-width: 8px;
+  }
+
+  /* Chat with AI — pill, always far right */
+  .cmd-btn--ai {
+    padding: 8px 18px;
+    border-radius: 50px;
+    border-width: 2px;
+    border-color: #0084ff;
+    background: rgba(0, 132, 255, 0.08);
+    color: #0084ff;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+  }
+  .cmd-btn--ai:hover {
+    background: rgba(0, 132, 255, 0.16);
+    border-color: #006aff;
+    color: #006aff;
+    box-shadow: 0 0 16px rgba(0, 132, 255, 0.22);
+    transform: translateY(-1px);
+  }
+  .ai-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #0084ff;
+    box-shadow: 0 0 5px #0084ff;
+    animation: ai-pulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes ai-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.3; transform: scale(1.6); }
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(8,1fr);
+    
+    margin: auto;
+    gap: 15px;
+    margin-bottom: 10px;
+    transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.5s ease,
+      padding 0.3s ease, margin 0.3s ease;
+    overflow: hidden;
+  }
+
+  .card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px var(--shadow);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    padding: 16px;
+    position: relative;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px var(--shadow);
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card h3 {
+    font-size: 1.5rem;
+    margin: 10px 0 5px 0;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .card .text-muted {
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .card .text-success {
+    color: var(--success-color) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .card .text-danger {
+    color: var(--danger-color) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .card .icon-circle,
+  .card .mb-2,
+  .card .loan-icon {
+    margin-bottom: 8px;
+  }
+
+  .card .icon-circle i,
+  .card .mb-2 i,
+  .card .loan-icon i {
+    font-size: 1.5rem;
+    color: var(--icon-color);
+  }
+
+  .card .fa-2x {
+    font-size: 1.5rem !important;
+    color: var(--icon-color);
+  }
+
+  .view-details {
+    background: linear-gradient(
+      135deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 100%
+    );
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .view-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--shadow);
+  }
+
+  .stats-grid.hide {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .stats-grid.show {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 2000px;
+  }
+
+  /* Modal Styles */
+  .modal-fullscreen .modal-dialog {
+    margin: 10px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+  }
+
+  .modal-fullscreen .modal-content {
+    height: 100%;
+  }
+
+  .modal-backdrop {
+    --bs-backdrop-opacity: 0.12;
+  }
+
+  .hide {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  .show {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      padding: 20px;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .btn-spacer { display: none; }
+    .cmd-btn--ai { margin-left: 0; }
+
+    .action-section-title {
+      font-size: 1.2rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(150px, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      padding: 14px;
+      min-height: 120px;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+    }
+
+    .card .text-muted {
+      font-size: 0.7rem;
+    }
+
+    .card .icon-circle i,
+    .card .mb-2 i,
+    .card .loan-icon i {
+      font-size: 1.3rem;
+    }
+  }
+
+  /* ==================== MAIN CONTENT MESSENGER ==================== */
+  .sidebar-messenger {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #0084ff, #006aff);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .sidebar-messenger:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 18px rgba(0, 132, 255, 0.45);
+  }
+
+  .sidebar-messenger {
+    cursor: pointer;
+  }
+
+  .sidebar-messenger {
+    position: relative;
+    cursor: pointer;
+  }
+
+  #unreadBadge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.5em;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Birthday modal - gift box + flowers */
+  .birthday-modal-body { position: relative; min-height: 320px; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+  .birthday-gift-wrapper { position: relative; width: 140px; height: 100px; margin-bottom: 20px; }
+  .birthday-box { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 70px; background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%); border-radius: 4px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+  .birthday-box::before { content: ''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 120%; height: 8px; background: linear-gradient(90deg, #c41e3a, #ffd700, #c41e3a); border-radius: 4px; }
+  .birthday-lid { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: 110px; height: 20px; background: linear-gradient(135deg, #c41e3a 0%, #a01830 100%); border-radius: 4px 4px 0 0; transform-origin: left center; transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+  .birthday-modal-body.opened .birthday-lid { transform: translateX(-50%) rotate(-110deg); }
+  .birthday-flowers { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: 100%; height: 80px; pointer-events: none; }
+  .birthday-flower { position: absolute; font-size: 24px; opacity: 0; transition: all 0.6s ease-out; }
+  .birthday-modal-body.opened .birthday-flower { opacity: 1; }
+  .birthday-modal-body.opened .birthday-flower:nth-child(1) { bottom: 50px; left: 20%; transform: rotate(-15deg) scale(1); }
+  .birthday-modal-body.opened .birthday-flower:nth-child(2) { bottom: 65px; left: 35%; transform: rotate(10deg) scale(1.1); }
+  .birthday-modal-body.opened .birthday-flower:nth-child(3) { bottom: 75px; left: 50%; transform: rotate(-5deg) scale(1.2); }
+  .birthday-modal-body.opened .birthday-flower:nth-child(4) { bottom: 65px; left: 65%; transform: rotate(15deg) scale(1.1); }
+  .birthday-modal-body.opened .birthday-flower:nth-child(5) { bottom: 50px; left: 80%; transform: rotate(-10deg) scale(1); }
+  .birthday-person-card { background: var(--card-background); border: 2px solid var(--border-color); border-radius: 16px; padding: 20px 24px; margin-top: 15px; width: 100%; max-width: 450px; text-align: left; opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease 0.4s, transform 0.5s ease 0.4s; }
+  .birthday-modal-body.opened .birthday-person-card { opacity: 1; transform: translateY(0); }
+  .birthday-person-card .bday-row { margin-bottom: 8px; font-size: 1rem; }
+  .birthday-person-card .bday-label { font-weight: 600; color: var(--text-secondary); min-width: 110px; display: inline-block; }
+  .birthday-person-card .bday-value { color: var(--text-primary); }
+  .birthday-person-card .bday-name { font-size: 1.3rem; font-weight: 700; color: var(--primary-color); margin-bottom: 12px; }
+
+ /* When sidebar is visible, reduce by 1 column */
+@media (min-width: 992px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  html.sidebar-collapsed .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  html.sidebar-collapsed .stats-grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (min-width: 1400px) {
+  .stats-grid { grid-template-columns: repeat(5, 1fr); }
+  html.sidebar-collapsed .stats-grid { grid-template-columns: repeat(6, 1fr); }
+}
+@media (min-width: 1600px) {
+  .stats-grid { grid-template-columns: repeat(7, 1fr); }
+  html.sidebar-collapsed .stats-grid { grid-template-columns: repeat(8, 1fr); }
+} /* Large laptops */
+
+
+ /* Normal laptops */
+
+
+ /* Tablets */
+
+
+ /* Mobile */
+
+  
+</style>
+
+<!-- Dashboard -->
+<div class="dashboard-content">
+  <div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">📅 Today's Events</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <ul id="eventList" class="list-group"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="birthdayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">🎂 Today's Birthdays</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body birthday-modal-body" id="birthdayModalBody">
+          <div class="birthday-gift-wrapper">
+            <div class="birthday-lid"></div>
+            <div class="birthday-box"></div>
+            <div class="birthday-flowers">
+              <span class="birthday-flower">🌸</span>
+              <span class="birthday-flower">🌺</span>
+              <span class="birthday-flower">🌷</span>
+              <span class="birthday-flower">🌼</span>
+              <span class="birthday-flower">🌻</span>
+              <span class="birthday-flower">💐</span>
+              <span class="birthday-flower">🌹</span>
+              <span class="birthday-flower">🌸</span>
+              <span class="birthday-flower">🌷</span>
+            </div>
+          </div>
+          <div id="birthdayPersonCards"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% set header = "15 CORPS ENGINEERING SIGNAL REGIMENT" %} {% set subscript =
+  'Welcome ' ~ role ~ ' ' ~ current_user_name %} {% include 'navbar/navbar.html'
+  %}
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <div style="margin-bottom: 10px">
+      {% include 'modals/alarm/alarm.html' %} {% include
+      'modals/alarm/attachment_alarm.html' %} {% include
+      'modals/alarm/leave_alarm.html' %} {% include
+      'modals/alarm/agniveer_test_alarms.html' %} {% include
+      'modals/alarm/event_alarm.html' %}
+    </div>
+
+    <!-- Action Buttons Loader -->
+    <div class="action-btn-progress-loader" id="actionBtnProgressLoader">
+      <div class="loader-progress-bar"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons" id="actionButtonsContainer">
+
+      <button id="show-btn">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+
+      <!-- Rejected Leaves -->
+      <button
+        class="cmd-btn cmd-btn--danger"
+        data-bs-toggle="modal"
+        data-bs-target="#coRejectedModal"
+        id="coRejectedBtn"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <line x1="9" y1="14" x2="15" y2="14"/>
+          <line x1="9" y1="17" x2="12" y2="17"/>
+        </svg>
+        REJECTED LEAVES
+        <span class="cmd-badge" id="coRejectedCount" style="display:none">
+          <span class="shimmer-line" style="width: 20px; height: 8px; display: inline-block"></span>
+          <span class="visually-hidden">unread messages</span>
+        </span>
+      </button>
+
+      <!-- Add Event -->
+      <button
+        class="cmd-btn cmd-btn--primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addEventModal"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <line x1="12" y1="14" x2="12" y2="18"/>
+          <line x1="10" y1="16" x2="14" y2="16"/>
+        </svg>
+        ADD EVENT
+      </button>
+
+      <!-- Messenger -->
+      <button
+        class="cmd-btn cmd-btn--messenger"
+        title="Chat with us"
+        id="chatBtn"
+      >
+        <i class="fab fa-facebook-messenger"></i>
+        MESSAGES
+        <span
+          class="cmd-badge"
+          id="unreadBadge"
+          style="display: none"
+        >0</span>
+      </button>
+      {% if role in ['2IC','CO'] %}
+      <button
+      id="leaveRequestsBtn"
+      class="cmd-btn cmd-btn--primary position-relative"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+        <line x1="9" y1="14" x2="15" y2="14"/>
+        <line x1="9" y1="17" x2="12" y2="17"/>
+      </svg>
+      LEAVE REQUEST
+    
+      <!-- 🔴 Badge -->
+      <span
+        id="leaveRequestBadge"
+        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+        style="display: none; font-size: 0.65rem;"
+      >
+        0
+      </span>
+ </button>
+      {% endif %}
+      <!-- Spacer pushes AI to far right -->
+      <span class="btn-spacer"></span>
+
+      <!-- Chat with AI — far right -->
+      <button class="cmd-btn cmd-btn--ai" onclick="hcOpen()">
+        <span class="ai-dot"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+          <path d="M12 2a8 8 0 00-8 8c0 3 1.6 5.6 4 7.1V20h8v-2.9A8 8 0 0012 2z"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/>
+          <line x1="15" y1="9" x2="15.01" y2="9"/>
+          <path d="M9 13s1 2 3 2 3-2 3-2"/>
+        </svg>
+        CHAT WITH AI
+      </button>
+
+    </div>
+
+    <div id="stats-card-grid" class="stats-grid show">
+      <div class="card p-3 text-center" id="birthdayCard" style="cursor:pointer;display:none" data-bs-toggle="modal" data-bs-target="#birthdayModal">
+        <div class="icon-circle mb-2"><i class="fas fa-birthday-cake"></i></div>
+        <small class="text-muted">TODAY'S BIRTHDAYS</small>
+        <h3 id="birthday-count">0</h3>
+      </div>
+      <!-- Dashboard Cards -->
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        data-bs-target="#paradeStateModal"
+        data-bs-toggle="modal"
+        id="card-parade"
+      >
+        <div class="icon-circle">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <small class="text-muted">PARADE STATE</small>
+        <h3 id="mainPower">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        data-bs-toggle="modal"
+        data-bs-target="#attachmentModal"
+        id="card-attachment"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <small class="text-muted">TD/ATTACHMENT</small>
+        <h3 id="attachment-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        data-bs-toggle="modal"
+        data-bs-target="#dutySearchModal"
+        id="card-duty-search"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-user-tag"></i>
+        </div>
+        <small class="text-muted">DOMAIN SPECIALIZATION</small>
+        <h3 id="duty-search-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        id="openCourses"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <small class="text-muted">COURSE</small>
+        <h3 id="totalCoursesDone">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        id="interview-card"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fa fa-male" aria-hidden="true"></i>
+        </div>
+        <small class="text-muted">KUNBA INTERVIEW</small>
+        <h3>
+          <span id="interview-Count">
+            <div
+              class="shimmer-line"
+              style="width: 30px; height: 24px; display: inline-block"
+            ></div> </span
+          >/<span id="total-count">
+            <div
+              class="shimmer-line"
+              style="width: 30px; height: 24px; display: inline-block"
+            ></div>
+          </span>
+        </h3>
+        <span id="interview%" class="text-danger">
+          <div
+            class="shimmer-line"
+            style="width: 50px; height: 14px; display: inline-block"
+          ></div>
+        </span>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        id="viewDetailsBtn"
+      >
+        <div class="mb-2">
+          <i class="fas fa-user-plus fa-2x text-primary"></i>
+        </div>
+        <small class="text-muted">DETACHMENT</small>
+        <h3 id="locationCount">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        id="openSensitive"
+      >
+        <div class="icon-circle mb-2">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <small class="text-muted">SENSITIVE INDL</small>
+        <h3 id="sensitive-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div class="card p-3 text-center" id="openBoardDetails">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-user-tie me-1"></i>
+        </div>
+        <small class="text-muted">BOO's</small>
+        <h3 id="board-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        id="loanDetailGraph"
+        data-bs-toggle="modal"
+        data-bs-target="#loanModal"
+      >
+        <div class="loan-icon">
+          <i class="fa-solid fa-hand-holding-dollar"></i>
+        </div>
+        <small class="text-muted">LOAN</small>
+        <h3 id="active-loan-count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer; transition: all 0.3s ease"
+        data-bs-toggle="modal"
+        data-bs-target="#projDash_modal">
+      
+        <div class="icon-circle mb-2">
+          <i class="fas fa-rocket"></i>
+        </div>
+
+        <small class="text-muted">TOTAL PROJECTS</small>
+
+        <h3 class="mb-0" id="get_projects_count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        data-bs-toggle="modal"
+        data-bs-target="#rollCallPoints"
+        id="card-rollcall"
+      >
+        <div class="mb-2">
+          <i class="fas fa-clipboard-list fa-2x text-primary"></i>
+        </div>
+        <small class="text-muted">CENTRAL ROLL CALL</small>
+        <h3 id="center-roll-points">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+
+      <div
+        class="card p-3 text-center"
+        style="cursor: pointer"
+        data-bs-toggle="modal"
+        data-bs-target="#agni_Modal"
+        id="card-agniveer"
+      >
+        <div class="icon-circle">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <small class="text-muted">AGNIVEER</small>
+        <h3 id="agniveer_count">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
+      </div>
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#duesInListModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-sign-in-alt"></i>
+        </div>
+        <small class="text-muted">DUES IN</small>
+        <H3 id="dues_in_count">
+<div class="shimmer-number mx-auto"></div>
+        </H3>
+      </div>
+      
+      <div class="card p-3 text-center" style="cursor:pointer" data-bs-toggle="modal"
+        data-bs-target="#duesOutListModal">
+        <div class="icon-circle mb-2">
+          <i class="fas fa-edit"></i>
+        </div>
+        <small class="text-muted">DUES OUT</small>
+        <H3 id="dues_out_count">
+<div class="shimmer-number mx-auto"></div>
+        </H3>
+      </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div class="modal fade" id="addEventModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Today's Event</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="eventForm">
+              <label>Event Date:</label>
+              <input
+                type="date"
+                class="form-control"
+                name="event_date"
+                value="{{ today }}"
+                required
+              />
+              <label class="mt-2">Event Name:</label>
+              <input
+                type="text"
+                class="form-control"
+                name="event_name"
+                required
+              />
+              <label class="mt-2">Venue:</label>
+              <input type="text" class="form-control" name="venue" required />
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="saveEvent()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {%include 'modals/Projects/modal.html'%}
+     {% include
+    'modals/detachmentModal/detachment.html' %} {% include
+    'modals/personnelModal/personal_modal.html' %} {% include
+    'modals/personnelModal/duty_search_modal.html' %} {% include
+    'modals/salesmodal/salesModal.html' %} {% include
+    'modals/leaverequest/leave_request.html' %} {% include
+    'modals/interview_pending/modal.html' %} {% include
+    'modals/count_parade/modal.html' %} {% include
+    'modals/attachment-modal/modal.html' %} {% include 'modals/loan/loans.html'
+    %} {% include 'modals/roll_call/modal.html' %} {% include
+    'modals/roll_call/view_roll_call.html' %} {% include
+    'modals/course/courses.html' %} {% include
+    'modals/interview_pending/jco-update-modal.html' %} {% include
+    'modals/success-modal/modal.html' %} {% include
+    'task_manager/update_task_by_jco.html' %} {% include
+    'modals/adduser/user.html' %} {% include 'modals/oncourses/modal.html' %} {%
+    include 'modals/leaverequest/co-rejected-view.html' %} {% include
+    'modals/alarm/agniveer_test_alarms.html' %} {% include
+    'modals/agniveer/modal.html' %}
+     {% include 'modals/messenger/modal.html' %}
+        {%include 'modals/ollama/ollama.html' %}
+      {% include 'modals/ADD-DUES-IN/modal.html' %}
+    {% include 'modals/ADD-DUES-IN/list_of_dues_in.html' %}
+    {% include 'modals/ADD-DUES-OUT/modal.html' %}
+    {% include 'modals/ADD-DUES-OUT/list_of_dues_out.html' %}
+    <div
+      class="modal fade modal-fullscreen"
+      id="paradeStateModal"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Parade State</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            {% include 'modals/parade_state/index.html' %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% include 'images_section/section.html' %}
+  </div>
+</div>
+
+
+<script>
+  document.addEventListener("hidden.bs.modal", function (e) {
+    document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.overflow = "";
+    if (e.target.id === "birthdayModal") {
+      const body = document.getElementById("birthdayModalBody");
+      if (body) body.classList.remove("opened");
+    }
+  });
+  document.addEventListener("shown.bs.modal", function (e) {
+    if (e.target.id === "birthdayModal") {
+      const body = document.getElementById("birthdayModalBody");
+      if (body) body.classList.add("opened");
+    }
+  });
+</script>
+
+<script>
+  // ========== SAFE ELEMENT CHECKER ==========
+  function safeQuerySelector(selector) {
+    const element = document.querySelector(selector);
+    if (!element) {
+      console.warn(`Element not found: ${selector}`);
+    }
+    return element;
+  }
+
+  function safeAddEventListener(selector, event, handler) {
+    const element = safeQuerySelector(selector);
+    if (element) {
+      element.addEventListener(event, handler);
+    }
+  }
+
+  // ========== START LOADER ==========
+  function startActionButtonsLoader() {
+    const loader = document.getElementById("actionBtnProgressLoader");
+    if (loader) {
+      setTimeout(() => {
+        loader.classList.add("loader-active");
+      }, 200);
+    }
+  }
+
+  // ========== UPDATE LOADER PROGRESS ==========
+  function updateLoaderProgress(percentage) {
+    const loader = document.getElementById("actionBtnProgressLoader");
+    const progressBar = loader?.querySelector(".loader-progress-bar");
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+    }
+  }
+
+  // ========== SHOW ACTION BUTTONS AFTER LOADING ==========
+  function showActionButtons() {
+    const loader = document.getElementById("actionBtnProgressLoader");
+    const buttonsContainer = document.getElementById("actionButtonsContainer");
+
+    if (loader && buttonsContainer) {
+      setTimeout(() => {
+        loader.style.opacity = "0";
+        loader.style.transition = "opacity 0.3s ease";
+
+        setTimeout(() => {
+          loader.style.display = "none";
+          buttonsContainer.classList.add("show");
+        }, 300);
+      }, 500);
+    }
+  }
+
+  // ========== CONDITIONAL EVENT LISTENERS ==========
+  function setupConditionalEventListeners() {
+    const openBoardDetails = safeQuerySelector("#openBoardDetails");
+    if (openBoardDetails) {
+      openBoardDetails.addEventListener("click", function () {
+        window.location.href = "/board_details";
+      });
+    }
+
+    const openSensitive = safeQuerySelector("#openSensitive");
+    if (openSensitive) {
+      openSensitive.addEventListener("click", function () {
+        window.location.href = "/mark_personnel";
+      });
+    }
+
+    const showBtn = safeQuerySelector("#show-btn");
+    const statsGrid = safeQuerySelector("#stats-card-grid");
+    if (showBtn && statsGrid) {
+      showBtn.addEventListener("click", function () {
+        if (statsGrid.classList.contains("hide")) {
+          statsGrid.classList.remove("hide");
+          statsGrid.classList.add("show");
+          this.innerHTML = '<i class="fas fa-chevron-down me-1"></i>';
+        } else {
+          statsGrid.classList.remove("show");
+          statsGrid.classList.add("hide");
+          this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        }
+      });
+    }
+  }
+
+  // ========== EVENT HANDLING ==========
+  function saveEvent() {
+    const eventForm = safeQuerySelector("#eventForm");
+    if (!eventForm) return;
+
+    let formData = new FormData(eventForm);
+
+    fetch("/add_event", {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          alert("Event Added!");
+          location.reload();
+        }
+      });
+  }
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const testModal = document.getElementById("testDetailsModal");
+    const modalBody = document.getElementById("testDetailsModalBody");
+
+    if (testModal && modalBody) {
+      testModal.addEventListener("show.bs.modal", function () {
+        modalBody.innerHTML = `
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary"></div>
+          </div>
+        `;
+
+        fetch("/fill-up-test-details")
+          .then((res) => res.text())
+          .then((html) => {
+            modalBody.innerHTML = html;
+            initFillUpTestForm();
+          })
+          .catch(() => {
+            modalBody.innerHTML =
+              "<p class='text-danger'>Failed to load form</p>";
+          });
+      });
+
+      function initFillUpTestForm() {
+        modalBody.querySelectorAll(".test-status").forEach((select) => {
+          select.addEventListener("change", function () {
+            const dateInput = this.closest(".row").querySelector(".test-date");
+            dateInput.disabled = this.value !== "Done";
+          });
+        });
+
+        const form = modalBody.querySelector("#fillTestForm");
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const payload = {
+            army_number: form.army_number.value,
+            tests: [
+              {
+                test: "1st",
+                status: form.test1.value,
+                date: form.test1_date.value,
+              },
+              {
+                test: "2nd",
+                status: form.test2.value,
+                date: form.test2_date.value,
+              },
+              {
+                test: "3rd",
+                status: form.test3.value,
+                date: form.test3_date.value,
+              },
+              {
+                test: "4th",
+                status: form.test4.value,
+                date: form.test4_date.value,
+              },
+            ],
+          };
+
+          fetch("/api/fill-up-test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+            .then((res) => res.json())
+            .then(() => {
+              alert("Test details saved");
+              bootstrap.Modal.getInstance(testModal).hide();
+              location.reload();
+            })
+            .catch(() => alert("Save failed"));
+        });
+      }
+    }
+  });
+</script>
+
+<script>
+  async function loadTodayEvents() {
+    try {
+      const res = await fetch("/api/today_event_alarm");
+      const data = await res.json();
+
+      const list = safeQuerySelector("#eventList");
+      if (!list) return;
+
+      list.innerHTML = "";
+
+      if (!data.rows || data.rows.length === 0) {
+        list.innerHTML = `
+          <li class="list-group-item text-muted text-center">
+            No events for today
+          </li>`;
+        return;
+      }
+
+      data.rows.forEach((event) => {
+        list.innerHTML += `
+          <li class="list-group-item">
+            <strong>${event.event_name}</strong><br>
+            <small class="text-muted">Location: ${event.venue}</small>
+          </li>
+        `;
+      });
+    } catch (err) {
+      console.error("Error loading events:", err);
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '—';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function loadTodayBirthdays() {
+    try {
+      const res = await fetch("/api/dashboard/birthdays");
+      const data = await res.json();
+      const birthdayCard = safeQuerySelector("#birthdayCard");
+      const countEl = safeQuerySelector("#birthday-count");
+      const cardsContainer = safeQuerySelector("#birthdayPersonCards");
+
+      if (data.status !== "success" || !data.data || data.data.length === 0) {
+        if (birthdayCard) birthdayCard.style.display = "none";
+        return;
+      }
+
+      const list = data.data;
+      if (countEl) countEl.textContent = list.length;
+      if (birthdayCard) birthdayCard.style.display = "flex";
+
+      const cardsHtml = list
+        .map(
+          (p) => `
+        <div class="birthday-person-card">
+          <div class="bday-name">🎂 ${escapeHtml(p.name)}</div>
+          <div class="bday-row"><span class="bday-label">Rank:</span><span class="bday-value">${escapeHtml(p.rank)}</span></div>
+          <div class="bday-row"><span class="bday-label">Army No:</span><span class="bday-value">${escapeHtml(p.army_number)}</span></div>
+          <div class="bday-row"><span class="bday-label">Company:</span><span class="bday-value">${escapeHtml(p.company)}</span></div>
+          <div class="bday-row"><span class="bday-label">Address:</span><span class="bday-value">${escapeHtml(p.address)}</span></div>
+        </div>
+      `
+        )
+        .join("");
+      if (cardsContainer) cardsContainer.innerHTML = cardsHtml;
+    } catch (err) {
+      console.error("Error loading birthdays:", err);
+    }
+  }
+
+  function updateIfExists(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerText = value ?? "0";
+    }
+  }
+
+  // ========== MAIN DASHBOARD DATA LOAD ==========
+  async function loadDashboardDataSingleAPI() {
+    try {
+      updateLoaderProgress(10);
+
+      const res = await fetch("/api/dashboard_summary");
+      if (!res.ok) throw new Error("Failed to fetch dashboard data");
+
+      updateLoaderProgress(30);
+
+      const {
+        detachments,
+        manpower = {},
+        interview = {},
+        attachment_count,
+        agniveer_count,
+        projects,
+        sensitive_count,
+        loan_count,
+        courses_count,
+        roll_call_pending_points,
+        boards_count,
+        tasks = {},
+        duty_count,
+        dues_in,
+        dues_out,
+      } = await res.json();
+
+      updateLoaderProgress(50);
+
+      const pendingTasks = tasks.pending ?? 0;
+      const totalTasks = tasks.total ?? 0;
+      const taskPercentage =
+        totalTasks > 0 ? ((pendingTasks / totalTasks) * 100).toFixed(1) : "0";
+
+      const dashboardMap = {
+        locationCount: detachments,
+        mainPower: `${manpower.officerCount ?? 0} - ${
+          manpower.jcoCount ?? 0
+        } - ${manpower.orCount ?? 0}`,
+        "interview-Count": interview.pending_count ?? 0,
+        "total-count": interview.total_count ?? 0,
+        "interview%": `Pending ${interview.percentage ?? 0}%`,
+        "attachment-count": attachment_count ?? 0,
+        agniveer_count,
+        get_projects_count: projects ?? 0,
+        "sensitive-count": sensitive_count ?? 0,
+        "active-loan-count": loan_count ?? 0,
+        totalCoursesDone: courses_count ?? 0,
+        "center-roll-points": roll_call_pending_points ?? 0,
+        "board-count": boards_count ?? 0,
+        "duty-search-count": duty_count ?? 0,
+        "dues_in_count":dues_in ?? 0,
+        "dues_out_count":dues_out ?? 0
+      };
+
+      Object.entries(dashboardMap).forEach(([id, value]) =>
+        updateIfExists(id, value)
+      );
+
+      updateLoaderProgress(70);
+      await updateRejectedLeaveCount();
+      updateLoaderProgress(85);
+      await loadTodayEvents();
+      await loadTodayBirthdays();
+      updateLoaderProgress(100);
+      showActionButtons();
+    } catch (err) {
+      console.error("Error loading dashboard data:", err);
+      updateLoaderProgress(100);
+      showActionButtons();
+    }
+  }
+
+  async function updateRejectedLeaveCount() {
+    try {
+      const res = await fetch("/apply_leave/rejected_leaves");
+      if (!res.ok) throw new Error("Failed to fetch rejected leaves");
+
+      const { data } = await res.json();
+      const count = data ? data.length : 0;
+
+      const badge = document.getElementById("coRejectedCount");
+      badge.innerText = count;
+      badge.style.display = count > 0 ? "inline-block" : "none";
+    } catch (err) {
+      console.error("Error fetching rejected leaves count:", err);
+    }
+  }
+  async function updateLeaveRequestBadge() {
+        try {
+          const res = await fetch("/apply_leave/get_leave_requests");
+          if (!res.ok) throw new Error("Failed to fetch leave requests");
+      
+          const data = await res.json();
+      
+          const count = data.data ? data.data.length : 0;
+      
+          const badge = document.getElementById("leaveRequestBadge");
+      
+          if (badge) {
+            badge.innerText = count;
+      
+            if (count > 0) {
+              badge.style.display = "inline-block";
+            } else {
+              badge.style.display = "none";
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching leave request count:", err);
+        }
+      }
+
+  // ========== INITIALIZATION ==========
+  function initializeDashboard() {
+    console.log("Dashboard initialized");
+    startActionButtonsLoader();
+    setupConditionalEventListeners();
+    loadDashboardDataSingleAPI();
+    updateLeaveRequestBadge()
+  }
+
+  // ========== DOM READY ==========
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeDashboard();
+  });
+</script>
+<script src="static/js/chat.js"></script>
+{% endblock %}

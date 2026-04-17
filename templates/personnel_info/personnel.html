@@ -1,0 +1,935 @@
+{% extends 'baseView.html' %}
+
+{% block content %}
+<style>
+  :root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent-color: #4a90e2;
+    --warning: #f093fb;
+    --success: #4ecdc4;
+    --info: #6a89cc;
+    --text-primary: #2d3748;
+    --text-secondary: #718096;
+    --bg-light: #f8fafc;
+  }
+
+  /* Fix sidebar overlap */
+
+
+  /* Make it responsive */
+  @media (max-width: 768px) {
+    .container-fluid {
+      margin-left: 0 !important;
+      width: 100% !important;
+      padding: 1rem !important;
+    }
+  }
+
+  body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  /* Dashboard Navbar Styles - ADD THIS SECTION */
+  .dashboard-navbar {
+    background-color: lightgray;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .navbar-left img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+  }
+
+  .navbar-left h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+  }
+
+  .navbar-right {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+
+  }
+
+
+  .dashboard-header {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .dashboard-navbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .navbar-right {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
+
+  .stats-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--warning), var(--success));
+    border-radius: 20px 20px 0 0;
+  }
+
+  .stats-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: inline-block;
+  }
+
+  .stats-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(78, 205, 196, 0.1));
+    border-radius: 50%;
+    z-index: -1;
+  }
+
+  .stats-icon i {
+    background: linear-gradient(135deg, var(--warning), var(--success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-number {
+    color: chocolate;
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--warning), var(--success));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .stats-label {
+    font-size: medium;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    height: 400px;
+    position: relative;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+
+  .chart-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-view-details {
+    background: linear-gradient(135deg, var(--warning), var(--success));
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .btn-view-details:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(240, 147, 251, 0.4);
+  }
+
+  /* ==================== MODAL STYLES ==================== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+  }
+
+  .modal-overlay.show {
+    display: block;
+  }
+
+  .modal-container {
+    position: fixed;
+    top: 3%;
+    left: 3%;
+    width: 94%;
+    height: 94%;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.modal-open nav.navbar {
+    display: none !important;
+  }
+
+  body.modal-open {
+    overflow: hidden;
+  }
+
+  /* Header */
+  .modal-header {
+    /* background: linear-gradient(135deg, var(--primary), var(--secondary)); */
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .modal-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.4rem;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  /* Nav Tabs */
+  .modal-nav {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 1.2rem;
+  }
+
+
+  .modal-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-content {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1.2rem;
+  }
+
+  .tab-content.active {
+    display: flex;
+  }
+
+  /* Tabular Tab */
+  .tabular-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filter-section {
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .company-select {
+    min-width: 180px;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: white;
+    cursor: pointer;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .company-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 3px 8px rgba(102, 126, 234, 0.12);
+  }
+
+  .results-count {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: white;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+  }
+
+  .table-container-modal {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-wrapper {
+    flex: 1;
+    overflow: auto;
+    max-height: 480px;
+  }
+
+  .personnel-table {
+    margin: 0;
+    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+
+  .personnel-table th {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    padding: 0.9rem 0.6rem;
+    letter-spacing: 0.4px;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .personnel-table th:first-child {
+    border-radius: 10px 0 0 0;
+  }
+
+  .personnel-table th:last-child {
+    border-radius: 0 10px 0 0;
+  }
+
+  .personnel-table td {
+    padding: 0.9rem 0.6rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    color: var(--text-primary);
+    background: white;
+  }
+
+  .company-badge {
+    padding: 0.35rem 0.85rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: linear-gradient(135deg, var(--info), var(--accent-color));
+    color: white;
+  }
+
+  /* ==================== MOBILE RESPONSIVE (≤768px) ==================== */
+  @media (max-width: 768px) {
+    .modal-container {
+      top: 2%;
+      left: 2%;
+      width: 96%;
+      height: 96%;
+      border-radius: 12px;
+    }
+
+    .modal-header {
+      padding: 0.8rem 1rem;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      font-size: 1.2rem;
+    }
+
+    .modal-nav {
+      padding: 0 0.8rem;
+    }
+
+
+    .tab-content {
+      padding: 0.8rem;
+    }
+
+    .filter-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.6rem;
+    }
+
+    .company-select {
+      min-width: auto;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.7rem;
+    }
+
+    .table-container-modal {
+      padding: 0.8rem;
+    }
+
+    .table-wrapper {
+      max-height: 380px;
+    }
+
+    .personnel-table {
+      font-size: 0.82rem;
+    }
+
+    .personnel-table th,
+    .personnel-table td {
+      padding: 0.7rem 0.4rem;
+    }
+
+    .company-badge {
+      font-size: 0.7rem;
+      padding: 0.3rem 0.7rem;
+    }
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .header-left img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+  }
+
+  .header-left h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #000;
+    margin: 0;
+  }
+
+  .header-right {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .header-link {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.3);
+    color: #000 !important;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  /* CHANGES HAS BEEN MADS
+   */
+
+  .header-link:hover {
+    background: var(--accent);
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 128, 0.3);
+  }
+</style>
+
+<div class="container-fluid px-4 py-4">
+  <!-- Dashboard Navbar with Add/Update Person Links -->
+  <div class="wrapper">
+    {% set header = "Personnel Management" %}
+    {% set subscript = "Add Personnel → Update Personnel → View Personnel" %}
+    {% include 'navbar/navbar.html' %}
+
+    {% if role in ['NCO PWR','SEC JCO','Subedar Major','NCO CHQ','NCO IT','NCO OP','NCO PWR','NCO MW','NCO MCCS','NCO
+CHQ','SEC JCO','JCO LINE','S/JCO','NCO CHQ','JCO CHQ','ONCO','NCO RHQ','NCO TM','NCO MT','NCO RP/NA','NCO QM'] %}
+    <div class="page-header">
+
+      <div class="header-right">
+
+        <a href="/personnel_information" class="header-link">Dashboard</a>
+        <a href="/personnel_information/add-personnel" class="header-link">Add Personnel</a>
+        <a href="/personnel_information/update-personnel" class="header-link">Update Personnel</a>
+        <a href="/personnel_information/delete-personnel" class="header-link">Delete Personnel</a>
+
+      </div>
+
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Dashboard Header -->
+
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <!-- Total Medical Cases Card -->
+    <div class="stats-card">
+      <div class="stats-icon">
+        <i class="fas fa-heartbeat"></i>
+      </div>
+      <div class="stats-number">{{ total_medical }}</div>
+      <div class="stats-label">Total Personnel with Medical Shape Below I</div>
+      <button class="btn-view-details" onclick="openModal()">
+        View Analytics
+      </button>
+    </div>
+
+    <!-- Company Distribution Chart -->
+    <div class="chart-container">
+      <div class="chart-title">Distribution by Company</div>
+      <div class="chart-wrapper">
+        <canvas id="companyChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Popup -->
+<div class="modal-overlay" id="analyticsModal">
+  <div class="modal-container">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3 class="modal-title">Personnel Analytics Dashboard</h3>
+      <button class="modal-close" onclick="closeModal()" style="background-color: red; 
+               color: white; 
+               width: 80px; 
+               height: 40px; 
+               border-radius: 10%; 
+               border: none; 
+               display: flex; 
+               align-items: center; 
+               justify-content: center;">&#10005;
+
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Navigation -->
+    <div class="modal-nav">
+      <ul class="nav-tabs">
+        <li class="nav-tab" data-tab="tabular">Tabular Data</li>
+      </ul>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Tabular Tab -->
+      <div class="tab-content" id="tabularTab">
+        <div class="tabular-content">
+          <!-- Filter Section -->
+          <div class="filter-section">
+            <div class="filter-label">Filter by Company:</div>
+            <div class="filter-controls">
+              <select class="company-select" id="modalCompanyFilter">
+                <option value="all">All Companies</option>
+                <option value="1 Company">1 Company</option>
+                <option value="2 Company">2 Company</option>
+                <option value="3 Company">3 Company</option>
+                <option value="HQ company">HQ company</option>
+              </select>
+              <div class="results-count">
+                Showing: <span id="modalVisibleCount">0</span> records
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="table-container-modal">
+            <div class="table-wrapper">
+              <table class="table table-hover personnel-table" id="modalPersonnelTable">
+                <thead>
+                  <tr>
+                    <th>Army Number</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Trade</th>
+                    <th>Company</th>
+                    <th>Enrollment Date</th>
+                  </tr>
+                </thead>
+                <tbody id="modalTableBody">
+                  <!-- Data will be loaded via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/Chart.umd.min.js"></script>
+<script>
+  // Chart instances
+  let companyChart = null;
+  let modalCompanyChart = null;
+
+  // Initialize Company Distribution Chart
+  async function initCompanyChart() {
+    try {
+      const response = await fetch("/personnel_information/api/medical-personnel");
+      if (!response.ok) {
+        throw new Error("Failed to fetch medical personnel data");
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error("API returned unsuccessful response");
+      }
+
+      // Extract data
+      const companyDistribution = data.company_distribution;
+      const totalMedical = data.total_medical;
+
+      // Build company name list dynamically
+      const companies = companyDistribution.map(item => item.company);
+      const counts = companyDistribution.map(item => item.count);
+
+      const ctx = document.getElementById("companyChart").getContext("2d");
+
+      // Destroy previous chart if it exists
+      if (companyChart) {
+        companyChart.destroy();
+      }
+
+      // Color palette
+      const colors = [
+        "#667eea",
+        "#f093fb",
+        "#4ecdc4",
+        "#ff6b6b",
+        "#ffcc00",
+        "#00b894"
+      ];
+
+      // Create new Chart.js instance
+      companyChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: companies,
+          datasets: [
+            {
+              data: counts,
+              backgroundColor: colors.slice(0, companies.length),
+              borderColor: colors.slice(0, companies.length).map(color => color + "CC"),
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                font: { size: 12, weight: "600" }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || "";
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          },
+          cutout: "65%"
+        }
+      });
+
+    } catch (error) {
+      console.error("Error initializing company chart:", error);
+    }
+  }
+
+  // Modal Functions
+  function openModal() {
+    const modal = document.getElementById('analyticsModal');
+    document.body.classList.add('modal-open');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    // Activate the Tabular tab and content
+    const tabularTab = document.querySelector('.nav-tab[data-tab="tabular"]');
+    const tabularContent = document.getElementById('tabularTab');
+
+    if (tabularTab && tabularContent) {
+      // Activate the tab
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      tabularTab.classList.add('active');
+
+      // Show the content
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tabularContent.classList.add('active');
+    }
+
+    loadAllPersonnelData();
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('analyticsModal');
+    document.body.classList.remove('modal-open');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+  }
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      closeModal();
+    }
+  });
+
+  // Close modal when clicking outside
+  document.addEventListener('click', function (event) {
+    const modal = document.getElementById('analyticsModal');
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Load all personnel data for modal
+async function loadAllPersonnelData() {
+    try {
+        const response = await fetch('/personnel_information/api/medical-personnel');
+        const data = await response.json();
+
+        if (data.success) {
+            window.allPersonnelData = data.medical_personnel;  // ← important
+            renderModalTable(data.medical_personnel);
+            updateModalResultsCount(data.medical_personnel.length);
+        } else {
+            showErrorInModal('Failed to load personnel data: ' + data.message);
+        }
+    } catch (error) {
+        showErrorInModal('Network error: Could not load personnel data');
+    }
+}
+
+
+  function showErrorInModal(message) {
+    const tableBody = document.getElementById('modalTableBody');
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center py-4 text-danger">
+          Error Loading Data
+          <p>${message}</p>
+          <button class="btn btn-primary mt-2" onclick="loadAllPersonnelData()">
+            Retry
+          </button>
+        </td>
+      </tr>
+    `;
+    updateModalResultsCount(0);
+  }
+
+  function renderModalTable(personnel) {
+    const tableBody = document.getElementById('modalTableBody');
+
+    if (!personnel || personnel.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="text-center py-4">
+            <h4 class="mt-3 mb-2">No Personnel Data Found</h4>
+            <p class="mb-0">No personnel records available in the database.</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = personnel.map(person => {
+      const armyNumber = person.army_number || 'N/A';
+      const rank = person.rank || 'N/A';
+      const name = person.name || 'N/A';
+      const trade = person.trade || 'N/A';
+      const company = person.company || 'Unknown';
+      const enrollmentDate = person.date_of_enrollment
+        ? new Date(person.date_of_enrollment).toLocaleDateString('en-GB')
+        : 'N/A';
+
+      const companyBadge = company !== 'Unknown'
+        ? `<span class="company-badge">${company}</span>`
+        : `<span class="badge bg-secondary">${company}</span>`;
+
+      return `
+        <tr data-company="${company}" data-medical="${person.med_cat || 'No'}">
+          <td class="text-mono fw-bold">${armyNumber}</td>
+          <td class="fw-bold text-uppercase">${rank}</td>
+          <td class="fw-semibold">${name}</td>
+          <td>${trade}</td>
+          <td>${companyBadge}</td>
+          <td>${enrollmentDate}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function setupModalCompanyFilter() {
+    const companyFilter = document.getElementById('modalCompanyFilter');
+
+    companyFilter.addEventListener('change', function () {
+      const selectedCompany = this.value;
+      const tableRows = document.querySelectorAll('#modalTableBody tr');
+      let visibleCount = 0;
+
+      tableRows.forEach(row => {
+        if (selectedCompany === 'all' || row.dataset.company === selectedCompany) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      updateModalResultsCount(visibleCount);
+    });
+  }
+
+  function updateModalResultsCount(count) {
+    document.getElementById('modalVisibleCount').textContent = count;
+  }
+
+  // Initialize when page loads
+  document.addEventListener('DOMContentLoaded', async function () {
+    await initCompanyChart();
+    setupModalCompanyFilter();
+
+    window.addEventListener('resize', function () {
+      if (companyChart) companyChart.resize();
+      if (modalCompanyChart) modalCompanyChart.resize();
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+<style>
+  #centerRollCallTable td:nth-child(8) {
+    max-width: 320px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  #centerRollCallTable tr:hover {
+    background-color: #e3f2fd !important;
+  }
+</style>
+
+<div class="modal fade" id="centerRollCallModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-md-down"
+       style="max-width: 1400px; margin-top: 2vh;">
+    <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold fs-4">Centre Roll Call Points</h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body bg-light p-4">
+
+        <!-- CATEGORY FILTER -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Filter Category</label>
+            <select id="rollCallCategory" class="form-select">
+              <option value="OR_REQUEST" selected>OR Request</option>
+              <option value="SM_SUGGESTION">SM Suggestion</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle table-striped mb-0">
+            <thead id="centerRollCallHead"
+                   class="bg-dark text-white shadow-sm"
+                   style="position: sticky; top: 0; z-index: 10;">
+            </thead>
+            <tbody id="centerRollCallTable">
+              <tr>
+                <td class="text-center text-muted py-5">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal = document.getElementById('centerRollCallModal');
+  const categorySelect = document.getElementById('rollCallCategory');
+  const tbody = document.getElementById('centerRollCallTable');
+  const thead = document.getElementById('centerRollCallHead');
+
+  function renderTableHeader(category) {
+    if (category === 'SM_SUGGESTION') {
+      thead.innerHTML = `
+        <tr class="text-uppercase fw-semibold">
+          <th>Category</th>
+          <th>Title</th>
+          <th style="min-width:320px;">Description</th>
+          <th>Date</th>
+        </tr>`;
+    } else {
+      thead.innerHTML = `
+        <tr class="text-uppercase fw-semibold">
+          <th class="text-center">#</th>
+          <th>Army No</th>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Category</th>
+          <th>Title</th>
+          <th style="min-width:320px;">Description</th>
+          <th>Date</th>
+        </tr>`;
+    }
+  }
+
+  function loadRollCallData() {
+    const category = categorySelect.value;
+    renderTableHeader(category);
+
+    fetch(`/roll_call/pending?category=${category}`)
+      .then(res => res.json())
+      .then(res => {
+        tbody.innerHTML = '';
+
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="${category === 'SM_SUGGESTION' ? 4 : 9}"
+                  class="text-center text-muted py-5">
+                No records found
+              </td>
+            </tr>`;
+          return;
+        }
+
+        res.data.forEach((row, index) => {
+          if (category === 'SM_SUGGESTION') {
+            tbody.innerHTML += `
+              <tr>
+                <td>${row.category}</td>
+                <td>${row.point_title}</td>
+                <td>${row.point_description}</td>
+                <td>${new Date(row.created_at).toLocaleDateString()}</td>
+              </tr>`;
+          } else {
+            tbody.innerHTML += `
+              <tr>
+                <td class="text-center">${index + 1}</td>
+                <td>${row.army_number}</td>
+                <td>${row.rank}</td>
+                <td>${row.name}</td>
+                <td>${row.company}</td>
+                <td>${row.category}</td>
+                <td>${row.point_title}</td>
+                <td>${row.point_description}</td>
+                <td>${new Date(row.created_at).toLocaleDateString()}</td>
+              </tr>`;
+          }
+        });
+      });
+  }
+
+  modal.addEventListener('show.bs.modal', loadRollCallData);
+  categorySelect.addEventListener('change', loadRollCallData);
+</script>

@@ -1,0 +1,143 @@
+<style>
+    .army-no {
+      font-weight: bold;
+      color: #0d6efd;
+    }
+    
+    .name-highlight {
+      font-weight: 600;
+      color: #198754;
+    }
+    </style>
+
+
+
+<!-- ================= DUES IN LIST MODAL ================= -->
+<div class="modal fade" id="duesInListModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">DUES IN DETAILS</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <div class="modal-body">
+  
+          <!-- 🔍 Search -->
+          <input type="text" id="duesInSearch" class="form-control mb-3"
+                 placeholder="Search Army No / Name...">
+  
+          <!-- 🔄 Loader -->
+          <div id="duesInLoader" class="text-center my-4">
+            <div class="spinner-border text-primary"></div>
+          </div>
+  
+          <!-- 📊 Table -->
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center d-none"
+                   id="duesInTable">
+  
+              <thead class="table-dark">
+                <tr>
+                  <th>Army No</th>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Trade</th>
+                  <th>Unit</th>
+                  <th>Order No</th>
+                  <th>Date</th>
+                  <th>DOR</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+  
+              <tbody id="duesInTableBody"></tbody>
+            </table>
+          </div>
+  
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  <script>
+    let duesInData = [];
+    
+    // 🚀 Modal open → fetch
+    document.getElementById('duesInListModal').addEventListener('show.bs.modal', async () => {
+    
+        document.getElementById("duesInLoader").style.display = "block";
+        document.getElementById("duesInTable").classList.add("d-none");
+    
+        try {
+            const res = await fetch("/dues/dues-in/list");
+            const result = await res.json();
+    
+            if(result.success){
+                duesInData = result.data;
+                renderDuesInTable(duesInData);
+            }
+    
+        } catch(err){
+            console.error(err);
+        }
+    });
+    
+    // 📊 Render
+    function renderDuesInTable(data){
+        const tbody = document.getElementById("duesInTableBody");
+        tbody.innerHTML = "";
+    
+        if(data.length === 0){
+            tbody.innerHTML = `<tr><td colspan="9">No Data Found</td></tr>`;
+        }
+    
+        data.forEach(row => {
+            tbody.innerHTML += `
+                <tr>
+                    <td class="army-no">${row.army_number || ''}</td>
+                    <td>${row.rank || ''}</td>
+                    <td class="name-highlight">${row.name || ''}</td>
+                    <td>${row.trade || ''}</td>
+                    <td>${row.unit || ''}</td>
+                    <td>${row.posting_order_no || ''}</td>
+                    <td>${formatDate(row.date_of_move)}</td>
+                    <td>${row.dor || ''}</td>
+                    <td>${row.remarks || ''}</td>
+                </tr>
+            `;
+        });
+    
+        document.getElementById("duesInLoader").style.display = "none";
+        document.getElementById("duesInTable").classList.remove("d-none");
+    }
+    
+    // 🔍 Search
+    document.getElementById("duesInSearch").addEventListener("keyup", function(){
+        const value = this.value.toLowerCase();
+    
+        const filtered = duesInData.filter(item =>
+            (item.army_number || '').toLowerCase().includes(value) ||
+            (item.name || '').toLowerCase().includes(value)
+        );
+    
+        renderDuesInTable(filtered);
+    });
+    
+    // 📅 Date formatter
+    function formatDate(dateStr){
+        if(!dateStr) return '';
+    
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+    </script>

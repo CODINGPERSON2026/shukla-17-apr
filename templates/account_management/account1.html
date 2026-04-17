@@ -1,0 +1,416 @@
+{% extends "baseView.html" %}
+{% block content %}
+
+<style>
+  
+
+  .card-shadow {
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  }
+
+  .table thead {
+    background-color: #1f2937;
+    color: #fff;
+  }
+
+  .amount {
+    font-weight: 600;
+  }
+
+  .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .view-btn.active {
+    background-color: #0d6efd;
+    color: white;
+  }
+</style>
+
+{% set header = "Account Management" %}
+  {% set subscript = "Add Grants → View Grants → Update allotment " %}
+  {% include 'navbar/navbar.html' %}
+<div class="container-fluid mt-4">
+
+  <!-- HEADER -->
+  
+<div class="d-flex justify-content-between align-items-center m-2">
+    <div>
+      <h4 style="font-weight: 600;background-color: rgb(227, 224, 220); padding: 5px;border-radius: 12px;">DETAILS OF GRANTS – FY 2025-26</h4>
+      <small class="text-muted">Admin Financial Control Panel</small>
+    </div>
+  </div>
+  <!-- ================= SUMMARY CARDS ================= -->
+  <div class="row mb-4">
+
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6>Total Grants</h6>
+          <h4 id="totalGrants">0</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6>Total Allotment (₹)</h6>
+          <h4 id="totalAllotment">0</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6>Total Expenditure (₹)</h6>
+          <h4 id="totalExpenditure">0</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6>Overall Utilization</h6>
+          <h4 id="overallUtil">0%</h4>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADD GRANT BUTTON -->
+  <div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <button class="btn btn-outline-primary view-btn active" id="analyticBtn">📊 Statistical View</button>
+      <button class="btn btn-outline-secondary view-btn" id="tableBtn">📋 Tabular View</button>
+    </div>
+    {%if role != 'CO'%}
+   <a id="add-grants" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#grantModal">
+  + Add Grant
+</a>
+    {%endif%}
+  </div>
+<!-- Add Grant Modal -->
+<div class="modal fade" id="grantModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add Grant</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <form id="grantForm">
+
+          <div class="mb-3">
+            <label class="form-label">Grant Name</label>
+            <input type="text" class="form-control" id="grant_name" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Code Head</label>
+            <input type="text" class="form-control" id="code_head" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Allotment</label>
+            <input type="number" class="form-control" id="allotment" required>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100">
+            Save Grant
+          </button>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+  <!-- ================= ANALYTICAL VIEW ================= -->
+  <div id="analyticView">
+
+    <div class="row g-4 mb-5">
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h6 class="mb-0 fw-semibold">Allotment vs Expenditure</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="barChart" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h6 class="mb-0 fw-semibold">Expenditure Distribution</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="pieChart" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h6 class="mb-0 fw-semibold">Utilization Trend (%)</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="lineChart" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header">
+            <h6 class="mb-0 fw-semibold">Overall Utilization</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="doughnutChart" height="120"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= TABULAR VIEW ================= -->
+  <div id="tableView" style="display:none;">
+
+    <div class="card card-shadow">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover mb-0 align-middle text-center">
+            <thead>
+              <tr>
+                <th>Ser No</th>
+                <th>Grant Head</th>
+                <th>Code Head</th>
+                <th>Allotment (₹)</th>
+                <th>No of SOs</th>
+                <th>Total Expdr (₹)</th>
+                <th>Balance (₹)</th>
+                <th>Expdr %</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="grantTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="/static/Chart.umd.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+  const tableBody = document.getElementById("grantTableBody");
+  const analyticView = document.getElementById("analyticView");
+  const tableView = document.getElementById("tableView");
+  const analyticBtn = document.getElementById("analyticBtn");
+  const tableBtn = document.getElementById("tableBtn");
+
+  let barChart, pieChart, lineChart, doughnutChart;
+
+  function formatCurrency(value){
+    return Number(value || 0).toLocaleString("en-IN");
+  }
+
+  analyticBtn.onclick = function(){
+    analyticView.style.display = "block";
+    tableView.style.display = "none";
+    analyticBtn.classList.add("active");
+    tableBtn.classList.remove("active");
+  };
+
+  tableBtn.onclick = function(){
+    analyticView.style.display = "none";
+    tableView.style.display = "block";
+    tableBtn.classList.add("active");
+    analyticBtn.classList.remove("active");
+  };
+
+  function loadGrants(){
+
+    fetch("/account/grants/summary")
+    .then(res => res.json())
+    .then(data => {
+
+      tableBody.innerHTML = "";
+
+      let totalAllotment = 0;
+      let totalExpenditure = 0;
+
+      let grantNames = [];
+      let allotments = [];
+      let expenditures = [];
+      let percentages = [];
+
+      data.forEach((grant, index) => {
+
+        const allotment = parseFloat(grant.total_allotment) || 0;
+        const exp = parseFloat(grant.total_expenditure) || 0;
+        const percent = parseFloat(grant.exp_percent) || 0;
+
+        totalAllotment += allotment;
+        totalExpenditure += exp;
+
+        grantNames.push(grant.name);
+        allotments.push(allotment);
+        expenditures.push(exp);
+        percentages.push(percent);
+
+        let badgeClass = "bg-success";
+        if (percent >= 80 && percent <= 100) badgeClass = "bg-warning text-dark";
+        if (percent > 100) badgeClass = "bg-danger";
+
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td class="fw-semibold">${grant.name}</td>
+            <td>${grant.code_head}</td>
+            <td>${formatCurrency(allotment)}</td>
+            <td>${grant.no_of_sos}</td>
+            <td class="text-danger">${formatCurrency(exp)}</td>
+            <td>${formatCurrency(grant.balance)}</td>
+            <td><span class="badge ${badgeClass}">${percent.toFixed(2)}%</span></td>
+            <td><a href="/account/grants/${grant.id}" class="btn btn-sm btn-outline-primary">View</a></td>
+          </tr>
+        `;
+
+        tableBody.innerHTML += row;
+      });
+
+      const overallPercent = totalAllotment > 0
+        ? (totalExpenditure / totalAllotment) * 100
+        : 0;
+
+      document.getElementById("totalGrants").innerText = data.length;
+      document.getElementById("totalAllotment").innerText = formatCurrency(totalAllotment);
+      document.getElementById("totalExpenditure").innerText = formatCurrency(totalExpenditure);
+      document.getElementById("overallUtil").innerText = overallPercent.toFixed(2) + "%";
+
+      createCharts(grantNames, allotments, expenditures, percentages, overallPercent);
+
+    });
+  }
+
+  function createCharts(names, allotments, expenditures, percentages, overallPercent){
+
+    if(barChart) barChart.destroy();
+    if(pieChart) pieChart.destroy();
+    if(lineChart) lineChart.destroy();
+    if(doughnutChart) doughnutChart.destroy();
+
+    barChart = new Chart(document.getElementById("barChart"), {
+      type: "bar",
+      data: {
+        labels: names,
+        datasets: [
+          { label: "Allotment", data: allotments },
+          { label: "Expenditure", data: expenditures }
+        ]
+      }
+    });
+
+    pieChart = new Chart(document.getElementById("pieChart"), {
+      type: "pie",
+      data: {
+        labels: names,
+        datasets: [{ data: expenditures }]
+      }
+    });
+
+    lineChart = new Chart(document.getElementById("lineChart"), {
+      type: "line",
+      data: {
+        labels: names,
+        datasets: [{
+          label: "Utilization %",
+          data: percentages,
+          tension: 0.3
+        }]
+      }
+    });
+
+    doughnutChart = new Chart(document.getElementById("doughnutChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Used", "Remaining"],
+        datasets: [{
+          data: [overallPercent, 100 - overallPercent]
+        }]
+      }
+    });
+  }
+
+  loadGrants();
+
+});
+</script>
+<script>
+
+document.getElementById("grantForm").addEventListener("submit", function(e){
+
+    e.preventDefault();
+
+    const data = {
+        name: document.getElementById("grant_name").value,
+        code_head: document.getElementById("code_head").value,
+        allotment: document.getElementById("allotment").value
+    };
+
+    fetch("/account/grants/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(response => {
+
+        if(response.success){
+
+            alert("Grant Added Successfully");
+
+            // close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('grantModal'));
+            modal.hide();
+
+            // optional reset
+            document.getElementById("grantForm").reset();
+
+        }else{
+            alert("Error adding grant");
+        }
+
+    })
+    .catch(err=>{
+        console.error(err);
+        alert("Server error");
+    });
+
+});
+
+</script>
+{% endblock %}

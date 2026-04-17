@@ -1,0 +1,164 @@
+
+<style>
+  #printParadeBtn:hover{
+
+    background-color: rgb(44, 29, 11);
+
+  }
+</style>
+<div class="modal fade" id="countModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content">
+  
+        <!-- HEADER -->
+        <div class="modal-header bg-secondary text-white">
+          <h5 class="modal-title fw-bold">PARADE STATE - COUNT UPDATE</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <!-- BODY -->
+        <div class="modal-body">
+          <div class="table-responsive">
+  
+            <table class="table table-bordered table-hover text-center align-middle" id="paradeDisplayTable">
+              <thead class="table-dark">
+                <tr>
+                  <th>Rank / Category</th>
+                  <th>1 Company</th>
+                  <th>2 Company</th>
+                  <th>3 Company</th>
+                  <th>HQ company</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="6">Loading...</td></tr>
+              </tbody>
+            </table>
+  
+          </div>
+        </div>
+  
+        <!-- FOOTER -->
+        <div class="modal-footer">
+          <button class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+          <button id="printParadeBtn" class="btn btn-primary">
+            🖨 Print Parade State
+          </button>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById("countModal").addEventListener("shown.bs.modal", function () {
+    
+      fetch("/api/get-parade-count")
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.querySelector("#paradeDisplayTable tbody");
+          tbody.innerHTML = "";
+      
+          let totalC1 = 0, totalC2 = 0, totalC3 = 0, totalC4 = 0, grandTotal = 0;
+      
+          Object.keys(data).forEach(rank => {
+            let c1 = data[rank].c1 || 0;
+            let c2 = data[rank].c2 || 0;
+            let c3 = data[rank].c3 || 0;
+            let c4 = data[rank].c4 || 0;
+            let total = c1 + c2 + c3 + c4;
+      
+            // Accumulate totals
+            totalC1 += c1;
+            totalC2 += c2;
+            totalC3 += c3;
+            totalC4 += c4;
+            grandTotal += total;
+      
+            tbody.innerHTML += `
+              <tr>
+                <td class="fw-bold text-start">${rank}</td>
+                <td>${c1}</td>
+                <td>${c2}</td>
+                <td>${c3}</td>
+                <td>${c4}</td>
+                <td class="fw-bold text-primary">${total}</td>
+              </tr>
+            `;
+          });
+      
+          // Add TOTAL Row
+          tbody.innerHTML += `
+            <tr class="table-info fw-bold">
+              <td class="text-start">TOTAL</td>
+              <td>${totalC1}</td>
+              <td>${totalC2}</td>
+              <td>${totalC3}</td>
+              <td>${totalC4}</td>
+              <td class="text-primary">${grandTotal}</td>
+            </tr>
+          `;
+      })
+      
+        .catch(() => {
+            document.querySelector("#paradeDisplayTable tbody").innerHTML = 
+            `<tr><td colspan="6" class="text-danger text-center">⚠ Error loading data</td></tr>`;
+        });
+    
+    });
+
+
+    document.getElementById("printParadeBtn").addEventListener("click", function () {
+
+      const modalBody = document.querySelector("#paradeDisplayTable").outerHTML;
+    
+      const printWindow = window.open("", "", "width=900,height=700");
+    
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Parade State Report</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  padding: 20px;
+              }
+              h2 {
+                  text-align: center;
+                  margin-bottom: 20px;
+              }
+              table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-bottom: 20px;
+              }
+              th, td {
+                  border: 1px solid #444;
+                  padding: 8px;
+                  text-align: center;
+              }
+              th {
+                  background: #dce7ff;
+                  font-weight: bold;
+              }
+              .total-row {
+                  background-color: #e6f4ea;
+                  font-weight: bold;
+              }
+          </style>
+        </head>
+        <body>
+            <h2>📋 Parade State Report</h2>
+            ${modalBody}
+        </body>
+        </html>
+      `);
+    
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    });
+    
+    </script>
+    
+      

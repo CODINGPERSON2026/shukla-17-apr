@@ -1,0 +1,192 @@
+<!-- ================= CREATE PROJECT MODAL ================= -->
+<div class="modal fade prj-detail-modal" id="prjCreateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+  
+        <div class="modal-header border-0 p-0">
+          <div class="prj-detail-header w-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <h3 class="prj-detail-title">Create New Project</h3>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+          </div>
+        </div>
+  
+        <div class="modal-body prj-detail-body-content">
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Project Title *</label>
+            <input type="text" id="newPrjTitle" class="form-control" required>
+            
+<div class="invalid-feedback">Project title is required</div>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Project Head *</label>
+            <input type="text" id="newPrjOwner" class="form-control" required>
+            <div class="invalid-feedback">Project head is required</div>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Cost *</label>
+            <input type="number" id="newPrjCost" class="form-control" min="0" required>
+            <div class="invalid-feedback">Project cost is required</div>
+          </div>
+  
+          
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Items</label>
+            <input type="text" id="newPrjItems" class="form-control">
+            <div class="invalid-feedback">Project items is required</div>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Quantity</label>
+            <input type="number" id="newPrjQuantity" class="form-control" min="0">
+            <div class="invalid-feedback">Project quantity is required</div>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea id="newPrjDescription" class="form-control" rows="3"></textarea>
+            <div class="invalid-feedback">Project Discription is required</div>
+          </div>
+  
+          <button class="prj-update-button" onclick="createNewProjectData()">
+            <i class="fas fa-save me-2"></i>Create Project
+          </button>
+  
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<script>
+    function openCreateProjectModal() {
+
+        const dashboardModal = bootstrap.Modal.getInstance(
+          document.getElementById('projDash_modal')
+        );
+      
+        if (dashboardModal) {
+          dashboardModal.hide();
+        }
+      
+        const createModal = new bootstrap.Modal(
+          document.getElementById('prjCreateModal')
+        );
+      
+        createModal.show();
+      }
+      async function createNewProjectData() {
+
+  const titleEl = document.getElementById('newPrjTitle');
+  const ownerEl = document.getElementById('newPrjOwner');
+  const costEl = document.getElementById('newPrjCost');
+
+  const itemsEl = document.getElementById('newPrjItems');
+  const quantityEl = document.getElementById('newPrjQuantity');
+  const descriptionEl = document.getElementById('newPrjDescription');
+
+  const project_name = titleEl.value.trim();
+  const head = ownerEl.value.trim();
+  const project_cost = costEl.value.trim();
+
+  const project_items = itemsEl.value.trim();
+  const quantity = quantityEl.value.trim();
+  const project_description = descriptionEl.value.trim();
+
+  // reset validation
+  [titleEl, ownerEl, costEl].forEach(el => {
+    el.classList.remove("is-invalid");
+  });
+
+  let isValid = true;
+
+  if (!project_name) {
+    titleEl.classList.add("is-invalid");
+    isValid = false;
+  }
+
+  if (!head) {
+    ownerEl.classList.add("is-invalid");
+    isValid = false;
+  }
+
+  if (!project_cost || parseFloat(project_cost) < 0) {
+    costEl.classList.add("is-invalid");
+    isValid = false;
+  }
+
+  if (!isValid) return;
+
+  const btn = document.querySelector("#prjCreateModal .prj-update-button");
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>Creating...`;
+  btn.disabled = true;
+
+  try {
+
+    const response = await fetch('/projects/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+
+        project_name,
+        head,
+        project_cost,
+        project_items,
+        quantity,
+        project_description,
+
+        // optional default fields
+        status: "Active",
+        current_stage: "Planning"
+
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+
+      btn.innerHTML = `<i class="fas fa-check me-2"></i>Created`;
+
+      setTimeout(() => {
+
+        bootstrap.Modal.getInstance(
+          document.getElementById('prjCreateModal')
+        ).hide();
+
+        loadAllProjectsData();
+
+        btn.innerHTML = `<i class="fas fa-save me-2"></i>Create Project`;
+        btn.disabled = false;
+
+      }, 800);
+
+    } else {
+      showCreateError(result.message || "Creation failed");
+    }
+
+  } catch (error) {
+    console.error(error);
+    showCreateError("Server error");
+  }
+}
+      function showCreateError(message) {
+
+        const body = document.querySelector("#prjCreateModal .modal-body");
+      
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "alert alert-danger mt-3";
+        errorDiv.innerText = message;
+      
+        body.prepend(errorDiv);
+      
+        setTimeout(() => errorDiv.remove(), 3000);
+      }
+                  
+</script>  

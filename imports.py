@@ -8,7 +8,9 @@ from flask import (
     url_for,
     flash,
     make_response,
-    send_file,Request
+    send_file,
+    Request,
+    current_app
 )
 
 from datetime import datetime, date, timedelta

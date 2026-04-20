@@ -219,6 +219,7 @@ from datetime import datetime
 def submit_leave_request():
     data = request.get_json()
     print("Received data:", data)
+    
 
     army_number = data.get("person_id")
     leave_type_str = data.get("leave_type")
@@ -233,6 +234,7 @@ def submit_leave_request():
     to_date = data.get("to_date")
     reason = data.get("reason")
     name = data.get("name")
+    reliever_army_number = data.get("reliever_army_number")
 
     # NEW: Transport and Address data
     transport_data = data.get("transport", {})
@@ -275,19 +277,30 @@ def submit_leave_request():
 
         # ==================== EXISTING MAIN INSERT (UNCHANGED) ====================
         cursor.execute("""
-            INSERT INTO leave_status_info
-            (army_number, `rank`, name, company, leave_type, leave_days, from_date, to_date,
-             prefix_date, suffix_date, prefix_days, suffix_days, request_sent_to, request_status,
-             remarks, leave_reason, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-        """, (
-            army_number, rank, name, company_name, leave_type_str,
-            int(actual_leave_days or total_days), from_date, to_date,
-            prefix_date, suffix_date, int(prefix_days or 0), int(suffix_days or 0),
-            request_sent_to, request_status,
-            f"{leave_type_str} for {total_days} day(s) (Prefix: {prefix_days}, Suffix: {suffix_days})",
-            reason
-        ))
+    INSERT INTO leave_status_info
+    (army_number, `rank`, name, company, leave_type, leave_days, from_date, to_date,
+     prefix_date, suffix_date, prefix_days, suffix_days, request_sent_to, request_status,
+     remarks, leave_reason, created_at, updated_at, reliever_army_number)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW(), %s)
+""", (
+    army_number, 
+    rank, 
+    name, 
+    company_name, 
+    leave_type_str,
+    int(actual_leave_days or total_days or 0), 
+    from_date, 
+    to_date,
+    prefix_date, 
+    suffix_date, 
+    int(prefix_days or 0), 
+    int(suffix_days or 0),
+    request_sent_to, 
+    request_status,
+    f"{leave_type_str} for {total_days} day(s) (Prefix: {prefix_days}, Suffix: {suffix_days})",
+    reason,
+    reliever_army_number   # ← This was the missing/misplaced value
+))
 
         main_leave_id = cursor.lastrowid
         conn.commit()
@@ -602,7 +615,7 @@ def get_leave_request(leave_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Fetch main leave request
+        # ================== FETCH MAIN LEAVE ==================
         cursor.execute("""
             SELECT 
                 id,
@@ -620,7 +633,8 @@ def get_leave_request(leave_id):
                 suffix_days,
                 leave_reason,
                 request_status,
-                reject_reason
+                reject_reason,
+                reliever_army_number
             FROM leave_status_info
             WHERE id = %s
         """, (leave_id,))
@@ -632,18 +646,41 @@ def get_leave_request(leave_id):
                 "message": "Leave request not found"
             }), 404
 
-        # Fetch name and rank from personnel table
-        cursor.execute("SELECT name, `rank` FROM personnel WHERE army_number = %s", 
-                      (leave['army_number'],))
+        # ================== FETCH APPLICANT DETAILS (if needed) ==================
+        cursor.execute(
+            "SELECT name, `rank`, company FROM personnel WHERE army_number = %s",
+            (leave['army_number'],)
+        )
         name_result = cursor.fetchone()
-        
+
         if name_result:
             leave['name'] = name_result['name']
             leave['rank'] = name_result['rank']
+            leave['company'] = name_result['company']   # Ensure latest company
 
-        # Handle Combined Leave - Check if leave_type has '+'
+        # ================== FETCH RELIEVER DETAILS (NEW) ==================
+        if leave.get('reliever_army_number'):
+            cursor.execute(
+                "SELECT name, `rank`, company FROM personnel WHERE army_number = %s",
+                (leave['reliever_army_number'],)
+            )
+            reliever_result = cursor.fetchone()
+
+            if reliever_result:
+                leave['reliever_name'] = reliever_result['name']
+                leave['reliever_rank'] = reliever_result['rank']
+                leave['reliever_company'] = reliever_result['company']
+            else:
+                leave['reliever_name'] = None
+                leave['reliever_rank'] = None
+                leave['reliever_company'] = None
+        else:
+            leave['reliever_name'] = None
+            leave['reliever_rank'] = None
+            leave['reliever_company'] = None
+
+        # ================== HANDLE COMBINED LEAVE ==================
         if '+' in leave.get('leave_type', ''):
-            # Fetch individual leave details from multi_leave_table
             cursor.execute("""
                 SELECT 
                     leave_type,
@@ -658,16 +695,12 @@ def get_leave_request(leave_id):
             multi_details = cursor.fetchall()
 
             if multi_details:
-                # Format leave_type as "AL(15) + PL(10)"
                 formatted = []
+                leave['leave_details'] = []
+
                 for d in multi_details:
                     formatted.append(f"{d['leave_type']}({d['leave_days']})")
-                
-                leave['leave_type'] = " + ".join(formatted)
 
-                # Add full details for frontend (optional but very useful)
-                leave['leave_details'] = []
-                for d in multi_details:
                     leave['leave_details'].append({
                         "leave_type": d['leave_type'],
                         "leave_days": d['leave_days'],
@@ -675,7 +708,9 @@ def get_leave_request(leave_id):
                         "to_date": d['to_date'].strftime('%d-%b-%Y') if d['to_date'] else None
                     })
 
-        # Convert all date fields to dd-MMM-YYYY format
+                leave['leave_type'] = " + ".join(formatted)
+
+        # ================== FORMAT DATES ==================
         if leave.get('from_date'):
             leave['from_date'] = leave['from_date'].strftime('%d-%b-%Y')
 
@@ -688,7 +723,26 @@ def get_leave_request(leave_id):
         if leave.get('suffix_date'):
             leave['suffix_date'] = leave['suffix_date'].strftime('%d-%b-%Y')
 
-        # Set leave_request_type based on user role
+        # ================== FETCH LEAVE HISTORY ==================
+        cursor.execute("""
+            SELECT 
+                star_remarks,
+                recommended_by
+            FROM leave_history
+            WHERE leave_request_id = %s
+            ORDER BY id ASC
+        """, (leave_id,))
+
+        history_rows = cursor.fetchall()
+
+        leave['history'] = []
+        for row in history_rows:
+            leave['history'].append({
+                "star_remarks": row['star_remarks'],
+                "recommended_by": row['recommended_by']
+            })
+
+        # ================== ROLE BASED TYPE ==================
         user = require_login()
         if user['role'] == 'OC':
             leave['leave_request_type'] = 'OR'
@@ -718,8 +772,10 @@ def get_leave_request(leave_id):
 @leave_bp.route("/recommend_leave", methods=["POST"])
 def recommend_leave():
     data = request.get_json()
-    print(data)
-
+    soldier_trade = ''
+    star_remarks = data.get('remark')
+    
+    
     leave_id = data.get("leave_id")
     if not leave_id:
         return jsonify({"message": "Leave ID missing"}), 400
@@ -729,6 +785,19 @@ def recommend_leave():
 
     try:
         conn.start_transaction()
+        print('here')
+        cursor.execute("""select army_number from leave_status_info where id = %s""",(leave_id,))
+        print('here2')
+        returned_result = cursor.fetchone()
+        print(returned_result,"we are here")
+        if returned_result:
+            army_number_fetched = returned_result['army_number']
+            cursor.execute('select trade,section from personnel where army_number = %s',(army_number_fetched,))
+            result_fetched_for_trade = cursor.fetchone()
+            soldier_trade = result_fetched_for_trade['trade']
+            soldier_section = result_fetched_for_trade['section']
+        print(soldier_trade,"this is soldiers trade")
+        
 
         send_request_to = ''
         request_status = ''
@@ -742,17 +811,24 @@ def recommend_leave():
             request_status = f"Pending at {send_request_to}"
 
         elif current_user_role.startswith("JCO "):
+            
             send_request_to = 'S/JCO'
             request_status = f"Pending at {send_request_to}"
 
         elif current_user_role.startswith("S/JCO"):
-            send_request_to = 'OC'
-            request_status = f"Pending at {send_request_to}"
-
+            if soldier_trade in ['COBBLER'] or soldier_section == 'RP':
+                send_request_to = 'Subedar Major'
+                request_status = f"Pending at {send_request_to}"
+                print("this is working")
+            else:
+                send_request_to = 'OC'
+                request_status = f"Pending at {send_request_to}"
+    
         elif current_user_role == 'Subedar Major':
             send_request_to = 'OC'
             request_status = 'Pending at OC'
-
+        print(send_request_to)
+        print(request_status)
         # ================= FINAL APPROVAL LOGIC =================
         if current_user_role == 'OC':
             cursor.execute("""
@@ -892,14 +968,14 @@ def recommend_leave():
             INSERT INTO leave_history (
                 leave_request_id, army_number, name, leave_type,
                 from_date, to_date, total_days, recommended_by, 
-                remarks, status
+                remarks, status,star_remarks
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             leave["id"], leave["army_number"], leave["name"], 
             leave["leave_type"], leave["from_date"], leave["to_date"],
             leave["leave_days"], current_user_role, 
-            leave["leave_reason"], request_status
+            leave["leave_reason"], request_status,star_remarks
         ))
 
         # ================= UPDATE MAIN TABLE =================
@@ -1554,7 +1630,6 @@ def download_leave_certificate(army_number):
         address_during_leave = {}
         
         if data.get('same_as_permanent') == 1 or data.get('same_as_permanent') ==True:
-        # if True:
             # Build address from personnel table
             address_parts = []
             print("fixed in the database")
@@ -1644,10 +1719,34 @@ def download_leave_certificate(army_number):
         elif data.get('return_mode') == 'Train' and data.get('return_train_type'):
             transport_info["return"]["type"] = data['return_train_type']
         
+        # ====================== CALCULATE ACTUAL LEAVE DAYS ======================
+        actual_leave_days = data.get('leave_days', 0)
+
+        # Subtract prefix and suffix days to get actual core leave days
+        if data.get('prefix_days'):
+            actual_leave_days -= int(data.get('prefix_days', 0))
+        if data.get('suffix_days'):
+            actual_leave_days -= int(data.get('suffix_days', 0))
+
+        # Ensure it doesn't go negative
+        actual_leave_days = max(actual_leave_days, 0)
+
+        # ====================== FORMAT PREFIX & SUFFIX ======================
+        prefix_days = int(data.get('prefix_days', 0))
+        suffix_days = int(data.get('suffix_days', 0))
+
+        prefix_details = "NIL"
+        if prefix_days > 0 and data.get('prefix_date'):
+            prefix_details = f"{prefix_days} day(s) w.e.f. {data['prefix_date'].strftime('%d-%m-%Y')}"
+
+        suffix_details = "NIL"
+        if suffix_days > 0 and data.get('suffix_date'):
+            suffix_details = f"{suffix_days} day(s) w.e.f. {data['suffix_date'].strftime('%d-%m-%Y')}"
+
         # ====================== PREPARE CERTIFICATE DATA ======================
         current_year = datetime.now().year
         cert_no = f"LEAVE/{current_year}/{data['leave_id']}"
-        
+
         applicant = {
             "name": data['name'],
             "rank": data['rank'],
@@ -1655,33 +1754,58 @@ def download_leave_certificate(army_number):
             "company_name": data['company'],
             "section_name": data['section'] if data['section'] else "HQ",
             "trade": data.get('trade', 'N/A'),
-            "contact": data['mobile_number'] if data['mobile_number'] else 'N/A'
+            "contact": data.get('mobile_number', 'N/A')
         }
-        
+
         leave_info = {
             "certificate_number": cert_no,
             "leave_type": leave_type_display,
             "start_date": data['from_date'],
             "end_date": data['to_date'],
-            "total_days": data['leave_days'],
+            "total_days": data['leave_days'],           
+            "actual_leave_days": actual_leave_days,     
+            "prefix_days": prefix_days,                 
+            "suffix_days": suffix_days,                 
+            "prefix_details": prefix_details,           
+            "suffix_details": suffix_details,           
             "issue_date": data['issue_date'] if data['issue_date'] else datetime.now(),
             "applied_on": data['applied_on'],
-            "prefix_details": f"{data['prefix_days']} day(s) on {data['prefix_date'].strftime('%d-%m-%Y') if data['prefix_date'] else 'NIL'}",
-            "suffix_details": f"{data['suffix_days']} day(s) on {data['suffix_date'].strftime('%d-%m-%Y') if data['suffix_date'] else 'NIL'}",
             "leave_reason": data.get('leave_reason', 'Not specified'),
             "remarks": data.get('remarks', 'N/A'),
             "address_during_leave": address_during_leave,
             "transport": transport_info,
-            "reporting_date": (data['suffix_date'] if data['suffix_date'] else data['to_date']).strftime('%d-%m-%Y') if (data['suffix_date'] or data['to_date']) else 'Not specified',
+            "reporting_date": (data['suffix_date'] if data['suffix_date'] else data['to_date']).strftime('%d-%m-%Y') 
+                              if (data.get('suffix_date') or data.get('to_date')) else 'Not specified',
             "leave_details": leave_details_list,
             "request_status": data['request_status']
         }
         
         print(f"Certificate generated for {army_number} with ID: {data['leave_id']}")
         print(leave_info)
-        
-        # Render template
-        html = render_template("certificate.html", applicant=applicant, leave=leave_info)
+
+        # ====================== FIX LOGO PATHS FOR PDF (pisa/xhtml2pdf) ======================
+        import os
+        from flask import current_app
+
+        # Build absolute file paths
+        static_dir = os.path.join(current_app.root_path, 'static')
+        chinar_logo_path = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'chinar.jpg'))
+        rt_logo_path     = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'rt.jpg'))
+
+        # Print for debugging (remove after testing)
+        print("Chinar logo path:", chinar_logo_path)
+        print("RT logo path:", rt_logo_path)
+        print("Chinar exists:", os.path.exists(chinar_logo_path))
+        print("RT exists:", os.path.exists(rt_logo_path))
+
+        # Render template with logo paths
+        html = render_template(
+            "certificate.html", 
+            applicant=applicant, 
+            leave=leave_info,
+            chinar_logo_path=chinar_logo_path,   # absolute path
+            rt_logo_path=rt_logo_path            # absolute path
+        )
         
         # Generate PDF
         pdf_buffer = BytesIO()
@@ -1708,7 +1832,6 @@ def download_leave_certificate(army_number):
             cursor.close()
         if 'conn' in locals() and conn:
             conn.close()
-
 
 
 
@@ -1934,3 +2057,40 @@ def get_leaves():
         print("ERROR:", e)
         return jsonify({"error": "Something went wrong"}), 500
 
+
+
+
+
+
+
+@leave_bp.route('/get_releiver_details')
+def get_releiver_details():
+    query = request.args.get('query', '').strip()
+    
+    if not query or len(query) < 2:
+        return jsonify([])
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)  # Returns rows as dict
+        
+        sql = """
+            SELECT army_number, name, `rank` 
+            FROM personnel 
+            WHERE army_number LIKE %s 
+               OR name LIKE %s 
+            LIMIT 10
+        """
+        search_term = f"%{query}%"
+        cursor.execute(sql, (search_term, search_term))
+        
+        results = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        print("Error fetching reliever details:", e)
+        return jsonify([]), 500

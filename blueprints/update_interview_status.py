@@ -303,49 +303,9 @@ def assign_jco():
 
 
 
-#  <div class="theme-tile" data-theme="dark">
-#                 <i class="fas fa-check-circle active-check"></i>
-#                 <div class="theme-swatch" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
-#                   <i class="fas fa-moon" style="color:#cbd5f5"></i>
-#                 </div>
-#                 <span class="theme-tile-name">Dark</span>
-#               </div>
 
 
 
 
 
 
-# @media (min-width: 1600px) {
-#   .stats-grid {
-#     grid-template-columns: repeat(8, 1fr);
-#   }
-# }
-
-# /* Large laptops */
-# @media (max-width: 1400px) {
-#   .stats-grid {
-#     grid-template-columns: repeat(6, 1fr);
-#   }
-# }
-
-# /* Normal laptops */
-# @media (max-width: 1200px) {
-#   .stats-grid {
-#     grid-template-columns: repeat(5, 1fr);
-#   }
-# }
-
-# /* Tablets */
-# @media (max-width: 992px) {
-#   .stats-grid {
-#     grid-template-columns: repeat(4, 1fr);
-#   }
-# }
-
-# /* Mobile */
-# @media (max-width: 576px) {
-#   .stats-grid {
-#     grid-template-columns: repeat(2, 1fr);
-#   }
-# }

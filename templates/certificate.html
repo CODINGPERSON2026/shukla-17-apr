@@ -3,22 +3,44 @@
 <head>
     <style>
         @page {
-            size: a4 portrait;
-            margin: 1.5cm 1.8cm;
+            size: A4 portrait;
+            margin: 2cm 2.2cm 2.5cm 2cm;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
             font-family: "Times New Roman", serif;
-            font-size: 11pt;
-            line-height: 1.4;
+            font-size: 11.5pt;
+            line-height: 1.6;
             color: #000;
             margin: 0;
             padding: 0;
+            position: relative;
+        }
+
+        body::before {
+            content: "15CESR";
+            position: fixed;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-42deg);
+            font-size: 108pt;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.07);
+            white-space: nowrap;
+            z-index: -1;
+            pointer-events: none;
+            letter-spacing: 12px;
         }
 
         .container {
             width: 100%;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         table {
@@ -28,138 +50,132 @@
 
         .header-table td {
             text-align: center;
-            padding-bottom: 15px;
+            padding-bottom: 20px;
         }
 
         h2 {
             margin: 0;
-            font-size: 18pt;
+            font-size: 19pt;
             font-weight: bold;
             text-decoration: underline;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         .sub-header {
-            font-size: 12pt;
-            margin-top: 5px;
+            font-size: 12.5pt;
+            margin-top: 8px;
             text-transform: uppercase;
             font-weight: bold;
+            letter-spacing: 2px;
         }
 
         .info-header {
-            margin: 15px 0 20px 0;
-            font-size: 11pt;
+            margin: 20px 0 25px 0;
+            font-size: 11.5pt;
         }
 
         .cert-body {
-            margin-top: 20px;
+            margin-top: 25px;
             text-align: justify;
-            font-size: 11pt;
-            line-height: 1.5;
+            font-size: 11.8pt;
+            line-height: 1.65;
         }
 
-        .details-table {
-            margin-top: 15px;
+        .cert-body strong {
+            font-weight: bold;
         }
 
         .details-table td {
-            padding: 5px 4px;
+            padding: 6px 5px;
             vertical-align: top;
         }
 
         .label {
             font-weight: bold;
-            width: 160px;
+            width: 170px;
         }
 
         .breakdown-table {
             width: 100%;
-            margin: 15px 0;
+            margin: 18px 0;
             border: 1px solid #000;
         }
 
         .breakdown-table th {
-            background: #f0f0f0;
-            padding: 5px;
+            background: #e8e8e8;
+            padding: 7px 6px;
             text-align: center;
             border: 1px solid #000;
-            font-size: 10pt;
+            font-size: 10.5pt;
         }
 
         .breakdown-table td {
-            padding: 5px;
+            padding: 7px 6px;
             text-align: center;
             border: 1px solid #000;
-            font-size: 10pt;
+            font-size: 10.5pt;
         }
 
         .transport-section {
-            margin: 12px 0;
-            font-size: 10pt;
-        }
-
-        .transport-table {
-            width: 100%;
-            margin-top: 5px;
-            border: 1px solid #ccc;
+            margin: 15px 0;
+            font-size: 10.8pt;
         }
 
         .transport-table td {
-            padding: 4px;
+            padding: 5px;
             border: 1px solid #ccc;
+        }
+
+        .report-line {
+            margin: 20px 0;
+            padding: 10px 14px;
+            background: #fdf4f4;
+            border-left: 4px solid #c00;
+            font-weight: bold;
+            font-size: 11.2pt;
         }
 
         .signature-table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 35px;
         }
 
         .seal-box {
-            border: 3px solid #c00;
+            border: 3.5px solid #c00;
             color: #c00;
-            width: 90px;
-            height: 90px;
+            width: 98px;
+            height: 98px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            font-size: 10pt;
+            font-size: 10.5pt;
             font-weight: bold;
             margin: 0 auto;
         }
 
         .digital-sig {
-            border: 1px solid #000;
-            padding: 8px;
-            font-size: 9pt;
-            margin-bottom: 10px;
+            border: 2px solid #c00;
+            background: #fff9f9;
+            padding: 10px 12px;
+            font-size: 9.5pt;
             text-align: center;
+            border-radius: 3px;
         }
 
         .footer {
-            margin-top: 20px;
+            margin-top: 45px;
             text-align: center;
             border-top: 1px solid #000;
-            padding-top: 10px;
-            font-size: 9pt;
+            padding-top: 12px;
+            font-size: 9.5pt;
             font-weight: bold;
         }
 
-        .report-line {
-            margin-top: 15px;
-            padding: 8px;
-            background: #f9f9f9;
-            border-left: 3px solid #c00;
-            font-weight: bold;
-        }
-
-        .reason-box {
-            margin: 12px 0;
-            padding: 6px;
-            background: #f5f5f5;
-            font-style: italic;
-            border-left: 3px solid #0066cc;
+        .header-logo {
+            height: 75px;
+            width: auto;
         }
     </style>
 </head>
@@ -168,48 +184,62 @@
     <div class="container">
 
         <!-- Header -->
-        <table class="header-table">
-            <tr>
-                <td>
-                    <h2>LEAVE CERTIFICATE</h2>
-                    <div class="sub-header">
-                        OFFICE OF THE 15 CORPS ENGG SIG REGT
-                    </div>
-                </td>
-            </tr>
-        </table>
+      <!-- Header -->
+<table class="header-table">
+    <tr>
+        <td width="20%" align="left" style="padding-right: 10px;">
+            <img src="{{ chinar_logo_path }}" 
+                 style="height: 80px; width: auto; max-width: 100%; object-fit: contain;border-radius:10%">
+        </td>
+        <td width="60%" align="center">
+            <h2>LEAVE CERTIFICATE</h2>
+            <div class="sub-header">OFFICE OF THE 15 CORPS ENGG SIG REGT</div>
+        </td>
+        <td width="20%" align="right" style="padding-left: 10px;">
+            <img src="{{ rt_logo_path }}" 
+                 style="height: 80px; width: auto; max-width: 100%;margin-left:10px object-fit: contain;">
+        </td>
+    </tr>
+</table>
 
         <!-- Info Header -->
         <table class="info-header">
             <tr>
                 <td align="left"><strong>Certificate No:</strong> {{ leave.certificate_number }}</td>
-                <td align="right"><strong>Leave Approved On:</strong> {{ leave.issue_date.strftime('%d %b %Y') }}</td>
+                <td align="right"><strong>Issued On:</strong> {{ leave.issue_date.strftime('%d %b %Y') }}</td>
             </tr>
         </table>
 
-        <!-- Main Body -->
+        <!-- Main Body - Clear & Improved -->
         <div class="cert-body">
             <strong>CERTIFIED</strong> that <strong>{{ applicant.rank }} {{ applicant.name }}</strong> 
             (Army No <strong>{{ applicant.army_number }}</strong>), 
             Trade: <strong>{{ applicant.trade }}</strong> of 
             <strong>{{ applicant.company_name }}, {{ applicant.section_name }}</strong> Section,
+
             is hereby granted <strong>{{ leave.leave_type }}</strong> leave 
-            for a period of <strong>{{ leave.total_days }} days</strong> 
-            w.e.f <strong>{{ leave.start_date.strftime('%d-%m-%Y') }}</strong> 
+            for a period of <strong>{{ leave.actual_leave_days }} days</strong> (actual leave) 
+            w.e.f. <strong>{{ leave.start_date.strftime('%d-%m-%Y') }}</strong> 
             to <strong>{{ leave.end_date.strftime('%d-%m-%Y') }}</strong>.
+
+            
+            <!-- {% if leave.prefix_days > 0 or leave.suffix_days > 0 %}
+                plus Prefix of <strong>{{ leave.prefix_days }} day(s)</strong> 
+                and Suffix of <strong>{{ leave.suffix_days }} day(s)</strong>.
+            {% endif %} -->
+
+            The total absence from unit will be <strong>{{ leave.total_days }} days.</strong>
         </div>
 
-      
-
-        <!-- Combined Leave Breakdown -->
+        <!-- Leave Breakdown (for combined/multi leave) -->
         {% if leave.leave_details and leave.leave_details|length > 0 %}
         <table class="breakdown-table">
             <thead>
                 <tr>
                     <th>Leave Type</th>
                     <th>Days</th>
-                    <th>From Date</th>
-                    <th>To Date</th>
+                    <th>From</th>
+                    <th>To</th>
                 </tr>
             </thead>
             <tbody>
@@ -234,7 +264,7 @@
                 <td>{{ leave.suffix_details }}</td>
             </tr>
             <tr>
-                <td class="label">Contact No:</td>
+                <td class="label">Contact No (Unit):</td>
                 <td>{{ applicant.contact }}</td>
                 <td class="label">Mobile (on leave):</td>
                 <td>{{ leave.address_during_leave.mobile }}</td>
@@ -243,7 +273,7 @@
                 <td class="label">Address during leave:</td>
                 <td colspan="3">
                     {{ leave.address_during_leave.full_address }}
-                    {% if leave.address_during_leave.alternate_contact and leave.address_during_leave.alternate_contact != 'N/A' and leave.address_during_leave.alternate_contact != 'None' %}
+                    {% if leave.address_during_leave.alternate_contact and leave.address_during_leave.alternate_contact not in ['N/A', 'None', ''] %}
                         <br><strong>Alt Contact:</strong> {{ leave.address_during_leave.alternate_contact }}
                     {% endif %}
                 </td>
@@ -254,7 +284,7 @@
         {% if leave.transport.onward.mode != 'Not Specified' or leave.transport.return.mode != 'Not Specified' %}
         <div class="transport-section">
             <strong>Transport Details:</strong>
-            <table class="transport-table">
+            <table class="transport-table" style="width:100%; margin-top:6px; border:1px solid #ccc;">
                 <tr style="background:#f0f0f0;">
                     <td width="15%"><strong>Journey</strong></td>
                     <td width="20%"><strong>Mode</strong></td>
@@ -264,13 +294,13 @@
                 <tr>
                     <td><strong>Onward</strong></td>
                     <td>{{ leave.transport.onward.mode }}</td>
-                    <td>{% if leave.transport.onward.type and leave.transport.onward.type != 'None' %}{{ leave.transport.onward.type }}{% else %}-{% endif %}</td>
+                    <td>{{ leave.transport.onward.type or '-' }}</td>
                     <td>{{ leave.transport.onward.full_route }}</td>
                 </tr>
                 <tr>
                     <td><strong>Return</strong></td>
                     <td>{{ leave.transport.return.mode }}</td>
-                    <td>{% if leave.transport.return.type and leave.transport.return.type != 'None' %}{{ leave.transport.return.type }}{% else %}-{% endif %}</td>
+                    <td>{{ leave.transport.return.type or '-' }}</td>
                     <td>{{ leave.transport.return.full_route }}</td>
                 </tr>
             </table>
@@ -279,8 +309,8 @@
 
         <!-- Reporting Instruction -->
         <div class="report-line">
-            ⚡ DIRECTIVE: The individual is directed to report back to the unit on expiry of leave by 
-            <strong>{{ leave.reporting_date }}</strong> (1800 hrs). 
+            ⚡ DIRECTIVE: The individual is directed to report back to the unit by 
+            <strong>{{ leave.reporting_date }}</strong> (1800 hrs) on expiry of leave. 
             Any extension requires prior approval through proper channel.
         </div>
 

@@ -569,7 +569,7 @@
       <a class="nav-link {{ 'active' if request.path == '/gallery/manage' else '' }}"
         href="/gallery/manage">Manage Gallery</a>
       {% endif %}
-      {%if role in ['CO','2IC']}
+      {%if role in ['CO','2IC']%}
       <a class="nav-link" href="/settings">Settings</a>
       {%endif%}
       <a class="nav-link" href="/logout" id="logoutLink">Logout</a>

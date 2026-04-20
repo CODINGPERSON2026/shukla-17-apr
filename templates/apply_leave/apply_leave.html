@@ -142,8 +142,45 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     background: linear-gradient(135deg, #1e3a5f, #2563eb);
   }
-  .date-hint { font-size: .76rem; color: #64748b; margin-top: .3rem; }
+
+  .date-hint { 
+    font-size: .76rem; 
+    color: #64748b; 
+    margin-top: .3rem; 
+    min-height: 1.1em;
+  }
   .date-hint.error { color: #dc2626; }
+  .date-hint.success { color: #16a34a; }
+
+  /* Reliever Search Styles */
+  .reliever-container {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .reliever-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #2563eb;
+    border-radius: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 10005;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: none;
+  }
+  .reliever-dropdown.show { display: block; }
+  .reliever-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .reliever-item:hover {
+    background: #eff6ff;
+  }
+  .reliever-item:last-child { border-bottom: none; }
 
   /* LEAVE APPLICATION MODAL */
   #leaveApplicationModal {
@@ -251,18 +288,20 @@
     transform: scale(1.1);
   }
  
+  /* Add Leave Button - Professional Smaller Size */
   .add-leave-btn {
     background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
     border: none;
-    padding: .8rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1rem;
+    padding: .65rem 1.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
     cursor: pointer;
     width: 100%;
     transition: all .2s;
     box-shadow: 0 4px 12px rgba(37,99,235,0.2);
+    margin-bottom: 1.5rem;
   }
   .add-leave-btn:hover {
     transform: translateY(-2px);
@@ -270,7 +309,7 @@
     background: linear-gradient(135deg, #1e40af, #1e3a5f);
   }
 
-  /* Transport Section - Enhanced with Multiple Legs */
+  /* Transport Section */
   .transport-section {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 2px solid #bae6fd;
@@ -454,14 +493,43 @@
 <div id="leaveApplicationModal" onclick="closeModalOnBackdrop(event)">
   <div class="leave-app-card">
     <div class="leave-app-header">
-      <h4>✨ Combined Leave Application</h4>
+      <h4>✨Apply Leave Application</h4>
       <button class="leave-app-close" onclick="closeLeaveApplicationModal()">✕</button>
     </div>
     <div class="leave-app-body">
       <div id="leaveBlocksContainer"></div>
-      <button type="button" class="add-leave-btn mb-4" onclick="addLeaveBlock()">
+      <button type="button" class="add-leave-btn" onclick="addLeaveBlock()">
         ➕ Add Another Leave Type
       </button>
+
+      <!-- Common Prefix & Suffix & Summary -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <label class="form-label">📅 Prefix Date <small class="text-muted">(before first leave)</small></label>
+          <input type="date" id="prefixDate" class="form-control" onchange="validatePrefixDate()">
+          <div class="date-hint" id="prefixHint"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">📅 Suffix Date <small class="text-muted">(after last leave)</small></label>
+          <input type="date" id="suffixDate" class="form-control" onchange="validateSuffixDate()">
+          <div class="date-hint" id="suffixHint"></div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">📊 Total Days</label>
+          <input type="number" id="days" class="form-control" readonly style="font-size:1.2rem; font-weight:700; background:#eff6ff; border-color:#2563eb;">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="total-days-badge" id="totalDaysBadge">0 Days</div>
+        </div>
+      </div>
+
+      <!-- New Reliever Field -->
+      <div class="reliever-container">
+        <label class="form-label">👤 Reliever (Name or Army Number)</label>
+        <input type="text" id="relieverSearch" class="form-control" placeholder="Type name or army number...">
+        <div id="relieverDropdown" class="reliever-dropdown"></div>
+        <input type="hidden" id="selectedRelieverArmyNumber">
+      </div>
 
       <!-- Transport Section - Multiple Stations/Legs -->
       <div class="transport-section">
@@ -575,27 +643,6 @@
         </div>
       </div>
 
-      <!-- Common Prefix & Suffix & Summary -->
-      <div class="row g-4 mb-4">
-        <div class="col-md-3">
-          <label class="form-label">📅 Prefix Date <small class="text-muted">(before first leave)</small></label>
-          <input type="date" id="prefixDate" class="form-control">
-          <div class="date-hint" id="prefixHint"></div>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">📅 Suffix Date <small class="text-muted">(after last leave)</small></label>
-          <input type="date" id="suffixDate" class="form-control">
-          <div class="date-hint" id="suffixHint"></div>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">📊 Total Days</label>
-          <input type="number" id="days" class="form-control" readonly style="font-size:1.2rem; font-weight:700; background:#eff6ff; border-color:#2563eb;">
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <div class="total-days-badge" id="totalDaysBadge">0 Days</div>
-        </div>
-      </div>
-
       <div class="summary-section">
         <div class="summary-title">
           <span>📊 Leave Summary</span>
@@ -636,9 +683,68 @@
 <script>
   let selectedPersonArmyNumber = null;
   let personnel_name = null;
- 
+  let selectedRelieverArmyNumber = null;
+
   const showLoading = () => loadingOverlay.classList.remove("d-none");
   const hideLoading = () => loadingOverlay.classList.add("d-none");
+
+  /* ====================== DEBOUNCE ====================== */
+  function debounce(func, delay = 300) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  }
+
+  /* ====================== RELIEVER SEARCH ====================== */
+  const relieverSearch = document.getElementById('relieverSearch');
+  const relieverDropdown = document.getElementById('relieverDropdown');
+  const selectedRelieverInput = document.getElementById('selectedRelieverArmyNumber');
+
+  const searchReliever = debounce(async (query) => {
+    if (!query || query.length < 2) {
+      relieverDropdown.classList.remove('show');
+      relieverDropdown.innerHTML = '';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/apply_leave/get_releiver_details?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      relieverDropdown.innerHTML = '';
+      if (!data || data.length === 0) {
+        relieverDropdown.innerHTML = '<div class="reliever-item text-muted">No matching personnel found</div>';
+      } else {
+        data.forEach(person => {
+          const div = document.createElement('div');
+          div.className = 'reliever-item';
+          div.innerHTML = `<strong>${person.army_number}</strong> — ${person.name} ${person.rank ? '(' + person.rank + ')' : ''}`;
+          div.onclick = () => {
+            relieverSearch.value = `${person.name} (${person.army_number})`;
+            selectedRelieverArmyNumber = person.army_number;
+            selectedRelieverInput.value = person.army_number;
+            relieverDropdown.classList.remove('show');
+          };
+          relieverDropdown.appendChild(div);
+        });
+      }
+      relieverDropdown.classList.add('show');
+    } catch (err) {
+      console.error("Reliever search failed", err);
+    }
+  }, 300);
+
+  relieverSearch.addEventListener('input', (e) => {
+    searchReliever(e.target.value.trim());
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.reliever-container')) {
+      relieverDropdown.classList.remove('show');
+    }
+  });
 
   /* ====================== MODAL CONTROLS ====================== */
   function openLeaveApplicationModal() {
@@ -655,6 +761,11 @@
     document.getElementById('reason').value = '';
     document.getElementById('leaveSummary').innerHTML = '';
     document.getElementById('totalDaysBadge').textContent = '0 Days';
+    document.getElementById('prefixHint').textContent = '';
+    document.getElementById('suffixHint').textContent = '';
+    relieverSearch.value = '';
+    selectedRelieverInput.value = '';
+    selectedRelieverArmyNumber = null;
 
     // Reset Transport
     document.getElementById('onwardMode').value = '';
@@ -665,22 +776,82 @@
     document.getElementById('returnTrainTypeDiv').style.display = 'none';
     document.getElementById('onwardLegsContainer').innerHTML = '';
     document.getElementById('returnLegsContainer').innerHTML = '';
-    addOnwardLeg();   // Add first leg
-    addReturnLeg();   // Add first leg
+    addOnwardLeg();   
+    addReturnLeg();   
 
-    // Reset Address While on Leave
+    // Reset Address
     document.getElementById('sameAsPermanent').checked = true;
     toggleAddressFields();
 
     // Add first leave block
     addLeaveBlock();
    
-    // Show modal
     document.getElementById('leaveApplicationModal').classList.add('show');
   }
  
   function closeLeaveApplicationModal() {
     document.getElementById('leaveApplicationModal').classList.remove('show');
+  }
+
+  /* ====================== PREFIX & SUFFIX VALIDATION ====================== */
+  function validatePrefixDate() {
+    const prefixVal = document.getElementById('prefixDate').value;
+    const prefixHint = document.getElementById('prefixHint');
+
+    if (!prefixVal) {
+      prefixHint.className = 'date-hint';
+      prefixHint.textContent = '';
+      return true;
+    }
+
+    const blocks = document.querySelectorAll('.leave-block');
+    if (blocks.length === 0) return true;
+
+    const firstFromVal = blocks[0].querySelector('.from-date').value;
+    if (!firstFromVal) return true;
+
+    const prefixDate = new Date(prefixVal);
+    const firstFromDate = new Date(firstFromVal);
+
+    if (prefixDate > firstFromDate) {
+      prefixHint.className = 'date-hint error';
+      prefixHint.textContent = '❌ Prefix date cannot be after first leave start date';
+      return false;
+    } else {
+      prefixHint.className = 'date-hint success';
+      prefixHint.textContent = '✅ Valid prefix date';
+      return true;
+    }
+  }
+
+  function validateSuffixDate() {
+    const suffixVal = document.getElementById('suffixDate').value;
+    const suffixHint = document.getElementById('suffixHint');
+
+    if (!suffixVal) {
+      suffixHint.className = 'date-hint';
+      suffixHint.textContent = '';
+      return true;
+    }
+
+    const blocks = document.querySelectorAll('.leave-block');
+    if (blocks.length === 0) return true;
+
+    const lastToVal = blocks[blocks.length-1].querySelector('.to-date').value;
+    if (!lastToVal) return true;
+
+    const suffixDate = new Date(suffixVal);
+    const lastToDate = new Date(lastToVal);
+
+    if (suffixDate < lastToDate) {
+      suffixHint.className = 'date-hint error';
+      suffixHint.textContent = '❌ Suffix date cannot be before last leave end date';
+      return false;
+    } else {
+      suffixHint.className = 'date-hint success';
+      suffixHint.textContent = '✅ Valid suffix date';
+      return true;
+    }
   }
 
   /* ====================== TRANSPORT - MODE CHANGE ====================== */
@@ -836,10 +1007,11 @@
     hideLoading();
   };
 
- function downloadCertificate(armyNumber) {
+  function downloadCertificate(armyNumber) {
     console.log("Downloading for:", armyNumber);
     window.open(`/apply_leave/download_certificate/${armyNumber}?t=${Date.now()}`, '_blank');
-}
+  }
+
   /* ====================== MULTIPLE LEAVE BLOCKS ====================== */
   let leaveBlocks = [];
 
@@ -936,8 +1108,8 @@
   }
 
   function calculateTotalDays() {
-    const prefixVal = prefixDate.value;
-    const suffixVal = suffixDate.value;
+    const prefixVal = document.getElementById('prefixDate').value;
+    const suffixVal = document.getElementById('suffixDate').value;
     let totalDays = 0;
     let summaryHTML = '';
    
@@ -1014,12 +1186,22 @@
     }
    
     document.getElementById('leaveSummary').innerHTML = summaryHTML;
+
+    validatePrefixDate();
+    validateSuffixDate();
   }
  
-  [prefixDate, suffixDate].forEach(el => el.addEventListener('change', calculateTotalDays));
+  [document.getElementById('prefixDate'), document.getElementById('suffixDate')].forEach(el => {
+    el.addEventListener('change', calculateTotalDays);
+  });
 
   /* ====================== SUBMIT ====================== */
   applyLeaveBtn.onclick = async () => {
+    if (!validatePrefixDate() || !validateSuffixDate()) {
+      alert("Please correct the prefix and suffix date errors before submitting.");
+      return;
+    }
+
     const blocks = document.querySelectorAll('.leave-block');
     let leaveData = [];
     for (let block of blocks) {
@@ -1037,10 +1219,10 @@
       return;
     }
 
-    const prefixVal = prefixDate.value || null;
-    const suffixVal = suffixDate.value || null;
-    const totalDays = parseInt(days.value) || 0;
-    const reasonText = reason.value.trim();
+    const prefixVal = document.getElementById('prefixDate').value || null;
+    const suffixVal = document.getElementById('suffixDate').value || null;
+    const totalDays = parseInt(document.getElementById('days').value) || 0;
+    const reasonText = document.getElementById('reason').value.trim();
 
     if (!reasonText) {
       alert("Please enter a reason for the leave application");
@@ -1096,7 +1278,8 @@
           name: personnel_name,
           combined_leaves: leaveData,
           transport: transportData,
-          address_while_on_leave: addressData
+          address_while_on_leave: addressData,
+          reliever_army_number: selectedRelieverArmyNumber   // New field
         })
       });
       const response = await res.json();
@@ -1238,7 +1421,7 @@
     }, 300);
   }
 
-  // Address toggle listener (runs once)
+  // Address toggle listener
   document.addEventListener('DOMContentLoaded', () => {
     const sameCheckbox = document.getElementById('sameAsPermanent');
     if (sameCheckbox) {

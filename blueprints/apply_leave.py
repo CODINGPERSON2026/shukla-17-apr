@@ -1787,6 +1787,7 @@ def download_leave_certificate(army_number):
 
         # ====================== FIX LOGO PATHS FOR PDF (pisa/xhtml2pdf) ======================
         import os
+        from PIL import Image, ImageDraw
         from flask import current_app
 
         # Build absolute file paths
@@ -1794,23 +1795,38 @@ def download_leave_certificate(army_number):
         chinar_logo_path = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'chinar.jpg'))
         rt_logo_path     = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'rt.jpg'))
         
-
-        # Print for debugging (remove after testing)
-        print("Chinar logo path:", chinar_logo_path)
-        print("RT logo path:", rt_logo_path)
-        
-        print("Chinar exists:", os.path.exists(chinar_logo_path))
-        print("RT exists:", os.path.exists(rt_logo_path))
-        
+        # --- Generate rounded Chinar Logo ---
+        chinar_rounded_path = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'chinar_rounded.jpg'))
+        if not os.path.exists(chinar_rounded_path) and os.path.exists(chinar_logo_path):
+            try:
+                img = Image.open(chinar_logo_path).convert("RGBA")
+                min_dim = min(img.size)
+                left = (img.width - min_dim)/2
+                top = (img.height - min_dim)/2
+                right = (img.width + min_dim)/2
+                bottom = (img.height + min_dim)/2
+                img = img.crop((left, top, right, bottom))
+                
+                mask = Image.new("L", img.size, 0)
+                draw = ImageDraw.Draw(mask)
+                draw.ellipse((0, 0, min_dim, min_dim), fill=255)
+                
+                white_bg = Image.new("RGB", img.size, (255, 255, 255))
+                white_bg.paste(img, mask=mask)
+                white_bg.save(chinar_rounded_path, "JPEG")
+            except Exception as e:
+                print("Could not round logo:", e)
+                chinar_rounded_path = chinar_logo_path
+        elif not os.path.exists(chinar_logo_path):
+            chinar_rounded_path = chinar_logo_path
 
         # Render template with logo paths
         html = render_template(
             "certificate.html", 
             applicant=applicant, 
             leave=leave_info,
-            chinar_logo_path=chinar_logo_path,   # absolute path
-            rt_logo_path=rt_logo_path       # absolute path
-            
+            chinar_logo_path=chinar_rounded_path,   # Pass the rounded image
+            rt_logo_path=rt_logo_path       
         )
         
         # Generate PDF

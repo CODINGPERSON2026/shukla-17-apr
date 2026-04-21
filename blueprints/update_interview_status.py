@@ -44,16 +44,16 @@ def get_pending_kunba_interviews():
 def complete_kunba_interview():
     data = request.json
     personnel_id = data['id']
+    remarks = data.get('remarks', '')
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE personnel
-        SET interview_status = 1
+        SET interview_status = 1, interview_remarks = %s
         WHERE id = %s
-    """, (personnel_id,))
+    """, (remarks, personnel_id))
     conn.commit()
     cursor.close()
-
     return jsonify({"success": True})
 
 

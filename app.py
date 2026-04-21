@@ -3479,10 +3479,10 @@ def reset_interview_status():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        UPDATE personnel
+ UPDATE personnel
 SET interview_status = 0
 WHERE interview_status = 1
-  AND TIMESTAMPDIFF(MINUTE, updated_at, NOW()) > 1;
+  AND TIMESTAMPDIFF(DAY, updated_at, NOW()) > 6;
 
 
                    
@@ -3495,7 +3495,7 @@ WHERE interview_status = 1
 # kunba interview timing     
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=reset_interview_status, trigger="interval", seconds=1296000)  # check every 30s
+scheduler.add_job(func=reset_interview_status, trigger="interval", minutes=10)
 scheduler.start()
 
 # AGNIVEER DATA FATCH WITH TABLE STARTING CODE++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3859,13 +3859,14 @@ def get_interview_data():
     company = user['company']
     role = user['role']
     current_user = user['army_number']
-    
+    print("route and my role is ",role)
     try:
         if role in ['JCO', 'S/JCO']:
+            print("in this section of checking")
             cursor.execute('SELECT home_state FROM personnel WHERE army_number = %s', (current_user,))
             home_result = cursor.fetchone()
             home_state = home_result['home_state'] if home_result else None
-
+            print(home_state,"this is my home sta")
             query = """
                 SELECT 
                     COALESCE(SUM(interview_status = 0), 0) AS pending_count,
@@ -3897,6 +3898,7 @@ def get_interview_data():
             cursor.execute(query, params)
 
         result = cursor.fetchone()
+        print(result,"here ")
         pending_count = result['pending_count'] if result else 0
         total_count = result['total_count'] if result else 0
         percentage = round((pending_count / total_count) * 100, 2) if total_count > 0 else 0

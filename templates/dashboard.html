@@ -648,14 +648,14 @@
       </button>
       {%if role in ['O2']%}
       <button
-        class="btn btn-primary"
+        class="cmd-btn btn-navy"
         data-bs-toggle="modal"
         data-bs-target="#add_dues_in"
       >
         ADD DUES IN
       </button>
       <button
-        class="btn btn-primary"
+        class="cmd-btn btn-danger"
         data-bs-toggle="modal"
         data-bs-target="#add_dues_out"
       >
@@ -854,37 +854,9 @@
           <div class="shimmer-number mx-auto"></div>
         </h3>
       </div>
-      {% endif %} {% if role in ['CO', '2IC', 'ADJUTANT','OC'] %}
-      <div
-        class="card p-3 text-center"
-        style="cursor: pointer"
-        id="interview-card"
-      >
-        <div class="icon-circle mb-2">
-          <i class="fa fa-male" aria-hidden="true"></i>
-        </div>
-        <small class="text-muted">KUNBA INTERVIEW</small>
-        <h3>
-          <span id="interview-Count">
-            <div
-              class="shimmer-line"
-              style="width: 30px; height: 24px; display: inline-block"
-            ></div> </span
-          >/<span id="total-count">
-            <div
-              class="shimmer-line"
-              style="width: 30px; height: 24px; display: inline-block"
-            ></div>
-          </span>
-        </h3>
-        <span id="interview%" class="text-danger">
-          <div
-            class="shimmer-line"
-            style="width: 50px; height: 14px; display: inline-block"
-          ></div>
-        </span>
-      </div>
-      {% endif %} {% if role in ['JCO' , 'S/JCO','SEC JCO','HEAD CLK'] %}
+      {% endif %}
+     
+      {% if role in ['JCO' , 'S/JCO','SEC JCO','HEAD CLK'] %}
       <div
         class="card p-3 text-center"
         style="cursor: pointer"

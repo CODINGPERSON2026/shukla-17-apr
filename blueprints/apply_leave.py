@@ -1527,6 +1527,7 @@ def download_leave_certificate(army_number):
                 p.company,
                 p.section,
                 p.trade,
+                p.i_card_no,
                 p.home_house_no,
                 p.home_village,
                 p.home_phone,
@@ -1754,7 +1755,8 @@ def download_leave_certificate(army_number):
             "company_name": data['company'],
             "section_name": data['section'] if data['section'] else "HQ",
             "trade": data.get('trade', 'N/A'),
-            "contact": data.get('mobile_number', 'N/A')
+            "contact": data.get('mobile_number', 'N/A'),
+            "i_card_no": data.get('i_card_no', 'N/A')
         }
 
         leave_info = {
@@ -1791,12 +1793,15 @@ def download_leave_certificate(army_number):
         static_dir = os.path.join(current_app.root_path, 'static')
         chinar_logo_path = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'chinar.jpg'))
         rt_logo_path     = os.path.abspath(os.path.join(static_dir, 'image_for_login_page', 'rt.jpg'))
+        
 
         # Print for debugging (remove after testing)
         print("Chinar logo path:", chinar_logo_path)
         print("RT logo path:", rt_logo_path)
+        
         print("Chinar exists:", os.path.exists(chinar_logo_path))
         print("RT exists:", os.path.exists(rt_logo_path))
+        
 
         # Render template with logo paths
         html = render_template(
@@ -1804,7 +1809,8 @@ def download_leave_certificate(army_number):
             applicant=applicant, 
             leave=leave_info,
             chinar_logo_path=chinar_logo_path,   # absolute path
-            rt_logo_path=rt_logo_path            # absolute path
+            rt_logo_path=rt_logo_path       # absolute path
+            
         )
         
         # Generate PDF

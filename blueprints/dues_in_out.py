@@ -137,54 +137,40 @@ def get_dues_out_count():
     
 
 @dues_bp.route('/dues-out/list', methods=['GET'])
-def get_dues_out():
+def get_dues_out1():
     try:
-        # 🔒 Role check
-  
-
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-
-        query = """
-        SELECT 
-            army_number,
-            `rank`,
-            name,
-            trade,
-            posted_to,
-            posting_order_no,
-            date_of_move,
-            remarks
-        FROM dues_out
-        ORDER BY id DESC
-        """
-
-        cursor.execute(query)
+        cursor.execute("""
+            SELECT
+                id,
+                army_number,
+                `rank`,
+                name,
+                trade,
+                posted_to,
+                date_of_move,
+                posting_order_no,
+                remarks
+            FROM dues_out
+            ORDER BY id DESC
+        """)
         data = cursor.fetchall()
-
         cursor.close()
         conn.close()
-
-        return jsonify({
-            "success": True,
-            "data": data
-        })
-
+        return jsonify({"success": True, "data": data})
     except Exception as e:
-        print("ERROR:", e)
         return jsonify({"success": False, "message": str(e)}), 500
     
 
 @dues_bp.route('/dues-in/list', methods=['GET'])
 def get_dues_in():
     try:
-        
-
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-
         cursor.execute("""
             SELECT 
+                id,              
                 army_number,
                 `rank`,
                 name,
@@ -197,13 +183,90 @@ def get_dues_in():
             FROM dues_in
             ORDER BY id DESC
         """)
-
         data = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+
+
+
+@dues_bp.route('/dues-in/delete/<int:record_id>', methods=['DELETE'])
+def delete_dues_in(record_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # ✅ Check if record exists first
+        cursor.execute("SELECT id FROM dues_in WHERE id = %s", (record_id,))
+        record = cursor.fetchone()
+
+        if not record:
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Record not found"}), 404
+
+        # 🗑️ Delete the record
+        cursor.execute("DELETE FROM dues_in WHERE id = %s", (record_id,))
+        conn.commit()
 
         cursor.close()
         conn.close()
+        return jsonify({"success": True, "message": "Record deleted successfully"})
 
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+
+# ── List (id added to SELECT) ────────────────────────────────────
+@dues_bp.route('/dues-out/list', methods=['GET'])
+def get_dues_out():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+                id,
+                army_number,
+                `rank`,
+                name,
+                trade,
+                posted_to,
+                date_of_move,
+                posting_order_no,
+                remarks
+            FROM dues_out
+            ORDER BY id DESC
+        """)
+        data = cursor.fetchall()
+        cursor.close()
+        conn.close()
         return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+# ── Delete ───────────────────────────────────────────────────────
+@dues_bp.route('/dues-out/delete/<int:record_id>', methods=['DELETE'])
+def delete_dues_out(record_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT id FROM dues_out WHERE id = %s", (record_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Record not found"}), 404
+
+        cursor.execute("DELETE FROM dues_out WHERE id = %s", (record_id,))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True, "message": "Record deleted successfully"})
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

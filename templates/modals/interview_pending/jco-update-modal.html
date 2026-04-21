@@ -1,13 +1,292 @@
+<!-- ============================================================
+     KUNBA INTERVIEW MODAL
+     ============================================================ -->
+<style>
+  /* ── Custom variables ── */
+  #kunbaInterviewModal .modal-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.18);
+  }
+
+  #kunbaInterviewModal .modal-header {
+    background: linear-gradient(135deg, #1a56db 0%, #0e3fad 100%);
+    padding: 20px 24px;
+    border-bottom: none;
+  }
+
+  #kunbaInterviewModal .modal-title {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+  }
+
+  #kunbaInterviewModal .modal-body {
+    background: #f8faff;
+    padding: 24px;
+  }
+
+  /* ── Pending count banner ── */
+  .pending-count-banner {
+    background: linear-gradient(135deg, #fff7ed 0%, #fff3e0 100%);
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .pending-count-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(249,115,22,0.4);
+  }
+
+  .pending-count-text strong {
+    font-size: 15px;
+    color: #92400e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .pending-count-text small {
+    font-size: 12px;
+    color: #b45309;
+  }
+
+  /* ── Tabs ── */
+  #kunbaInterviewModal .nav-tabs {
+    border-bottom: 2px solid #e2e8f0;
+    gap: 4px;
+  }
+
+  #kunbaInterviewModal .nav-tabs .nav-link {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 9px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  #kunbaInterviewModal .nav-tabs .nav-link:hover {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+  #kunbaInterviewModal .nav-tabs .nav-link.active {
+    background: #1a56db;
+    color: white;
+    border-bottom: 2px solid #1a56db;
+  }
+
+  /* ── Table wrapper ── */
+  .ki-table-wrapper {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    border: 1px solid #e2e8f0;
+  }
+
+  /* ── Modern table ── */
+  .ki-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13.5px;
+  }
+
+  .ki-table thead tr {
+    background: linear-gradient(135deg, #f1f5ff 0%, #e8efff 100%);
+  }
+
+  .ki-table thead th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #475569;
+    border-bottom: 2px solid #dde5ff;
+    white-space: nowrap;
+  }
+
+  .ki-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s, transform 0.15s;
+    cursor: default;
+  }
+
+  .ki-table tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .ki-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .ki-table tbody td {
+    padding: 13px 16px;
+    color: #1e293b;
+    vertical-align: middle;
+  }
+
+  /* Army number pill */
+  .army-no-pill {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.4px;
+    border: 1px solid #bfdbfe;
+  }
+
+  /* Rank badge */
+  .rank-badge {
+    display: inline-block;
+    background: #f0fdf4;
+    color: #166534;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #bbf7d0;
+  }
+
+  /* Name */
+  .ki-name {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  /* State tag */
+  .state-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #475569;
+    font-size: 13px;
+  }
+
+  /* Done button */
+  .btn-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(34,197,94,0.35);
+    letter-spacing: 0.2px;
+  }
+
+  .btn-done:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34,197,94,0.45);
+    background: linear-gradient(135deg, #16a34a, #15803d);
+  }
+
+  .btn-done:active {
+    transform: translateY(0);
+  }
+
+  /* Completed-on cell */
+  .completed-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #059669;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  /* Empty state */
+  .ki-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+
+  .ki-empty svg {
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  /* Row removal animation */
+  @keyframes rowFadeOut {
+    to { opacity: 0; transform: translateX(20px); max-height: 0; padding: 0; }
+  }
+
+  .row-removing {
+    animation: rowFadeOut 0.35s ease forwards;
+    overflow: hidden;
+  }
+
+  /* Row entrance animation */
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .ki-table tbody tr {
+    animation: rowIn 0.25s ease forwards;
+  }
+</style>
+
 <div class="modal fade" id="kunbaInterviewModal" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
 
+      <!-- Header -->
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title">KUNBA Interviews</h5>
+        <div class="d-flex align-items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+               viewBox="0 0 24 24" stroke="white" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          <h5 class="modal-title mb-0">KUNBA Interviews</h5>
+        </div>
         <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
+      <!-- Body -->
       <div class="modal-body">
+
+        <!-- Pending count banner -->
+        <div class="pending-count-banner" id="pendingCountBanner" style="display:none!important;">
+          <div class="pending-count-circle" id="pendingCountCircle">–</div>
+          <div class="pending-count-text">
+            <strong id="pendingCountLabel">– Interviews Pending</strong><br>
+            <small>Tap "Interview Done" to mark each one as complete</small>
+          </div>
+        </div>
 
         <!-- Tabs -->
         <ul class="nav nav-tabs mb-3" role="tablist">
@@ -17,9 +296,10 @@
                     data-bs-target="#pendingTab"
                     type="button">
               Pending Interviews
+              <span class="badge ms-2 rounded-pill" id="pendingTabBadge"
+                    style="background:#f97316;font-size:11px;">–</span>
             </button>
           </li>
-
           <li class="nav-item">
             <button class="nav-link"
                     data-bs-toggle="tab"
@@ -35,42 +315,60 @@
 
           <!-- PENDING TAB -->
           <div class="tab-pane fade show active" id="pendingTab">
-            <table class="table table-bordered table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Army No</th>
-                  <th>Rank</th>
-                  <th>Name</th>
-                  <th>Home State</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="kunbaInterviewTableBody">
-                <tr>
-                  <td colspan="5" class="text-center text-muted">Loading...</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="ki-table-wrapper">
+              <table class="ki-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Army No</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Home State</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="kunbaInterviewTableBody">
+                  <tr>
+                    <td colspan="6">
+                      <div class="ki-empty">
+                        <svg width="32" height="32" fill="none" viewBox="0 0 24 24"
+                             stroke="#94a3b8" stroke-width="1.5">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="12" y1="8" x2="12" y2="12"/>
+                          <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <div>Loading…</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!-- COMPLETED TAB -->
           <div class="tab-pane fade" id="completedTab">
-            <table class="table table-bordered table-hover align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Army No</th>
-                  <th>Rank</th>
-                  <th>Name</th>
-                  <th>Home State</th>
-                  <th>Completed On</th>
-                </tr>
-              </thead>
-              <tbody id="completedInterviewTableBody">
-                <tr>
-                  <td colspan="5" class="text-center text-muted">Loading...</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="ki-table-wrapper">
+              <table class="ki-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Army No</th>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Home State</th>
+                    <th>Completed On</th>
+                  </tr>
+                </thead>
+                <tbody id="completedInterviewTableBody">
+                  <tr>
+                    <td colspan="6">
+                      <div class="ki-empty">Loading…</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>
@@ -80,96 +378,325 @@
   </div>
 </div>
 
+
+<!-- ============================================================
+     REMARKS POPUP MODAL
+     ============================================================ -->
+<div class="modal fade" id="remarksModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+    <div class="modal-content border-0 rounded-3 shadow">
+
+      <div class="modal-body p-4">
+
+        <!-- Icon + Title -->
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width: 46px; height: 46px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                 fill="none" viewBox="0 0 24 24"
+                 stroke="#0d6efd" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <div>
+            <h6 class="mb-0 fw-semibold">Interview Remarks</h6>
+            <small class="text-muted">
+              For <strong id="remarksPersonName" class="text-dark"></strong>
+              &mdash; remarks are optional
+            </small>
+          </div>
+        </div>
+
+        <hr class="mt-0 mb-3">
+
+        <!-- Textarea -->
+        <div class="mb-1">
+          <label class="form-label small text-muted mb-1">Remarks</label>
+          <textarea id="remarksInput"
+                    class="form-control"
+                    rows="4"
+                    maxlength="300"
+                    placeholder="Enter remarks (optional)..."
+                    oninput="document.getElementById('rmCharCount').textContent = this.value.length"
+                    style="resize: vertical; font-size: 13px;"></textarea>
+        </div>
+        <div class="text-end mb-3">
+          <small class="text-muted"><span id="rmCharCount">0</span> / 300</small>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button"
+                  class="btn btn-sm btn-outline-secondary px-3"
+                  onclick="closeRemarksModal()">
+            Cancel
+          </button>
+          <button type="button"
+                  class="btn btn-sm btn-primary px-3"
+                  onclick="submitInterview()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                 fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2.5"
+                 class="me-1" style="vertical-align: -1px;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Mark as Done
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     SUCCESS TOAST
+     ============================================================ -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+  <div id="interviewSuccessToast"
+       class="toast align-items-center border-0 text-white"
+       style="background-color: #198754; min-width: 280px;"
+       role="alert"
+       aria-live="assertive"
+       aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body d-flex align-items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+             fill="none" viewBox="0 0 24 24"
+             stroke="white" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+        <div>
+          <div class="fw-semibold" style="font-size: 13px;">Interview Marked as Done</div>
+          <div style="font-size: 12px; opacity: 0.85;">Record updated successfully.</div>
+        </div>
+      </div>
+      <button type="button"
+              class="btn-close btn-close-white me-2 m-auto"
+              data-bs-dismiss="toast"
+              aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+
 {% include 'modals/success-modal/modal.html' %}
+
+
+<!-- ============================================================
+     SCRIPT  (logic unchanged, UI only upgraded)
+     ============================================================ -->
 <script>
-  /* ================= PENDING ================= */
+  let pendingInterviewId = null;
+
+  /* ── Update pending count UI ── */
+  function updatePendingCount(count) {
+    const banner = document.getElementById('pendingCountBanner');
+    const circle = document.getElementById('pendingCountCircle');
+    const label  = document.getElementById('pendingCountLabel');
+    const badge  = document.getElementById('pendingTabBadge');
+
+    circle.textContent = count;
+    badge.textContent  = count;
+    label.textContent  = count === 1 ? '1 Interview Pending' : `${count} Interviews Pending`;
+
+    if (count > 0) {
+      banner.style.removeProperty('display');   // show
+    } else {
+      banner.style.setProperty('display', 'none', 'important'); // hide
+    }
+  }
+
+  /* ── Open main modal ── */
   document.getElementById('kunbaInterviewModal')
     .addEventListener('shown.bs.modal', loadKunbaInterviewData);
-  
+
+  /* ── Load pending list ── */
   async function loadKunbaInterviewData() {
     const tbody = document.getElementById('kunbaInterviewTableBody');
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center">Loading...</td></tr>`;
-  
-    const res = await fetch('/interview_update/pending_interview_list');
+    tbody.innerHTML = `<tr><td colspan="6"><div class="ki-empty">Loading…</div></td></tr>`;
+
+    const res  = await fetch('/interview_update/pending_interview_list');
     const data = await res.json();
-  
+
+    updatePendingCount(data.length);
+
     if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-success">No pending interviews</td></tr>`;
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="ki-empty">
+            <svg width="36" height="36" fill="none" viewBox="0 0 24 24"
+                 stroke="#22c55e" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+            <div style="color:#16a34a;font-weight:600;">All interviews completed!</div>
+          </div>
+        </td></tr>`;
       return;
     }
-  
+
     tbody.innerHTML = '';
-    data.forEach(p => {
+    data.forEach((p, idx) => {
       tbody.innerHTML += `
         <tr id="row-${p.id}">
-          <td>${p.army_number}</td>
-          <td>${p.rank}</td>
-          <td>${p.name}</td>
-          <td>${p.home_state}</td>
+          <td><span style="color:#94a3b8;font-size:12px;font-weight:600;">${idx + 1}</span></td>
+          <td><span class="army-no-pill">${p.army_number}</span></td>
+          <td><span class="rank-badge">${p.rank}</span></td>
+          <td><span class="ki-name">${p.name}</span></td>
           <td>
-            <button class="btn btn-sm btn-success"
-                    onclick="markInterviewDone(${p.id})">
+            <span class="state-tag">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"
+                   stroke="#94a3b8" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                <circle cx="12" cy="11" r="3"/>
+              </svg>
+              ${p.home_state}
+            </span>
+          </td>
+          <td>
+            <button class="btn-done"
+                    onclick="openRemarksModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24"
+                   stroke="white" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
               Interview Done
             </button>
           </td>
-        </tr>
-      `;
+        </tr>`;
     });
   }
-  
-  async function markInterviewDone(id) {
-    if (!confirm("Mark interview as done?")) return;
-  
+
+  /* ── Open remarks popup ── */
+  function openRemarksModal(id, name) {
+    pendingInterviewId = id;
+    document.getElementById('remarksPersonName').textContent = name;
+    document.getElementById('remarksInput').value = '';
+    document.getElementById('rmCharCount').textContent = '0';
+    new bootstrap.Modal(document.getElementById('remarksModal')).show();
+  }
+
+  /* ── Close remarks popup ── */
+  function closeRemarksModal() {
+    const modalEl = document.getElementById('remarksModal');
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+    pendingInterviewId = null;
+  }
+
+  /* ── Submit interview done ── */
+  async function submitInterview() {
+    const remarks = document.getElementById('remarksInput').value.trim();
+    const id      = pendingInterviewId;
+
+    closeRemarksModal();
+
     const res = await fetch('/interview_update/update_interview_status', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ id })
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ id, remarks })
     });
-  
+
     const result = await res.json();
+
     if (result.success) {
-      showStatusModal("Interview Done", "Green", 2000);
-      document.getElementById(`row-${id}`).remove();
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.classList.add('row-removing');
+        setTimeout(() => row.remove(), 380);
+      }
+
+      // Update count
+      const currentCount = parseInt(document.getElementById('pendingCountCircle').textContent) || 0;
+      updatePendingCount(Math.max(0, currentCount - 1));
+
+      // If 0 remaining after removal, show empty state
+      setTimeout(() => {
+        const tbody = document.getElementById('kunbaInterviewTableBody');
+        if (tbody.querySelectorAll('tr:not(.row-removing)').length === 0) {
+          tbody.innerHTML = `
+            <tr><td colspan="6">
+              <div class="ki-empty">
+                <svg width="36" height="36" fill="none" viewBox="0 0 24 24"
+                     stroke="#22c55e" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+                <div style="color:#16a34a;font-weight:600;">All interviews completed!</div>
+              </div>
+            </td></tr>`;
+        }
+      }, 420);
+
+      const toastEl = document.getElementById('interviewSuccessToast');
+      new bootstrap.Toast(toastEl, { delay: 3500 }).show();
     } else {
-      alert("Failed to update");
+      alert('Failed to update. Please try again.');
     }
   }
-  
+
+  /* ── Load completed list (lazy, once) ── */
   let completedLoaded = false;
-  
+
   document.querySelector('[data-bs-target="#completedTab"]')
     .addEventListener('shown.bs.tab', loadCompletedInterviews);
-  
+
   async function loadCompletedInterviews() {
     if (completedLoaded) return;
     completedLoaded = true;
-  
+
     const tbody = document.getElementById('completedInterviewTableBody');
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center">Loading...</td></tr>`;
-  
-    const res = await fetch('/interview_update/completed_interview_list');
+    tbody.innerHTML = `<tr><td colspan="6"><div class="ki-empty">Loading…</div></td></tr>`;
+
+    const res  = await fetch('/interview_update/completed_interview_list');
     const data = await res.json();
-  
+
     if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No completed interviews</td></tr>`;
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="ki-empty">No completed interviews yet.</div>
+        </td></tr>`;
       return;
     }
-  
+
     tbody.innerHTML = '';
-    data.forEach(p => {
+    data.forEach((p, idx) => {
       tbody.innerHTML += `
         <tr>
-          <td>${p.army_number}</td>
-          <td>${p.rank}</td>
-          <td>${p.name}</td>
-          <td>${p.home_state}</td>
-          <td>${p.completed_on}</td>
-        </tr>
-      `;
+          <td><span style="color:#94a3b8;font-size:12px;font-weight:600;">${idx + 1}</span></td>
+          <td><span class="army-no-pill">${p.army_number}</span></td>
+          <td><span class="rank-badge">${p.rank}</span></td>
+          <td><span class="ki-name">${p.name}</span></td>
+          <td>
+            <span class="state-tag">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24"
+                   stroke="#94a3b8" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+                <circle cx="12" cy="11" r="3"/>
+              </svg>
+              ${p.home_state}
+            </span>
+          </td>
+          <td>
+            <span class="completed-date">
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24"
+                   stroke="#059669" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="9 12 11 14 15 10"/>
+              </svg>
+              ${p.completed_on}
+            </span>
+          </td>
+        </tr>`;
     });
   }
-     
+
+  /* ── Reload page on modal close ── */
   document.getElementById('kunbaInterviewModal')
     .addEventListener('hidden.bs.modal', () => location.reload());
-  </script>
-  
+</script>

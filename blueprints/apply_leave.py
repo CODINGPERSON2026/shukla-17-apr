@@ -816,7 +816,7 @@ def recommend_leave():
             request_status = f"Pending at {send_request_to}"
 
         elif current_user_role.startswith("S/JCO"):
-            if soldier_trade in ['COBBLER'] or soldier_section == 'RP':
+            if soldier_trade in ['COBBLER','W/MAN','STWD','CC','DSR','H/K','C/Com','CHEF COM','MESS KEEPER','CHEF MESS','W/M','DSR','STWD','MK','WM','HKEEPER','ARTSN(ww)',] or soldier_section == 'RP/NA':
                 send_request_to = 'Subedar Major'
                 request_status = f"Pending at {send_request_to}"
                 print("this is working")
@@ -1504,7 +1504,7 @@ def download_leave_certificate(army_number):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         print("in this download route")
-        # Fetch main leave data with ALL related information
+
         cursor.execute("""
             SELECT
                 l.id as leave_id,
@@ -1540,7 +1540,6 @@ def download_leave_certificate(army_number):
                 p.home_district,
                 p.home_state,
                 m.number AS mobile_number,
-                -- Transport information
                 lt.transport_id as transport_id,
                 lt.onward_mode,
                 lt.onward_air_type,
@@ -1548,7 +1547,6 @@ def download_leave_certificate(army_number):
                 lt.return_mode,
                 lt.return_air_type,
                 lt.return_train_type,
-                -- Address information
                 la.same_as_permanent,
                 la.address_line1,
                 la.address_line2,
@@ -1571,9 +1569,35 @@ def download_leave_certificate(army_number):
         data = cursor.fetchone()
         if not data:
             return "No approved leave certificate found for this user.", 404
-        
-        # ====================== HANDLE COMBINED LEAVE ======================
+
+        # ====================== LEAVE TYPE DISPLAY ======================
         leave_type_display = data['leave_type']
+
+        # ====================== 🔥 YOUR CUSTOM AL LOGIC ======================
+        from datetime import datetime
+        if data['leave_type'] == 'AL':
+            current_year = str(datetime.now().year)
+
+            cursor.execute("""
+                SELECT AL
+                FROM leave_details
+                WHERE army_number = %s
+                  AND year = %s
+            """, (army_number, current_year))
+
+            result = cursor.fetchone()
+            total_al = result['AL'] if result and result['AL'] is not None else 0
+
+            print(f"AL used this year: {total_al}")
+
+            remaining_al = 60 - total_al
+
+            if remaining_al == 0:
+                leave_type_display = 'BAL'
+            elif remaining_al > 0:
+                leave_type_display = 'PAL'
+
+        # ====================== HANDLE COMBINED LEAVE ======================
         leave_details_list = []
         
         if data['leave_type'] and '+' in data['leave_type']:
@@ -1599,7 +1623,7 @@ def download_leave_certificate(army_number):
                         "to_date": item['to_date'].strftime('%d-%m-%Y') if item['to_date'] else None
                     })
                 leave_type_display = " + ".join(formatted_parts)
-        
+
         # ====================== FETCH JOURNEY LEGS ======================
         onward_legs = []
         return_legs = []

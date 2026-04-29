@@ -732,9 +732,8 @@
         <i class="fas fa-plus-circle me-1"></i>
         ADD TRADE
       </button>
-      {% endif %} {% if role|trim in [ 'NCO PWR', 'NCO QRT', 'NCO CHQ', 'NCO
-      IT', 'NCO OP', 'JCO MW', 'NCO MW', 'NCO LRW', 'NCO MCCS', 'NCO LINE', 'NCO
-      RHQ', 'NCO TM', 'NCO MT', 'NCO RP/NA', 'NCO QM', 'SEC JCO', 'JCO LINE',
+      {% endif %}
+       {% if role|trim in [ 'NCO PWR', 'NCO QRT', 'NCO CHQ', 'NCO IT', 'NCO OP', 'JCO MW', 'NCO MW', 'NCO LRW', 'NCO MCCS', 'NCO LINE', 'NCO RHQ', 'NCO TM','NCO IT','NCO RHQ', 'NCO MT', 'NCO RP/NA', 'NCO QM', 'SEC JCO', 'JCO LINE',
       'JCO LRW', 'JCO CHQ', 'JCO IT', 'JCO MT', 'JCO RHQ', 'JCO MCCS', 'JCO QM',
       'S/JCO', 'ONCO', 'OC', '2IC', 'JCO QRT', 'JCO TM', 'JCO PWR', 'JCO OP',
       'JCO SYS', 'JCO DET', 'NCO DET', 'NCO SYS', 'Subedar Major' ] %}
@@ -1025,7 +1024,7 @@
         class="card p-3 text-center"
         style="cursor: pointer"
         data-bs-toggle="modal"
-        data-bs-target="#agniveersModal"
+        data-bs-target="#agni_Modal"
       >
         <div class="icon-circle">
           <i class="fas fa-user-shield"></i>
@@ -1128,42 +1127,56 @@
       </div>
     </div>
 
-    {% include 'modals/detachmentModal/detachment.html' %} {% include
-    'modals/personnelModal/duty_search_modal.html' %} {% include
-    'modals/personnelModal/personal_modal.html' %} {% include
-    'modals/salesmodal/salesModal.html' %} {% include
-    'modals/leaverequest/leave_request.html' %} {% include
-    'modals/interview_pending/modal.html' %} {% include
-    'modals/count_parade/modal.html' %} {% include
-    'modals/attachment-modal/modal.html' %} {% include 'modals/loan/loans.html'
-    %} {% include 'modals/roll_call/modal.html' %} {% include
-    'modals/roll_call/view_roll_call.html' %} {% include
-    'modals/course/courses.html' %} {% include
-    'modals/interview_pending/jco-update-modal.html' %} {% include
-    'modals/success-modal/modal.html' %} {% include
-    'task_manager/update_task_by_jco.html' %} {% include
-    'modals/adduser/user.html' %} {% include 'modals/oncourses/modal.html' %} {%
-    include 'modals/messenger/modal.html' %} {% if role in ['O CENTRE NCO'] %}
+    {% include 'modals/detachmentModal/detachment.html' %}
+    {% include 'modals/personnelModal/duty_search_modal.html' %} 
+    {% include 'modals/personnelModal/personal_modal.html' %} 
+    {% include 'modals/salesmodal/salesModal.html' %} 
+    {% include 'modals/leaverequest/leave_request.html' %} 
+    {% include 'modals/interview_pending/modal.html' %}
+    {% include 'modals/count_parade/modal.html' %}
+    {% include 'modals/attachment-modal/modal.html' %}
+    {% include 'modals/loan/loans.html' %}
+    {% include 'modals/roll_call/modal.html' %}
+    {% include 'modals/roll_call/view_roll_call.html' %}
+    {% include 'modals/course/courses.html' %}
+    {% include 'modals/interview_pending/jco-update-modal.html' %}
+    {% include 'modals/success-modal/modal.html' %}
+    {% include 'task_manager/update_task_by_jco.html' %}
+    {% include 'modals/adduser/user.html' %}
+    {% include 'modals/oncourses/modal.html' %} 
+    {% include 'modals/messenger/modal.html' %}
+
+    {% if role in ['O CENTRE NCO'] %}
     <div class="modal fade" id="tradeModal" tabindex="-1">
       <div class="modal-dialog modal-fullscreen">
         <div class="modal-content">{% include 'modals/trade/trade.html' %}</div>
       </div>
     </div>
-    {% endif %} {% if role in ['CO', '2IC', 'ADJUTANT','TRGJCO','OC'] %} {%
-    include 'modals/agniveer/modal.html' %} {% include
-    'modals/agniveer/fill_up_test_details.html' %} {% endif %} {% if role in ['O
-    CENTRE NCO', 'ONCO'] %} {% include 'modals/parade_data/index.html' %} {%
-    endif %} {% if role =='CO'%} {% include
-    'modals/leaverequest/co-rejected-view.html' %} {% endif %} {% if role in
-    ['CO', '2IC', 'ADJUTANT','OC']%} {% include
-    'modals/alarm/agniveer_test_alarms.html' %} {% endif %} {% if role ==
-    'Subedar Major'%} {% include 'modals/coy_kunba/view_company_kunba.html' %}
-    {% endif %} {% if role in 'O2'%} {% include 'modals/ADD-DUES-IN/modal.html'
-    %} {% include 'modals/ADD-DUES-IN/list_of_dues_in.html' %} {% include
-    'modals/ADD-DUES-OUT/modal.html' %} {% include
-    'modals/ADD-DUES-OUT/list_of_dues_out.html' %} {% endif %}
+    {% endif %}
+    {% if role in ['CO', '2IC', 'ADJUTANT','TRGJCO','OC'] %} 
+    {% include 'modals/agniveer/modal.html' %}
+    {% include 'modals/agniveer/fill_up_test_details.html' %} 
+    {% endif %} 
+    {% if role in ['O CENTRE NCO', 'ONCO'] %}
+    {% include 'modals/parade_data/index.html' %}
+    {% endif %}
+    {% if role =='CO'%}
+    {% include 'modals/leaverequest/co-rejected-view.html' %}
+    {% endif %}
+    {% if role in ['CO', '2IC', 'ADJUTANT','OC']%}
+    {% include 'modals/alarm/agniveer_test_alarms.html' %}
+    {% endif %}
+    {% if role =='Subedar Major'%}
+    {% include 'modals/coy_kunba/view_company_kunba.html' %}
+    {% endif %}
+    {% if role in 'O2'%}
+    {% include 'modals/ADD-DUES-IN/modal.html'%} 
+    {% include 'modals/ADD-DUES-IN/list_of_dues_in.html' %}
+    {% include 'modals/ADD-DUES-OUT/modal.html' %}
+    {% include 'modals/ADD-DUES-OUT/list_of_dues_out.html' %}
+    {% endif %}
      
-     {% include 'modals/Sanctioned_leaves/sanction_leave_modal.html'%}
+    {% include 'modals/Sanctioned_leaves/sanction_leave_modal.html'%}
     
 
     <!-- Parade State Modal -->

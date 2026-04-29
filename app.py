@@ -532,7 +532,7 @@ def get_pending_interview_list():
             assigned_rows = cursor.fetchall()
 
             for row in assigned_rows:
-                state = row['home_state']
+                state = row['home_state'].strip().lower()
                 if state not in assigned_jco_map:
                     assigned_jco_map[state] = f"Temporary Assigned JCO {row['jco_name']}"
 
@@ -540,7 +540,7 @@ def get_pending_interview_list():
         # 5️⃣ Attach JCO info — company-aware lookup
         # =========================
         for row in pending_data:
-            state = row['home_state']
+            state = row['home_state'].strip().lower()
             soldier_company = row['company'].strip().lower()
             key = (state, soldier_company)       # ← match soldier's company
 
@@ -2062,7 +2062,7 @@ WHERE company = %s
             SELECT COUNT(*) AS count 
             FROM candidate_on_courses c
             LEFT JOIN personnel p ON c.army_number = p.army_number
-            WHERE 1=1
+            WHERE 1=1 AND CURDATE() BETWEEN c.course_starting_date AND c.course_end_date
         """
         course_params = []
         if company != "Admin":
@@ -2393,7 +2393,7 @@ def get_co_all_dashboard_data(date_str):
                 SUM(grandTotal_posted_str) as total_posted_str,
                 SUM(grandTotal_present_unit) as present_unit,
                 SUM(grandTotal_trout_det) as total_out,
-                SUM(grandTotal_lve) as total_lve,  -- Add this line
+                SUM(or_lve) as total_lve,  -- Add this line
                 COUNT(DISTINCT company) as company_count
             FROM parade_state_daily
             WHERE report_date = %s {company_filter}
@@ -2403,14 +2403,22 @@ def get_co_all_dashboard_data(date_str):
         cursor.execute(f"""
             SELECT 
                 company,
-                grandTotal_lve as on_leave,  -- Changed from grandTotal_trout_det to grandTotal_lve
-                grandTotal_posted_str as total_strength,
-                ROUND((grandTotal_lve / NULLIF(grandTotal_posted_str, 0) * 100), 2) as leave_percentage  -- Changed here too
+                or_lve as on_leave,  -- Changed from grandTotal_trout_det to grandTotal_lve
+                or_posted_str as total_strength,
+                offr_posted_str as total_officer_strength,
+                offr_lve as officer_on_leave,
+                jco_posted_str as total_jco_strength,
+                jco_lve jco_on_leave,   
+                ROUND((jco_lve/ NULLIF(jco_posted_str, 0) * 100), 2) jco_leave_percentage,  -- Changed here too
+                ROUND((or_lve/ NULLIF(or_posted_str, 0) * 100), 2) as leave_percentage,  -- Changed here too
+                ROUND((offr_lve/ NULLIF(offr_posted_str, 0) * 100), 2) as officer_leave_percentage  -- Changed here too
             FROM parade_state_daily
             WHERE report_date = %s {company_filter}
             ORDER BY company
         """, tuple(params))
         leave_data = cursor.fetchall()
+        print(leave_data,"lets check the details")
+        print("we are checking here")
         
         cursor.execute(f"""
             SELECT 
@@ -2431,9 +2439,21 @@ def get_co_all_dashboard_data(date_str):
             }), 404
         
         # Update totals to use leave (lve) instead of total out (trout_det)
-        total_on_leave = sum(row['on_leave'] or 0 for row in leave_data)
+        total_on_leave = sum(row['on_leave'] or 0 for row in leave_data)  #acctually its only calculating how many are OR ON LEAVE NOT TOTAL
         total_strength = sum(row['total_strength'] or 0 for row in leave_data)
+        total_officer_strength = sum(row['total_officer_strength'] or 0 for row in leave_data)
         total_leave_percentage = round((total_on_leave / total_strength * 100), 2) if total_strength > 0 else 0
+        officer_on_leave = sum(row['officer_on_leave'] or 0 for row in leave_data)
+        officer_leave_percentage = round((officer_on_leave / total_officer_strength * 100), 2) if total_strength > 0 else 0
+        total_jco_strength = sum(row['total_jco_strength'] or 0 for row in leave_data)
+        jco_on_leave = sum(row['jco_on_leave'] or 0 for row in leave_data)
+
+        jco_leave_percentage = (
+    round((jco_on_leave / total_jco_strength * 100), 2)
+    if total_jco_strength > 0 else 0
+)
+        print(total_jco_strength,jco_on_leave,jco_leave_percentage)
+        print("PERFECT")
         
         for row in manpower_data:
             row['total'] = (row['officers'] or 0) + (row['jcos'] or 0) + (row['other_ranks'] or 0)
@@ -2459,7 +2479,13 @@ def get_co_all_dashboard_data(date_str):
                     'total': {
                         'on_leave': total_on_leave,
                         'total_strength': total_strength,
-                        'leave_percentage': total_leave_percentage
+                        'leave_percentage': total_leave_percentage,
+                        'officer_on_leave':officer_on_leave,
+                        'total_officer_strength':total_officer_strength,
+                        'officer_leave_percentage':officer_leave_percentage,
+                        'jco_leave_percentage':jco_leave_percentage,
+                        'jco_on_leave':jco_on_leave,
+                        'total_jco_strength':total_jco_strength
                     }
                 },
                 'manpower': {
@@ -2481,9 +2507,7 @@ def get_co_all_dashboard_data(date_str):
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         cursor.close()
-        conn.close()        
-# Add this new route to your Flask app (app.py)
-# Place it near your other CO dashboard endpoints
+        conn.close()
 
 @app.route('/api/co-dashboard/parade-table/<date_str>', methods=['GET'])
 def get_co_aggregated_parade_table(date_str):
@@ -3447,9 +3471,9 @@ def get_courses():
             coc.institute_name
         FROM candidate_on_courses coc
         LEFT JOIN personnel p 
-            ON coc.army_number = p.army_number
+            ON coc.army_number = p.army_number where coc.status = 'Active' AND CURDATE() BETWEEN course_starting_date AND course_end_date;
     """)
-
+  
     data = cursor.fetchall()
     print("get all courses")
     print("data",data)
@@ -4128,7 +4152,7 @@ def get_courses_count():
             SELECT COUNT(*) AS count 
             FROM candidate_on_courses c
             LEFT JOIN personnel p ON c.army_number = p.army_number
-            WHERE 1=1
+            WHERE 1=1 AND CURDATE() BETWEEN c.course_starting_date AND c.course_end_date
         """
         params = []
         if company != "Admin":
@@ -4835,13 +4859,13 @@ def company_interview_pending():
             assigned_rows = cursor.fetchall()
 
             for row in assigned_rows:
-                state = row['home_state']
+                state = row['home_state'].strip().lower()
                 if state not in assigned_jco_map:
                     assigned_jco_map[state] = row['jco_name']
 
         # 5️⃣ Attach JCO with fallback logic
         for row in pending_data:
-            state = row['home_state']
+            state = row['home_state'].strip().lower()
 
             if state in jco_map:
                 row['jco_name'] = jco_map[state]
@@ -5003,7 +5027,7 @@ def kunda_pending_personnel():
           AND detachment_status=0
           AND posting_status=0
           AND interview_status=0
-          AND home_state IN ({placeholders})
+          AND home_state IN ({placeholders}) AND `rank` NOT IN ('Subedar','Naib Subedar','Subedar Major')
     """
     cursor.execute(query, home_states)
     rows = cursor.fetchall()
@@ -5011,11 +5035,69 @@ def kunda_pending_personnel():
     cursor.close()
     conn.close()
     return jsonify({"rows": rows})
+# @app.route('/api/mark_interview_done', methods=['POST'])
+# def mark_interview_done():
+#     data = request.get_json()
+#     home_state = data.get('home_state')
+#     army_number_front_end = data.get('army_number_front_end')
+#     print(data, 'incoming data')
+
+#     if not home_state or not army_number_front_end:
+#         return jsonify({"success": False, "message": "home_state and army_number are required"}), 400
+
+#     conn = get_db_connection()
+#     cursor = conn.cursor(dictionary=True)
+
+#     try:
+#         conn.start_transaction()
+
+#         # 1️⃣ Update the specific personnel row
+#         cursor.execute("""
+#             UPDATE personnel
+#             SET interview_status = 1
+#             WHERE home_state = %s
+#               AND army_number = %s
+#               AND interview_status = 0
+#         """, (home_state, army_number_front_end))
+
+#         # 2️⃣ Check if any other personnel with the same home_state is still pending
+#         cursor.execute("""
+#             SELECT COUNT(*) AS pending_count
+#             FROM personnel
+#             WHERE home_state = %s
+#               AND interview_status = 0
+#         """, (home_state,))
+#         result = cursor.fetchone()
+#         pending_count = result['pending_count'] if result else 0
+
+#         # 3️⃣ If no pending personnel, mark assignment done
+#         if pending_count == 0:
+#             cursor.execute("""
+#                 UPDATE jco_kunda_assignment
+#                 SET interview_status = 'Done'
+#                 WHERE additional_assigned_home_state = %s
+#                   AND interview_status = 'Pending'
+#             """, (home_state,))
+
+#         conn.commit()
+
+#     except Exception as e:
+#         conn.rollback()
+#         cursor.close()
+#         conn.close()
+#         return jsonify({"success": False, "message": str(e)}), 500
+
+#     cursor.close()
+#     conn.close()
+#     return jsonify({"success": True})
+
+
 @app.route('/api/mark_interview_done', methods=['POST'])
 def mark_interview_done():
     data = request.get_json()
     home_state = data.get('home_state')
     army_number_front_end = data.get('army_number_front_end')
+    remarks = data.get('remarks')
     print(data, 'incoming data')
 
     if not home_state or not army_number_front_end:
@@ -5030,11 +5112,11 @@ def mark_interview_done():
         # 1️⃣ Update the specific personnel row
         cursor.execute("""
             UPDATE personnel
-            SET interview_status = 1
+            SET interview_status = 1,interview_remarks = %s
             WHERE home_state = %s
               AND army_number = %s
               AND interview_status = 0
-        """, (home_state, army_number_front_end))
+        """, (remarks, home_state, army_number_front_end))
 
         # 2️⃣ Check if any other personnel with the same home_state is still pending
         cursor.execute("""
@@ -5056,18 +5138,17 @@ def mark_interview_done():
             """, (home_state,))
 
         conn.commit()
+         # ✅ ADD THIS
+        return jsonify({
+            "success": True,
+            "message": "Interview marked as done successfully"
+        }), 200
 
     except Exception as e:
         conn.rollback()
         cursor.close()
         conn.close()
         return jsonify({"success": False, "message": str(e)}), 500
-
-    cursor.close()
-    conn.close()
-    return jsonify({"success": True})
-
-
 
 
 @app.route('/gallery/manage')

@@ -10,7 +10,7 @@
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#9ca3af}
 .dues-table{width:100%;border-collapse:collapse;font-size:13px}
 .dues-table thead tr{background:#f9fafb}
-.dues-table thead th{padding:10px 14px;font-weight:600;font-size:11px;color:#6B7280;text-align:left;border-bottom:1px solid #e5e7eb;white-space:nowrap;letter-spacing:.06em;text-transform:uppercase}
+.dues-table thead th{padding:10px 14px;font-weight:600;font-size:11px;color:#6B7280;text-align:left;border-bottom:1px solid #e5e7eb;white-space:nowrap;letter-spacing:.06em;text-transform:uppercase;text-align: center;}
 .dues-table tbody tr{border-bottom:1px solid #f3f4f6;transition:background .12s}
 .dues-table tbody tr:last-child{border-bottom:none}
 .dues-table tbody tr:hover{background:#f9fafb}
@@ -88,6 +88,7 @@
             <table class="dues-table" id="duesOutTable">
               <thead>
                 <tr>
+                  <th>Action</th>
                   <th>Army no</th>
                   <th>Rank</th>
                   <th>Name</th>
@@ -96,7 +97,6 @@
                   <th>Dt of move</th>
                   <th>Order no</th>
                   <th>Remarks</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="duesOutTableBody"></tbody>
@@ -199,14 +199,6 @@ function renderDuesOutTable(data){
     data.forEach(r => {
       tbody.innerHTML += `
         <tr id="duesout-row-${r.id}">
-          <td><span class="army-chip">${r.army_number||''}</span></td>
-          <td><span class="rank-pill">${r.rank||''}</span></td>
-          <td class="name-cell">${r.name||''}</td>
-          <td>${r.trade||'—'}</td>
-          <td class="posted-to">${r.posted_to||'—'}</td>
-          <td>${formatDuesOutDate(r.date_of_move)}</td>
-          <td>${r.posting_order_no||'—'}</td>
-          <td class="remarks-text">${r.remarks||'—'}</td>
           <td>
             <button class="del-btn"
               onclick="openDuesOutDelete(${r.id},'${(r.name||'').replace(/'/g,"\\'")}','${r.army_number||''}')">
@@ -216,6 +208,14 @@ function renderDuesOutTable(data){
               Remove
             </button>
           </td>
+          <td><span class="army-chip">${r.army_number||''}</span></td>
+          <td><span class="rank-pill">${r.rank||''}</span></td>
+          <td class="name-cell">${r.name||''}</td>
+          <td>${r.trade||'—'}</td>
+          <td class="posted-to">${r.posted_to||'—'}</td>
+          <td>${formatDuesOutDate(r.date_of_move)}</td>
+          <td>${r.posting_order_no||'—'}</td>
+          <td class="remarks-text">${r.remarks||'—'}</td>
         </tr>`;
     });
   }

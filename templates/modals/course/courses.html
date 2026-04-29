@@ -1,89 +1,535 @@
-<div class="modal fade" id="coursesModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content">
-  
-        <div class="modal-header">
-          <h5 class="modal-title">Courses</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- 
+  COURSES MODAL — Integrates with base.html theme system
+  All styles scoped to .cm-* — zero collision with existing styles
+-->
+
+<style>
+  .cm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1055;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1.5rem 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .cm-overlay.cm-active { opacity: 1; pointer-events: all; }
+
+  .cm-shell {
+    width: 100%;
+    max-width: 1500px;
+    height: calc(100vh - 4rem);       /* fixed height — shell never grows */
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;                  /* children clip inside rounded corners */
+    box-shadow: 0 8px 40px var(--shadow);
+    transform: translateY(-12px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cm-overlay.cm-active .cm-shell { transform: translateY(0); }
+
+  /* ---- Header ---- */
+  .cm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--modal-header-bg);
+    border-radius: 15px 15px 0 0;
+    flex-shrink: 0;
+    gap: 1rem;
+  }
+  .cm-header-left { display: flex; align-items: center; gap: 12px; }
+  .cm-header-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 1.1rem; color: #fff;
+  }
+  .cm-title { font-size: 1.15rem; font-weight: 600; color: #fff; margin: 0; line-height: 1.2; }
+  .cm-subtitle { font-size: 0.72rem; color: rgba(255,255,255,0.75); margin-top: 2px; }
+  .cm-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .cm-count-badge {
+    font-size: 0.75rem; font-weight: 500; color: #fff;
+    background: rgba(255,255,255,0.2); border-radius: 20px; padding: 3px 12px; white-space: nowrap;
+  }
+  .cm-close-btn {
+    width: 36px; height: 36px; border: none; border-radius: 10px;
+    background: rgba(255,255,255,0.15); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
+  }
+  .cm-close-btn:hover { background: rgba(200,35,51,0.8); }
+
+  /* ---- Toolbar ---- */
+  .cm-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--card-background);
+    flex-wrap: wrap;
+    flex-shrink: 0;                    /* never squishes */
+  }
+  .cm-search-wrap { flex: 1; min-width: 200px; position: relative; }
+  .cm-search-wrap i {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-secondary); font-size: 0.8rem; pointer-events: none;
+  }
+  .cm-search {
+    width: 100%; border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 8px 10px 8px 30px; font-size: 0.85rem;
+    color: var(--text-primary); background: var(--card-background);
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cm-search::placeholder { color: var(--text-secondary); opacity: 0.7; }
+  .cm-search:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+  .cm-filter-select {
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 8px 10px; font-size: 0.85rem;
+    color: var(--text-primary); background: var(--card-background);
+    outline: none; cursor: pointer; max-width: 160px;
+  }
+  .cm-filter-select:focus { border-color: var(--primary-color); }
+  .cm-export-btn {
+    border: 1px solid var(--border-color); border-radius: 8px;
+    padding: 8px 14px; font-size: 0.85rem; font-weight: 500;
+    color: var(--text-primary); background: var(--card-background);
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .cm-export-btn:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+
+  /* ---- Table scroll area ---- */
+  .cm-table-wrap {
+    flex: 1;                           /* takes ALL remaining vertical space */
+    overflow: auto;                    /* scroll both axes here, nowhere else */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+    /* No padding — table fills edge to edge so sticky header aligns */
+  }
+  .cm-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+  .cm-table-wrap::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+  .cm-table-wrap::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---- Table ---- */
+  .cm-table {
+    width: 100%;
+    min-width: 1000px;                 /* triggers horizontal scroll */
+    border-collapse: collapse;         /* collapse keeps sticky header clean */
+    table-layout: auto;
+  }
+
+  /* Sticky header — works because overflow:auto is on the PARENT .cm-table-wrap */
+  .cm-table thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--card-background);
+  }
+  .cm-table thead th {
+    padding: 13px 16px;                /* taller header cells */
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+  }
+  .cm-table thead th:first-child { padding-left: 20px; }
+  .cm-table thead th:last-child  { padding-right: 20px; }
+  .cm-table thead th:hover { color: var(--primary-color); }
+
+  .cm-sort-icon { margin-left: 5px; opacity: 0.35; font-size: 0.6rem; }
+  .cm-table thead th.cm-sort-asc  .cm-sort-icon::after { content: '▲'; opacity:1; color: var(--primary-color); }
+  .cm-table thead th.cm-sort-desc .cm-sort-icon::after { content: '▼'; opacity:1; color: var(--primary-color); }
+  .cm-table thead th:not(.cm-sort-asc):not(.cm-sort-desc) .cm-sort-icon::after { content: '⇅'; }
+
+  /* Body rows */
+  .cm-table tbody tr {
+    animation: cm-row-in 0.18s ease both;
+    transition: background 0.1s;
+  }
+  @keyframes cm-row-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cm-table tbody tr:nth-child(even) { background: rgba(0,0,0,0.025); }
+  .cm-table tbody tr:hover { background: var(--border-color) !important; }
+
+  .cm-table tbody td {
+    padding: 13px 16px;                /* generous vertical padding = taller rows */
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+  }
+  .cm-table tbody td:first-child { padding-left: 20px; }
+  .cm-table tbody td:last-child  { padding-right: 20px; }
+
+  /* ---- Cell types ---- */
+  .cm-army-no {
+    font-weight: 700;
+    color: var(--primary-color);
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+  .cm-rank-badge {
+    display: inline-block;
+    background: #fef9c3; border: 1px solid #fde047;
+    border-radius: 5px; padding: 3px 10px;
+    font-size: 0.78rem; font-weight: 700; color: #713f12;
+    white-space: nowrap;
+  }
+  [data-theme="dark"] .cm-rank-badge { background: rgba(253,224,71,0.1); color: #fde047; border-color: rgba(253,224,71,0.3); }
+  .cm-company-badge {
+    display: inline-block;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 5px; padding: 3px 10px;
+    font-size: 0.78rem; font-weight: 600; color: var(--primary-color);
+    white-space: nowrap;
+  }
+  .cm-name { font-weight: 500; white-space: nowrap; }
+  /* Course & institute: wrap long text, don't break layout */
+  .cm-course-name {
+    font-weight: 600;
+    white-space: normal;
+    word-break: break-word;
+    min-width: 180px;
+    max-width: 280px;
+    line-height: 1.4;
+  }
+  .cm-institute {
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+    white-space: normal;
+    word-break: break-word;
+    min-width: 200px;
+    max-width: 300px;
+    line-height: 1.4;
+  }
+  .cm-date { font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; }
+
+  /* ---- Skeleton ---- */
+  .cm-skeleton td { padding: 13px 16px; border-bottom: 1px solid var(--border-color); }
+  .cm-skeleton-bar {
+    height: 13px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--border-color) 25%, rgba(0,0,0,0.07) 50%, var(--border-color) 75%);
+    background-size: 200% 100%; animation: cm-shimmer 1.3s infinite;
+  }
+  @keyframes cm-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ---- Empty ---- */
+  .cm-empty { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+  .cm-empty i { font-size: 2.2rem; margin-bottom: 0.6rem; display: block; opacity: 0.4; }
+  .cm-empty p { font-size: 0.88rem; margin: 0; }
+
+  /* ---- Footer ---- */
+  .cm-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--card-background);
+    flex-shrink: 0;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .cm-footer-info { font-size: 0.77rem; color: var(--text-secondary); }
+  .cm-per-page { font-size: 0.77rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .cm-per-page select {
+    border: 1px solid var(--border-color); border-radius: 6px;
+    padding: 3px 6px; font-size: 0.77rem;
+    color: var(--text-primary); background: var(--card-background); outline: none; cursor: pointer;
+  }
+  .cm-pagination { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .cm-page-btn {
+    min-width: 32px; height: 32px; padding: 0 7px;
+    border: 1px solid var(--border-color); border-radius: 6px;
+    background: var(--card-background); color: var(--text-primary);
+    font-size: 0.8rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .cm-page-btn:hover:not(:disabled) { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+  .cm-page-btn.cm-page-active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
+  .cm-page-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 900px) {
+    .cm-overlay { padding: 1rem; }
+    .cm-shell { height: calc(100vh - 2rem); }
+    .cm-footer { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 600px) {
+    .cm-count-badge { display: none; }
+    .cm-title { font-size: 1rem; }
+  }
+  /* Large screens / TV */
+  @media (min-width: 1800px) {
+    .cm-shell { max-width: 1750px; }
+    .cm-table thead th { font-size: 0.8rem; padding: 15px 18px; }
+    .cm-table tbody td { font-size: 0.9rem; padding: 15px 18px; }
+    .cm-title { font-size: 1.25rem; }
+  }
+</style>
+
+<div class="cm-overlay" id="cmOverlay" role="dialog" aria-modal="true" aria-labelledby="cmTitle">
+  <div class="cm-shell">
+
+    <div class="cm-header">
+      <div class="cm-header-left">
+        <div class="cm-header-icon"><i class="fas fa-graduation-cap"></i></div>
+        <div>
+          <div class="cm-title" id="cmTitle">Candidates on Courses</div>
+          <div class="cm-subtitle">Training &amp; Development Registry</div>
         </div>
-  
-        <div class="modal-body">
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-              <thead class="table-dark">
-                <tr>
-                  
-                  <th>Army No</th>
-                  <th>Rank</th>
-                  <th>Name </th>
-                  <th>Company </th>
-                  
-                  <th>Course Name</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Institute Name</th>
-                  
-                  
-                </tr>
-              </thead>
-              <tbody id="coursesTableBody">
-                <tr>
-                  <td colspan="8" class="text-center">Loading...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-  
+      </div>
+      <div class="cm-header-right">
+        <span class="cm-count-badge" id="cmTotalCount">— records</span>
+        <button class="cm-close-btn" id="cmCloseBtn" aria-label="Close"><i class="fas fa-times"></i></button>
       </div>
     </div>
+
+    <div class="cm-toolbar">
+      <div class="cm-search-wrap">
+        <i class="fas fa-search"></i>
+        <input class="cm-search" id="cmSearch" type="text" placeholder="Search name, army no, course, institute…">
+      </div>
+      <select class="cm-filter-select" id="cmCompanyFilter">
+        <option value="">All Companies</option>
+      </select>
+      <button class="cm-export-btn" id="cmExportBtn">
+        <i class="fas fa-download"></i> Export CSV
+      </button>
+    </div>
+
+    <!-- This single div scrolls — header and footer stay fixed -->
+    <div class="cm-table-wrap">
+      <table class="cm-table" id="cmTable">
+        <thead>
+          <tr>
+            <th data-col="army_number">Army No<span class="cm-sort-icon"></span></th>
+            <th data-col="rank">Rank<span class="cm-sort-icon"></span></th>
+            <th data-col="name">Name<span class="cm-sort-icon"></span></th>
+            <th data-col="company">Company<span class="cm-sort-icon"></span></th>
+            <th data-col="course_name">Course Name<span class="cm-sort-icon"></span></th>
+            <th data-col="from_date">From<span class="cm-sort-icon"></span></th>
+            <th data-col="to_date">To<span class="cm-sort-icon"></span></th>
+            <th data-col="institute_name">Institute<span class="cm-sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="cmTableBody">
+          <tr class="cm-skeleton"><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:60px"></div></td><td><div class="cm-skeleton-bar" style="width:140px"></div></td><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:170px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:190px"></div></td></tr>
+          <tr class="cm-skeleton"><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:50px"></div></td><td><div class="cm-skeleton-bar" style="width:120px"></div></td><td><div class="cm-skeleton-bar" style="width:90px"></div></td><td><div class="cm-skeleton-bar" style="width:150px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:160px"></div></td></tr>
+          <tr class="cm-skeleton"><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:65px"></div></td><td><div class="cm-skeleton-bar" style="width:155px"></div></td><td><div class="cm-skeleton-bar" style="width:75px"></div></td><td><div class="cm-skeleton-bar" style="width:180px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:200px"></div></td></tr>
+          <tr class="cm-skeleton"><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:55px"></div></td><td><div class="cm-skeleton-bar" style="width:130px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:160px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:175px"></div></td></tr>
+          <tr class="cm-skeleton"><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:60px"></div></td><td><div class="cm-skeleton-bar" style="width:145px"></div></td><td><div class="cm-skeleton-bar" style="width:80px"></div></td><td><div class="cm-skeleton-bar" style="width:165px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:85px"></div></td><td><div class="cm-skeleton-bar" style="width:185px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cm-footer">
+      <div class="cm-footer-info" id="cmFooterInfo">Loading…</div>
+      <div class="cm-per-page">
+        Rows per page
+        <select id="cmPerPage">
+          <option value="15">15</option>
+          <option value="25" selected>25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div class="cm-pagination" id="cmPagination"></div>
+    </div>
+
   </div>
-  <script>
-    document.getElementById("openCourses").addEventListener("click", () => {
-      const modal = new bootstrap.Modal(document.getElementById("coursesModal"));
-      modal.show();
-      loadCourses();
+</div>
+
+<script>
+(function () {
+  var allData = [], filteredData = [];
+  var currentPage = 1, perPage = 25;
+  var sortCol = null, sortDir = 'asc';
+  var searchQ = '', companyFilter = '';
+
+  var overlay      = document.getElementById('cmOverlay');
+  var tbody        = document.getElementById('cmTableBody');
+  var searchEl     = document.getElementById('cmSearch');
+  var filterEl     = document.getElementById('cmCompanyFilter');
+  var perPageEl    = document.getElementById('cmPerPage');
+  var footerInfo   = document.getElementById('cmFooterInfo');
+  var paginationEl = document.getElementById('cmPagination');
+  var totalCount   = document.getElementById('cmTotalCount');
+
+  function openModal() {
+    overlay.classList.add('cm-active');
+    document.body.style.overflow = 'hidden';
+    loadCourses();
+  }
+  function closeModal() {
+    overlay.classList.remove('cm-active');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('cmCloseBtn').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('cm-active')) closeModal();
+  });
+
+  var openBtn = document.getElementById('openCourses');
+  if (openBtn) openBtn.addEventListener('click', openModal);
+
+  function loadCourses() {
+    if (allData.length) return;
+    fetch('/api/get-all-courses')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        allData = data;
+        populateCompanyFilter(data);
+        applyFilters();
+      })
+      .catch(function () {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger-color);padding:3rem;font-size:.85rem">&#9888; Error loading data. Please try again.</td></tr>';
+      });
+  }
+
+  function populateCompanyFilter(data) {
+    var seen = {}, companies = [];
+    data.forEach(function (r) {
+      if (r.company && !seen[r.company]) { seen[r.company] = 1; companies.push(r.company); }
     });
-    
-    function loadCourses() {
-      fetch("/api/get-all-courses")
-        .then(res => res.json())
-        .then(data => {
-          const tbody = document.getElementById("coursesTableBody");
-          tbody.innerHTML = "";
-    
-          if (!data.length) {
-            tbody.innerHTML = `
-            <tr>
-              <td colspan="8" class="text-center text-muted">No courses found</td>
-            </tr>`;
-            return;
-          }
-          
-          data.forEach((row, index) => {
-            tbody.innerHTML += `
-            <tr>
-              
-              <td>${row.army_number}</td>
-              <td>${row.rank}</td>
-              <td>${row.name}</td>
-              <td>${row.company}</td>
-                <td>${row.course_name}</td>
-                <td>${row.from_date}</td>
-                <td>${row.to_date}</td>
-                <td>${row.institute_name}</td>
-                
-                
-              </tr>`;
-          });
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById("coursesTableBody").innerHTML = `
-            <tr>
-              <td colspan="8" class="text-danger text-center">Error loading data</td>
-            </tr>`;
-        });
+    companies.sort().forEach(function (c) {
+      var o = document.createElement('option'); o.value = c; o.textContent = c; filterEl.appendChild(o);
+    });
+  }
+
+  function applyFilters() {
+    var q = searchQ.toLowerCase();
+    filteredData = allData.filter(function (r) {
+      var ms = !q ||
+        (r.army_number    || '').toLowerCase().indexOf(q) > -1 ||
+        (r.name           || '').toLowerCase().indexOf(q) > -1 ||
+        (r.rank           || '').toLowerCase().indexOf(q) > -1 ||
+        (r.course_name    || '').toLowerCase().indexOf(q) > -1 ||
+        (r.institute_name || '').toLowerCase().indexOf(q) > -1;
+      return ms && (!companyFilter || r.company === companyFilter);
+    });
+    if (sortCol) doSort();
+    currentPage = 1;
+    render();
+  }
+
+  searchEl.addEventListener('input', function (e) { searchQ = e.target.value; applyFilters(); });
+  filterEl.addEventListener('change', function (e) { companyFilter = e.target.value; applyFilters(); });
+  perPageEl.addEventListener('change', function (e) { perPage = parseInt(e.target.value); currentPage = 1; render(); });
+
+  document.querySelectorAll('#cmTable thead th[data-col]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var col = th.dataset.col;
+      sortDir = (sortCol === col) ? (sortDir === 'asc' ? 'desc' : 'asc') : 'asc';
+      sortCol = col;
+      document.querySelectorAll('#cmTable thead th').forEach(function (h) {
+        h.classList.remove('cm-sort-asc', 'cm-sort-desc');
+      });
+      th.classList.add(sortDir === 'asc' ? 'cm-sort-asc' : 'cm-sort-desc');
+      doSort(); render();
+    });
+  });
+
+  function doSort() {
+    filteredData.sort(function (a, b) {
+      var va = (a[sortCol] || '').toString().toLowerCase();
+      var vb = (b[sortCol] || '').toString().toLowerCase();
+      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+
+  function render() {
+    totalCount.textContent = filteredData.length + ' records';
+    var start = (currentPage - 1) * perPage;
+    var pageData = filteredData.slice(start, start + perPage);
+    var end = Math.min(start + pageData.length, filteredData.length);
+
+    footerInfo.textContent = filteredData.length
+      ? 'Showing ' + (start + 1) + '\u2013' + end + ' of ' + filteredData.length + ' records'
+      : 'No records found';
+
+    if (!filteredData.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="cm-empty"><i class="fas fa-search"></i><p>No records match your search</p></div></td></tr>';
+      paginationEl.innerHTML = '';
+      return;
     }
-    </script>
-      
+
+    tbody.innerHTML = pageData.map(function (row, i) {
+      return '<tr style="animation-delay:' + (i * 0.02) + 's">' +
+        '<td><span class="cm-army-no">' + esc(row.army_number) + '</span></td>' +
+        '<td><span class="cm-rank-badge">' + esc(row.rank) + '</span></td>' +
+        '<td><span class="cm-name">' + esc(row.name) + '</span></td>' +
+        '<td><span class="cm-company-badge">' + esc(row.company) + '</span></td>' +
+        '<td><div class="cm-course-name">' + esc(row.course_name) + '</div></td>' +
+        '<td><span class="cm-date">' + esc(row.from_date) + '</span></td>' +
+        '<td><span class="cm-date">' + esc(row.to_date) + '</span></td>' +
+        '<td><div class="cm-institute">' + esc(row.institute_name) + '</div></td>' +
+        '</tr>';
+    }).join('');
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    var total = Math.ceil(filteredData.length / perPage);
+    if (total <= 1) { paginationEl.innerHTML = ''; return; }
+    var pages = [];
+    if (total <= 7) { for (var i = 1; i <= total; i++) pages.push(i); }
+    else {
+      pages = [1];
+      if (currentPage > 3) pages.push('...');
+      for (var i = Math.max(2, currentPage - 1); i <= Math.min(total - 1, currentPage + 1); i++) pages.push(i);
+      if (currentPage < total - 2) pages.push('...');
+      pages.push(total);
+    }
+    var html = '<button class="cm-page-btn" ' + (currentPage === 1 ? 'disabled' : '') + ' onclick="cmGoPage(' + (currentPage - 1) + ')">&#8249;</button>';
+    pages.forEach(function (p) {
+      html += p === '...'
+        ? '<button class="cm-page-btn" disabled>&#8230;</button>'
+        : '<button class="cm-page-btn ' + (p === currentPage ? 'cm-page-active' : '') + '" onclick="cmGoPage(' + p + ')">' + p + '</button>';
+    });
+    html += '<button class="cm-page-btn" ' + (currentPage === total ? 'disabled' : '') + ' onclick="cmGoPage(' + (currentPage + 1) + ')">&#8250;</button>';
+    paginationEl.innerHTML = html;
+  }
+
+  window.cmGoPage = function (p) {
+    currentPage = p;
+    render();
+    document.querySelector('.cm-table-wrap').scrollTop = 0;
+  };
+
+  document.getElementById('cmExportBtn').addEventListener('click', function () {
+    var cols = ['army_number','rank','name','company','course_name','from_date','to_date','institute_name'];
+    var headers = ['Army No','Rank','Name','Company','Course Name','From','To','Institute'];
+    var rows = [headers].concat(filteredData.map(function (r) {
+      return cols.map(function (c) { return '"' + (r[c] || '').toString().replace(/"/g, '""') + '"'; });
+    }));
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(rows.map(function (r) { return r.join(','); }).join('\n'));
+    a.download = 'courses_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+  });
+
+  function esc(str) {
+    return (str === null || str === undefined ? '' : String(str))
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+})();
+</script>

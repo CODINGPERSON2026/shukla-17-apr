@@ -174,14 +174,14 @@
 <table class="header-table" style="width: 100%;">
     <tr>
         <td width="20%" align="left" valign="middle">
-            <img src="{{ chinar_logo_path }}" width="80" height="80" style="border-radius:50%">
+            <img src="{{ chinar_logo_path }}" width="100" height="100" style="border-radius:50%">
         </td>
         <td width="60%" align="center" valign="middle">
             <h2 style="margin: 0;">LEAVE CERTIFICATE</h2>
             <div class="sub-header" style="margin-top: 8px;">15 CORPS ENGG SIG REGT</div>
         </td>
         <td width="20%" align="right" valign="middle">
-            <img src="{{ rt_logo_path }}" width="100" height="100">
+            <img src="{{ rt_logo_path }}" width="120" height="120">
         </td>
     </tr>
 </table>
@@ -198,8 +198,8 @@
         <div class="cert-body">
             <strong>It is CERTIFIED</strong> that Army No <strong>{{ applicant.army_number }}</strong> 
             Rank <strong>{{ applicant.rank }}</strong> 
-            Trade <strong>{{ applicant.trade }}</strong> 
-            Name <strong>{{ applicant.name }}</strong> 
+            Name <strong>{{ applicant.name }}</strong>
+            Trade <strong>{{ applicant.trade }}</strong>  
             (I-Card No: <strong>{{ applicant.i_card_no }}</strong>) of 
             <strong>{{ applicant.company_name }}, {{ applicant.section_name }}</strong> Section,
 
@@ -317,7 +317,7 @@
                 <td width="33%" style="vertical-align: bottom;">
                     <div class="digital-sig">
                         <strong style="color: #c00;">✓ DIGITALLY SIGNED</strong><br>
-                        <strong>By:</strong> Commanding Officer<br>
+                        <strong>By:</strong>Officer Commanding <br>
                         <strong>Date:</strong> {{ leave.issue_date.strftime('%d-%m-%Y') }}
                     </div>
                     <strong>Approving Authority</strong><br>
@@ -328,7 +328,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            15 CORPS ENGG SIG REGT • Subedar Major: 95555555555 • Adjt: 9555898989
+            15 CORPS ENGG SIG REGT • Subedar Major: 9431780109 • Adjt: 8377835539
         </div>
 
     </div>

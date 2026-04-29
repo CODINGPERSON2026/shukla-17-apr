@@ -1,0 +1,111 @@
+<!-- Modal -->
+<div class="modal fade" id="on_courses_modal" tabindex="-1" aria-labelledby="onCoursesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="onCoursesModalLabel">INDL ON COURSE</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Army Number -->
+        <div class="mb-3">
+          <label class="form-label">Army Number <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="army_number" required>
+        </div>
+        
+
+        <!-- Course Name -->
+        <div class="mb-3">
+          <label class="form-label">Course Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="course_name" required>
+        </div>
+
+        <!-- Institute Name -->
+        <div class="mb-3">
+          <label class="form-label">Institute Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="institute_name" required>
+        </div>
+
+        <!-- Dates -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Course Start Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="course_starting_date" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Course End Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="course_end_date" required>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="save_course_btn" class="btn btn-primary">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modalEl = document.getElementById('on_courses_modal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    document.getElementById('save_course_btn').addEventListener('click', () => {
+      // Get values
+      const army_number = document.getElementById('army_number').value.trim();
+      
+      const course_name = document.getElementById('course_name').value.trim();
+      const institute_name = document.getElementById('institute_name').value.trim();
+      const course_starting_date = document.getElementById('course_starting_date').value;
+      const course_end_date = document.getElementById('course_end_date').value;
+
+      // Basic required field validation
+      if (!army_number) {
+        alert("Please enter Army Number");
+        return;
+      }
+      if (!course_name || !institute_name || !course_starting_date || !course_end_date) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      // Payload for POST request
+      const payload = {
+        army_number: army_number,
+       
+        course_name: course_name,
+        institute_name: institute_name,
+        course_starting_date: course_starting_date,
+        course_end_date: course_end_date
+      };
+
+      fetch("/oncourses/add_on_course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "success") {
+          alert("Course Added Successfully");
+          modal.hide();
+          // Clear all inputs
+          modalEl.querySelectorAll('input').forEach(input => input.value = '');
+        } else {
+          alert(res.message || "Failed to add course");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Network error. Please try again.");
+      });
+    });
+  });
+</script>

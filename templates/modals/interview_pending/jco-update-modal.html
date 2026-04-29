@@ -117,7 +117,7 @@
 
   .ki-table thead th {
     padding: 13px 16px;
-    text-align: left;
+    text-align: center;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -257,6 +257,34 @@
   .ki-table tbody tr {
     animation: rowIn 0.25s ease forwards;
   }
+  .remarks-cell {
+    max-width: 300px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #64748b #f1f5f9;
+  }
+  
+  .remarks-cell::-webkit-scrollbar {
+    height: 5px;
+  }
+  
+  .remarks-cell::-webkit-scrollbar-thumb {
+    background: #64748b;
+    border-radius: 10px;
+  }
+  
+  .remarks-cell::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
 </style>
 
 <div class="modal fade" id="kunbaInterviewModal" tabindex="-1">
@@ -358,6 +386,7 @@
                     <th>Name</th>
                     <th>Home State</th>
                     <th>Completed On</th>
+                    <th>Remarks</th>
                   </tr>
                 </thead>
                 <tbody id="completedInterviewTableBody">
@@ -382,7 +411,7 @@
 <!-- ============================================================
      REMARKS POPUP MODAL
      ============================================================ -->
-<div class="modal fade" id="remarksModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="remarksTModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
     <div class="modal-content border-0 rounded-3 shadow">
 
@@ -413,7 +442,7 @@
         <!-- Textarea -->
         <div class="mb-1">
           <label class="form-label small text-muted mb-1">Remarks</label>
-          <textarea id="remarksInput"
+          <textarea id="remarks-Input"
                     class="form-control"
                     rows="4"
                     maxlength="300"
@@ -429,7 +458,7 @@
         <div class="d-flex gap-2 justify-content-end">
           <button type="button"
                   class="btn btn-sm btn-outline-secondary px-3"
-                  onclick="closeRemarksModal()">
+                  onclick="closeremarksTModal()">
             Cancel
           </button>
           <button type="button"
@@ -560,7 +589,7 @@
           </td>
           <td>
             <button class="btn-done"
-                    onclick="openRemarksModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
+                    onclick="openremarksTModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24"
                    stroke="white" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"/>
@@ -573,27 +602,27 @@
   }
 
   /* ── Open remarks popup ── */
-  function openRemarksModal(id, name) {
+  function openremarksTModal(id, name) {
     pendingInterviewId = id;
     document.getElementById('remarksPersonName').textContent = name;
-    document.getElementById('remarksInput').value = '';
+    document.getElementById('remarks-Input').value = '';
     document.getElementById('rmCharCount').textContent = '0';
-    new bootstrap.Modal(document.getElementById('remarksModal')).show();
+    new bootstrap.Modal(document.getElementById('remarksTModal')).show();
   }
 
   /* ── Close remarks popup ── */
-  function closeRemarksModal() {
-    const modalEl = document.getElementById('remarksModal');
+  function closeremarksTModal() {
+    const modalEl = document.getElementById('remarksTModal');
     bootstrap.Modal.getInstance(modalEl)?.hide();
     pendingInterviewId = null;
   }
 
   /* ── Submit interview done ── */
   async function submitInterview() {
-    const remarks = document.getElementById('remarksInput').value.trim();
+    const remarks = document.getElementById('remarks-Input').value.trim();
     const id      = pendingInterviewId;
 
-    closeRemarksModal();
+    closeremarksTModal();
 
     const res = await fetch('/interview_update/update_interview_status', {
       method:  'POST',
@@ -632,8 +661,7 @@
         }
       }, 420);
 
-      const toastEl = document.getElementById('interviewSuccessToast');
-      new bootstrap.Toast(toastEl, { delay: 3500 }).show();
+      showStatusModal("INTERVIEW DONE", "BLUE", 4000);
     } else {
       alert('Failed to update. Please try again.');
     }
@@ -692,6 +720,11 @@
               ${p.completed_on}
             </span>
           </td>
+          <td>
+  <div class="remarks-cell">
+    ${p.interview_remarks ? p.interview_remarks : '<span style="color:#94a3b8; font-style:italic;">No remarks</span>'}
+  </div>
+</td>
         </tr>`;
     });
   }

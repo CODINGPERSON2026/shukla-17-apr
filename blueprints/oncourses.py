@@ -11,7 +11,7 @@ def add_on_course():
     institute_name = data.get('institute_name')
     course_starting_date = data.get('course_starting_date')
     course_end_date = data.get('course_end_date')
-
+    course_status =  data.get('course_status')
     if not all([army_number, course_name, institute_name, course_starting_date, course_end_date]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
@@ -25,15 +25,17 @@ def add_on_course():
                 course_starting_date,
                 course_end_date,
                 course_name,
-                institute_name
-            ) VALUES (%s, %s, %s, %s, %s)
+                institute_name,
+                course_status
+            ) VALUES (%s, %s, %s, %s, %s,%s)
         """
         cursor.execute(query, (
             army_number,
             course_starting_date,
             course_end_date,
             course_name,
-            institute_name
+            institute_name,
+            course_status
         ))
         conn.commit()
         return jsonify({"status": "success"}), 200
@@ -75,7 +77,7 @@ def get_courses():
                 coc.course_end_date
             FROM candidate_on_courses coc
             LEFT JOIN personnel p ON coc.army_number = p.army_number
-            WHERE coc.status = 'active'
+            WHERE coc.status = 'Active'
             ORDER BY coc.course_starting_date DESC
         """
         cursor.execute(query)
@@ -130,3 +132,209 @@ def remove_from_course(course_id):
         conn.close()
 
 
+
+
+@oncourses_bp.route('/get_reserved_courses', methods=['GET'])
+def get_reserved_courses():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = """
+            SELECT
+                coc.id,
+                coc.army_number,
+                p.name,
+                p.`rank`,
+                p.company,
+                coc.course_name,
+                coc.institute_name,
+                coc.course_starting_date,
+                coc.course_end_date,
+                coc.course_status
+            FROM candidate_on_courses coc
+            LEFT JOIN personnel p ON coc.army_number = p.army_number
+            WHERE coc.course_status IN ('Reserved', 'Confirmed')
+              AND coc.status IN ('Active', 'Upcoming')          -- Added as per your request
+            ORDER BY coc.course_name ASC, 
+                     coc.course_starting_date DESC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        from collections import defaultdict
+
+        courses = defaultdict(lambda: {
+            "course_name": "",
+            "institute_name": "",
+            "course_starting_date": "",
+            "course_end_date": "",
+            "reserved_count": 0,
+            "confirmed_count": 0,
+            "candidates": []
+        })
+
+        for row in rows:
+            key = row['course_name']
+            
+            # Initialize course details only once
+            if not courses[key]['course_name']:
+                courses[key].update({
+                    "course_name": row['course_name'] or "Unknown Course",
+                    "institute_name": row['institute_name'] or "—",
+                    "course_starting_date": str(row['course_starting_date']) if row['course_starting_date'] else "—",
+                    "course_end_date": str(row['course_end_date']) if row['course_end_date'] else "—",
+                })
+
+            courses[key]['candidates'].append({
+                "id": row['id'],
+                "army_number": row['army_number'],
+                "name": row['name'] or "Unknown",
+                "rank": row['rank'] or "—",
+                "company": row['company'] or "—",
+                "course_status": row['course_status']
+            })
+
+            if row['course_status'] == 'Reserved':
+                courses[key]['reserved_count'] += 1
+            else:
+                courses[key]['confirmed_count'] += 1
+
+        return jsonify({
+            "status": "success", 
+            "data": list(courses.values())
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching reserved courses: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@oncourses_bp.route('/validate_army_number', methods=['GET'])
+def validate_army_number():
+    army_number = request.args.get('army_number')
+    if not army_number:
+        return jsonify({"status": "error", "message": "Army number required"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT name, `rank`
+            FROM personnel 
+            WHERE army_number = %s
+        """, (army_number,))
+        
+        personnel = cursor.fetchone()
+        
+        if personnel:
+            return jsonify({
+                "status": "success",
+                "exists": True,
+                "name": personnel['name'],
+                "rank": personnel['rank']
+            }), 200
+        else:
+            return jsonify({
+                "status": "success",
+                "exists": False
+            }), 200
+    except Exception as e:
+        print(f"Error validating army number: {e}")
+        return jsonify({"status": "error", "message": "Database error"}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@oncourses_bp.route('/get_upcoming_courses', methods=['GET'])
+def get_upcoming_courses():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = """
+            SELECT
+                coc.id,
+                coc.army_number,
+                p.name,
+                p.`rank`,
+                p.company,
+                coc.course_name,
+                coc.institute_name,
+                coc.course_starting_date,
+                coc.course_end_date,
+                coc.course_status
+            FROM candidate_on_courses coc
+            LEFT JOIN personnel p ON coc.army_number = p.army_number
+            WHERE coc.status = 'Upcoming'
+            ORDER BY coc.course_name ASC, coc.course_starting_date DESC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        from collections import defaultdict
+        courses = defaultdict(lambda: {
+            "course_name": "",
+            "institute_name": "",
+            "course_starting_date": "",
+            "course_end_date": "",
+            "reserved_count": 0,
+            "confirmed_count": 0,
+            "candidates": []
+        })
+
+        for row in rows:
+            key = row['course_name']
+            if not courses[key]['course_name']:
+                courses[key].update({
+                    "course_name": row['course_name'] or "Unknown Course",
+                    "institute_name": row['institute_name'] or "—",
+                    "course_starting_date": str(row['course_starting_date']) if row['course_starting_date'] else "—",
+                    "course_end_date": str(row['course_end_date']) if row['course_end_date'] else "—",
+                })
+
+            courses[key]['candidates'].append({
+                "id": row['id'],
+                "army_number": row['army_number'],
+                "name": row['name'] or "Unknown",
+                "rank": row['rank'] or "—",
+                "company": row['company'] or "—",
+                "course_status": row['course_status']
+            })
+
+            if row['course_status'] == 'Reserved':
+                courses[key]['reserved_count'] += 1
+            elif row['course_status'] == 'Confirmed':
+                courses[key]['confirmed_count'] += 1
+
+        return jsonify({"status": "success", "data": list(courses.values())}), 200
+
+    except Exception as e:
+        print(f"Error fetching upcoming courses: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@oncourses_bp.route('/confirm_course/<int:course_id>', methods=['PATCH'])
+def confirm_course(course_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE candidate_on_courses SET course_status = 'Confirmed' WHERE id = %s AND course_status = 'Reserved'",
+            (course_id,)
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"status": "error", "message": "Record not found or already confirmed"}), 404
+        return jsonify({"status": "success", "message": "Course confirmed"}), 200
+    except Exception as e:
+        conn.rollback()
+        print(f"Error confirming course: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()

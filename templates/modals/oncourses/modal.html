@@ -1,111 +1,442 @@
-<!-- Modal -->
+<!-- ON COURSES MODAL - WITH UPCOMING COURSES TAB -->
 <div class="modal fade" id="on_courses_modal" tabindex="-1" aria-labelledby="onCoursesModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
+  <div class="modal-dialog  modal-xl">
     <div class="modal-content">
-
       <div class="modal-header">
-        <h5 class="modal-title" id="onCoursesModalLabel">INDL ON COURSE</h5>
+        <h5 class="modal-title" id="onCoursesModalLabel">INDL ON COURSE MANAGEMENT</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-
       <div class="modal-body">
 
-        <!-- Army Number -->
-        <div class="mb-3">
-          <label class="form-label">Army Number <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="army_number" required>
-        </div>
-        
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="onCourseTabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" id="add-tab-btn" data-bs-toggle="tab" data-bs-target="#add-course" type="button">Add New Course</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="manage-tab-btn" data-bs-toggle="tab" data-bs-target="#manage-reserved" type="button">Manage Reserved</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="upcoming-tab-btn" data-bs-toggle="tab" data-bs-target="#upcoming-courses" type="button">Upcoming Courses</button>
+          </li>
+        </ul>
 
-        <!-- Course Name -->
-        <div class="mb-3">
-          <label class="form-label">Course Name <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="course_name" required>
-        </div>
+        <div class="tab-content">
 
-        <!-- Institute Name -->
-        <div class="mb-3">
-          <label class="form-label">Institute Name <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="institute_name" required>
-        </div>
+          <!-- ==================== ADD NEW COURSE TAB ==================== -->
+          <div class="tab-pane fade show active" id="add-course" role="tabpanel">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Army Number <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="army_number" placeholder="Enter Army Number">
+                  <button class="btn btn-outline-secondary" type="button" id="verify_army_btn">Verify</button>
+                </div>
+                <div id="army_validation_msg" class="mt-1 small"></div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Course Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="course_name">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Institute Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="institute_name">
+              </div>
+            </div>
 
-        <!-- Dates -->
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Course Start Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control" id="course_starting_date" required>
+            <div class="row g-3 mt-3">
+              <div class="col-md-4">
+                <label class="form-label">Course Status <span class="text-danger">*</span></label>
+                <select class="form-select" id="course_status">
+                  <option value="" disabled selected>-- Select Status --</option>
+                  <option value="Reserved">Reserved (Waiting)</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <!-- <option value="Upcoming">Upcoming</option>ve -->
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="course_starting_date">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">End Date <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="course_end_date">
+              </div>
+            </div>
           </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Course End Date <span class="text-danger">*</span></label>
-            <input type="date" class="form-control" id="course_end_date" required>
-          </div>
-        </div>
 
+          <!-- ==================== MANAGE RESERVED TAB ==================== -->
+          <div class="tab-pane fade" id="manage-reserved" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Reserved  Courses Overview</h5>
+              <button class="btn btn-primary btn-sm" onclick="loadReservedCourses()">
+                <i class="fas fa-sync-alt"></i> Refresh
+              </button>
+            </div>
+            <div id="reserved_courses_container" class="table-responsive"></div>
+
+            <div id="detail_view_container" class="mt-4" style="display: none;">
+              <button class="btn btn-sm btn-secondary mb-3" onclick="hideDetailView()">← Back to Course List</button>
+              <div id="detail_content"></div>
+            </div>
+          </div>
+
+          <!-- ==================== UPCOMING COURSES TAB ==================== -->
+          <div class="tab-pane fade" id="upcoming-courses" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Upcoming Courses</h5>
+              <button class="btn btn-primary btn-sm" onclick="loadUpcomingCourses()">
+                <i class="fas fa-sync-alt"></i> Refresh
+              </button>
+            </div>
+            <div id="upcoming_courses_container" class="table-responsive">
+              <!-- Upcoming courses summary table loaded here -->
+            </div>
+
+            <!-- Detail view for upcoming course -->
+            <div id="upcoming_detail_view" class="mt-4" style="display: none;">
+              <button class="btn btn-sm btn-secondary mb-3" onclick="hideUpcomingDetailView()">
+                ← Back to Upcoming List
+              </button>
+              <div id="upcoming_detail_content"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" id="save_course_btn" class="btn btn-primary">Save</button>
+        <button type="button" id="save_course_btn" class="btn btn-success">Save Course</button>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const modalEl = document.getElementById('on_courses_modal');
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('on_courses_modal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-    document.getElementById('save_course_btn').addEventListener('click', () => {
-      // Get values
-      const army_number = document.getElementById('army_number').value.trim();
-      
-      const course_name = document.getElementById('course_name').value.trim();
-      const institute_name = document.getElementById('institute_name').value.trim();
-      const course_starting_date = document.getElementById('course_starting_date').value;
-      const course_end_date = document.getElementById('course_end_date').value;
+  let isArmyNumberValid = false;
 
-      // Basic required field validation
-      if (!army_number) {
-        alert("Please enter Army Number");
-        return;
-      }
-      if (!course_name || !institute_name || !course_starting_date || !course_end_date) {
-        alert("Please fill all required fields");
-        return;
-      }
+  // Tab handling
+  document.getElementById('manage-tab-btn').addEventListener('click', () => setTimeout(loadReservedCourses, 150));
+  document.getElementById('upcoming-tab-btn').addEventListener('click', () => setTimeout(loadUpcomingCourses, 150));
 
-      // Payload for POST request
-      const payload = {
-        army_number: army_number,
-       
-        course_name: course_name,
-        institute_name: institute_name,
-        course_starting_date: course_starting_date,
-        course_end_date: course_end_date
-      };
+  // ===================== ARMY NUMBER VALIDATION =====================
+  const armyInput = document.getElementById('army_number');
+  const verifyBtn = document.getElementById('verify_army_btn');
+  const validationMsg = document.getElementById('army_validation_msg');
 
-      fetch("/oncourses/add_on_course", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+  function validateArmyNumber() {
+    const army_number = armyInput.value.trim();
+    if (!army_number) {
+      validationMsg.innerHTML = '';
+      isArmyNumberValid = false;
+      return;
+    }
+
+    validationMsg.innerHTML = `<span class="text-info">Verifying...</span>`;
+
+    fetch(`/oncourses/validate_army_number?army_number=${encodeURIComponent(army_number)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.status === "success" && res.exists) {
+          validationMsg.innerHTML = `<span class="text-success">✓ Valid - ${res.name || 'Personnel Found'}</span>`;
+          isArmyNumberValid = true;
+        } else {
+          validationMsg.innerHTML = `<span class="text-danger">✗ Army Number not found. Please enter correct Army Number.</span>`;
+          isArmyNumberValid = false;
+        }
       })
+      .catch(() => {
+        validationMsg.innerHTML = `<span class="text-danger">Error verifying Army Number.</span>`;
+        isArmyNumberValid = false;
+      });
+  }
+
+  armyInput.addEventListener('blur', validateArmyNumber);
+  verifyBtn.addEventListener('click', validateArmyNumber);
+
+  // ===================== SAVE NEW COURSE =====================
+  document.getElementById('save_course_btn').addEventListener('click', function () {
+    if (document.getElementById('add-course').classList.contains('show')) {
+      saveNewCourse();
+    }
+  });
+
+  function saveNewCourse() {
+    const army_number = document.getElementById('army_number').value.trim();
+
+    if (!isArmyNumberValid) {
+      alert("Please verify the Army Number first.Make sure you have filled your personnel details form.");
+      armyInput.focus();
+      return;
+    }
+
+    const payload = {
+      army_number: army_number,
+      course_name: document.getElementById('course_name').value.trim(),
+      institute_name: document.getElementById('institute_name').value.trim(),
+      course_status: document.getElementById('course_status').value,
+      course_starting_date: document.getElementById('course_starting_date').value,
+      course_end_date: document.getElementById('course_end_date').value
+    };
+
+    if (!payload.course_name || !payload.institute_name || 
+        !payload.course_status || !payload.course_starting_date || !payload.course_end_date) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    fetch("/oncourses/add_on_course", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === "success") {
+        alert("Course added successfully!");
+        modal.hide();
+        clearAddForm();
+      } else {
+        alert(res.message || "Failed to add course");
+      }
+    })
+    .catch(() => alert("Network error"));
+  }
+
+  function clearAddForm() {
+    document.querySelectorAll('#add-course input').forEach(el => el.value = '');
+    document.getElementById('course_status').selectedIndex = 0;
+    validationMsg.innerHTML = '';
+    isArmyNumberValid = false;
+  }
+
+  // ===================== MANAGE RESERVED TAB =====================
+  window.loadReservedCourses = function () {
+    const container = document.getElementById('reserved_courses_container');
+    document.getElementById('detail_view_container').style.display = 'none';
+
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div><p>Loading...</p></div>`;
+
+    fetch('/oncourses/get_reserved_courses')
+      .then(res => res.json())
+      .then(response => {
+        if (response.status !== "success") throw new Error(response.message || "Failed");
+
+        const courses = response.data || [];
+        let html = `
+          <table class="table table-hover table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Course Name</th>
+                <th>Institute</th>
+                <th class="text-center">Reserved</th>
+                <th class="text-center">Confirmed</th>
+                <th class="text-center">Total</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        if (courses.length === 0) {
+          html += `<tr><td colspan="6" class="text-center py-4">No Reserved personnel found</td></tr>`;
+        } else {
+          courses.forEach(course => {
+            const total = (course.reserved_count || 0) + (course.confirmed_count || 0);
+            html += `
+              <tr>
+                <td><strong>${course.course_name}</strong></td>
+                <td>${course.institute_name}</td>
+                <td class="text-center"><span class="badge bg-warning">${course.reserved_count || 0}</span></td>
+                <td class="text-center"><span class="badge bg-success">${course.confirmed_count || 0}</span></td>
+                <td class="text-center fw-bold">${total}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-primary" onclick="showCourseDetail('${course.course_name.replace(/'/g, "\\'")}')">
+                    View Reserved
+                  </button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      })
+      .catch(() => {
+        container.innerHTML = `<div class="alert alert-danger">Failed to load data. <button onclick="loadReservedCourses()" class="btn btn-sm btn-outline-primary">Retry</button></div>`;
+      });
+  };
+
+  window.showCourseDetail = function (courseName) {
+    // ... (same as previous version - detailed reserved view)
+    const container = document.getElementById('reserved_courses_container');
+    const detailContainer = document.getElementById('detail_view_container');
+    const detailContent = document.getElementById('detail_content');
+
+    detailContainer.style.display = 'block';
+    container.style.display = 'none';
+
+    detailContent.innerHTML = `<div class="text-center py-5"><div class="spinner-border"></div></div>`;
+
+    fetch('/oncourses/get_reserved_courses')
+      .then(res => res.json())
+      .then(response => {
+        const courses = response.data || [];
+        const course = courses.find(c => c.course_name === courseName);
+        if (!course) return detailContent.innerHTML = `<div class="alert alert-warning">Course not found.</div>`;
+
+        let html = `<h5>${course.course_name} <small>(${course.institute_name})</small></h5>
+                    <h6 class="text-warning">Reserved Candidates (${course.reserved_count || 0})</h6>`;
+
+        html += `<table class="table table-hover"><thead class="table-light"><tr>
+                   <th>Army No</th><th>Rank & Name</th><th>Company</th><th class="text-center">Action</th>
+                 </tr></thead><tbody>`;
+
+        const reserved = course.candidates.filter(c => c.course_status === 'Reserved');
+        if (reserved.length === 0) {
+          html += `<tr><td colspan="4" class="text-center">No reserved candidates</td></tr>`;
+        } else {
+          reserved.forEach(cand => {
+            html += `<tr>
+                       <td><strong>${cand.army_number}</strong></td>
+                       <td>${cand.rank} ${cand.name}</td>
+                       <td>${cand.company || '—'}</td>
+                       <td class="text-center">
+                         <button class="btn btn-sm btn-success" onclick="confirmCourse(${cand.id}); hideDetailView();">Confirm</button>
+                       </td>
+                     </tr>`;
+          });
+        }
+        html += `</tbody></table>`;
+        detailContent.innerHTML = html;
+      })
+      .catch(() => detailContent.innerHTML = `<div class="alert alert-danger">Failed to load details.</div>`);
+  };
+
+  window.hideDetailView = function () {
+    document.getElementById('detail_view_container').style.display = 'none';
+    document.getElementById('reserved_courses_container').style.display = 'block';
+  };
+
+  window.confirmCourse = function (courseId) {
+    if (!confirm("Confirm this candidate?")) return;
+    fetch(`/oncourses/confirm_course/${courseId}`, { method: 'PATCH' })
       .then(res => res.json())
       .then(res => {
         if (res.status === "success") {
-          alert("Course Added Successfully");
-          modal.hide();
-          // Clear all inputs
-          modalEl.querySelectorAll('input').forEach(input => input.value = '');
-        } else {
-          alert(res.message || "Failed to add course");
-        }
+          alert("Confirmed successfully!");
+          loadReservedCourses();
+        } else alert(res.message || "Failed");
       })
-      .catch(err => {
-        console.error(err);
-        alert("Network error. Please try again.");
+      .catch(() => alert("Network error"));
+  };
+
+  // ===================== UPCOMING COURSES TAB =====================
+  window.loadUpcomingCourses = function () {
+    const container = document.getElementById('upcoming_courses_container');
+    document.getElementById('upcoming_detail_view').style.display = 'none';
+
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div><p>Loading upcoming courses...</p></div>`;
+
+    fetch('/oncourses/get_upcoming_courses')   // ← New endpoint needed
+      .then(res => res.json())
+      .then(response => {
+        if (response.status !== "success") throw new Error(response.message || "Failed");
+
+        const courses = response.data || [];
+        let html = `
+          <table class="table table-hover table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Course Name</th>
+                <th>Institute</th>
+                <th class="text-center">Reserved</th>
+                <th class="text-center">Confirmed</th>
+                <th class="text-center">Total</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        if (courses.length === 0) {
+          html += `<tr><td colspan="6" class="text-center py-4">No upcoming courses found</td></tr>`;
+        } else {
+          courses.forEach(course => {
+            const total = (course.reserved_count || 0) + (course.confirmed_count || 0);
+            html += `
+              <tr>
+                <td><strong>${course.course_name}</strong></td>
+                <td>${course.institute_name}</td>
+                <td class="text-center"><span class="badge bg-warning">${course.reserved_count || 0}</span></td>
+                <td class="text-center"><span class="badge bg-success">${course.confirmed_count || 0}</span></td>
+                <td class="text-center fw-bold">${total}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-primary" onclick="showUpcomingDetail('${course.course_name.replace(/'/g, "\\'")}')">
+                    View Candidates
+                  </button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+      })
+      .catch(() => {
+        container.innerHTML = `<div class="alert alert-danger">Failed to load upcoming courses.</div>`;
       });
-    });
-  });
+  };
+
+  window.showUpcomingDetail = function (courseName) {
+    const container = document.getElementById('upcoming_courses_container');
+    const detailContainer = document.getElementById('upcoming_detail_view');
+    const detailContent = document.getElementById('upcoming_detail_content');
+
+    detailContainer.style.display = 'block';
+    container.style.display = 'none';
+
+    detailContent.innerHTML = `<div class="text-center py-5"><div class="spinner-border"></div></div>`;
+
+    fetch('/oncourses/get_upcoming_courses')
+      .then(res => res.json())
+      .then(response => {
+        const courses = response.data || [];
+        const course = courses.find(c => c.course_name === courseName);
+        if (!course) return detailContent.innerHTML = `<div class="alert alert-warning">Course not found.</div>`;
+
+        let html = `<h5>${course.course_name} <small class="text-muted">(${course.institute_name})</small></h5>
+                    <p><strong>Status:</strong> Upcoming</p>`;
+
+        html += `<table class="table table-hover"><thead class="table-light"><tr>
+                   <th>Army No</th><th>Rank & Name</th><th>Company</th><th>Status</th>
+                 </tr></thead><tbody>`;
+
+        if (course.candidates.length === 0) {
+          html += `<tr><td colspan="4" class="text-center">No candidates found</td></tr>`;
+        } else {
+          course.candidates.forEach(cand => {
+            const statusBadge = cand.course_status === 'Confirmed' 
+              ? `<span class="badge bg-success">Confirmed</span>` 
+              : `<span class="badge bg-warning">Reserved</span>`;
+            html += `<tr>
+                       <td><strong>${cand.army_number}</strong></td>
+                       <td>${cand.rank} ${cand.name}</td>
+                       <td>${cand.company || '—'}</td>
+                       <td>${statusBadge}</td>
+                     </tr>`;
+          });
+        }
+        html += `</tbody></table>`;
+        detailContent.innerHTML = html;
+      })
+      .catch(() => detailContent.innerHTML = `<div class="alert alert-danger">Failed to load details.</div>`);
+  };
+
+  window.hideUpcomingDetailView = function () {
+    document.getElementById('upcoming_detail_view').style.display = 'none';
+    document.getElementById('upcoming_courses_container').style.display = 'block';
+  };
+});
 </script>

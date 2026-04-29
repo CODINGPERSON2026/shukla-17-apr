@@ -86,6 +86,7 @@ def completed_interview_list():
                 `rank`,
                 name,
                 home_state,
+                interview_remarks,
                 updated_at AS completed_on
             FROM personnel
             WHERE interview_status = 1
@@ -96,6 +97,7 @@ def completed_interview_list():
         """
         cursor.execute(query, (home_state, user_company))
         rows = cursor.fetchall()
+        
 
         return jsonify(rows)
 

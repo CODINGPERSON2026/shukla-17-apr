@@ -1,0 +1,2009 @@
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 24px;
+        background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .stat-item {
+        background: white;
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        background: #e0e7ff;
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-value {
+        font-size: 30px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 4px;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    /* Update stat-item styles to accommodate date input */
+    .stat-item:last-child {
+        background: transparent;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-item:last-child:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .date-selection-container {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .date-label {
+        font-size: 13px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .date-input {
+        width: 100%;
+        margin: 0;
+        font-size: 15px;
+        padding: 14px 16px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        color: #1e293b;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .date-input:hover {
+        border-color: #3b82f6;
+    }
+
+    .date-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .date-input.future-date {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+
+    /* CO Dashboard Section */
+    .co-dashboard {
+        padding: 10px 24px;
+        background: #f8f8f8;
+        border-bottom: 1px solid #e0e0e0;
+        display: none;
+    }
+
+    .co-dashboard.active {
+        display: block;
+    }
+
+    .co-cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-top: 10px;
+    }
+
+    .co-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        width: 100%;
+        height: fit-content;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .co-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        text-align: center;
+        color: #111827;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f3f4f6;
+        letter-spacing: -0.2px;
+    }
+
+    .co-table-container {
+        max-height: 260px;
+        overflow: auto;
+    }
+
+    .co-table-container::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+
+    .co-table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .co-table-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+
+    .co-table-container::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+
+    .co-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        min-width: 100%;
+    }
+
+    .co-table thead {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+
+    .co-table th {
+        padding: 8px 6px;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .co-table td {
+        padding: 8px 6px;
+        text-align: left;
+        border-bottom: 1px solid #f3f4f6;
+        white-space: nowrap;
+    }
+
+    .co-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .co-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Compact column widths */
+    .co-table th:nth-child(1),
+    .co-table td:nth-child(1) {
+        width: 40%;
+        min-width: 120px;
+    }
+
+    .co-table th:nth-child(2),
+    .co-table td:nth-child(2) {
+        width: 20%;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .co-table th:nth-child(3),
+    .co-table td:nth-child(3) {
+        width: 20%;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .co-table th:nth-child(4),
+    .co-table td:nth-child(4) {
+        width: 20%;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    /* For the manpower table with 5 columns */
+    .co-table#coManpowerTable th:nth-child(1),
+    .co-table#coManpowerTable td:nth-child(1) {
+        width: 30%;
+        min-width: 100px;
+    }
+
+    .co-table#coManpowerTable th:nth-child(2),
+    .co-table#coManpowerTable td:nth-child(2),
+    .co-table#coManpowerTable th:nth-child(3),
+    .co-table#coManpowerTable td:nth-child(3),
+    .co-table#coManpowerTable th:nth-child(4),
+    .co-table#coManpowerTable td:nth-child(4) {
+        width: 15%;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .co-table#coManpowerTable th:nth-child(5),
+    .co-table#coManpowerTable td:nth-child(5) {
+        width: 15%;
+        min-width: 50px;
+        text-align: center;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    /* Center align for "no data" message */
+    .co-table td[colspan] {
+        text-align: center;
+        padding: 40px 20px !important;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1400px) {
+        .co-cards-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .stats-bar {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .co-card {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-bar {
+            grid-template-columns: 1fr;
+        }
+
+        .co-cards-container {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .co-card {
+            max-width: 100%;
+            padding: 10px;
+        }
+
+        .co-table {
+            font-size: 11px;
+        }
+
+        .co-table th,
+        .co-table td {
+            padding: 6px 4px;
+        }
+    }
+
+    .expand-view-btn {
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 24px auto;
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+        width: calc(100% - 48px);
+        max-width: 600px;
+    }
+
+    .expand-view-btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.5);
+    }
+
+    .expand-view-btn:active {
+        transform: translateY(0) scale(1.0);
+    }
+
+    /* Full Page View with Table Styling */
+    .full-page-view {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        z-index: 1000;
+        padding: 0;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .full-page-view.active {
+        display: block;
+    }
+
+    .full-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-bottom: 1px solid #e0e0e0;
+        margin-bottom: 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .back-btn {
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .back-btn:hover {
+        background: #f8f9fa;
+        transform: translateY(-1px);
+    }
+
+    .full-page-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: white;
+        margin: 0;
+    }
+
+    .full-page-content {
+        padding: 0 24px 24px;
+    }
+
+    .search-section-full {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f8f8f8;
+        border-radius: 8px;
+    }
+
+    .search-input {
+        padding: 12px 16px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        background: #fff;
+        color: #333;
+        min-width: 200px;
+        transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-input.future-date {
+        border-color: #ff6b6b;
+        background: #fff5f5;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+
+    .btn-primary:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: #fff;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+        background: #f5f5f5;
+    }
+
+    .btn-secondary:disabled {
+        background: #f5f5f5;
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    .actions-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .actions-left,
+    .actions-right {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Status Message */
+    .status-message {
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 48px;
+    }
+
+    .status-message.success {
+        background: #f0f9f0;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .status-message.error {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+
+    .status-message.warning {
+        background: #fff3e0;
+        color: #f57c00;
+        border: 1px solid #ffcc80;
+    }
+
+    .status-message.info {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #90caf9;
+    }
+
+    /* Table Wrapper for Full Page */
+    .table-wrapper {
+        overflow-x: auto;
+        padding: 0;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+    }
+
+    /* Full Page Table Styling (similar to your modal table) */
+    .full-page-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        min-width: 1200px;
+        font-size: 0.9rem;
+    }
+
+    .full-page-table th {
+        background: #2c3e50;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 8px;
+        text-align: center;
+        border-bottom: 2px solid #1a252f;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+
+    .full-page-table td {
+        padding: 8px;
+        text-align: center;
+        font-size: 0.85rem;
+        border-bottom: 1px solid #e0e0e0;
+        min-width: 60px;
+    }
+
+    .full-page-table .category-label {
+        font-weight: 600;
+        background: #ecf0f1;
+        text-align: left !important;
+        padding-left: 16px !important;
+        min-width: 150px;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+    }
+
+    .full-page-table tr:hover td {
+        background-color: #f9f9f9;
+    }
+
+    .full-page-table .total-row td {
+        background-color: #d5e8f7 !important;
+        font-weight: bold;
+    }
+
+    .full-page-table .total-row .category-label {
+        background-color: #c4dbf2 !important;
+    }
+
+    .full-page-table .grand-total-row td {
+        background-color: #2c3e50 !important;
+        color: white;
+        font-weight: 700;
+    }
+
+    .full-page-table .grand-total-row .category-label {
+        background-color: #2c3e50 !important;
+        color: white;
+    }
+
+    .full-page-table .calculated-cell {
+        background: #fff3cd !important;
+        font-weight: 600;
+    }
+
+    .full-page-table .read-only-cell {
+        background: #e9ecef !important;
+        cursor: not-allowed;
+    }
+
+    /* Input fields in full page view */
+    .full-page-table input[type="number"] {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 0.85rem;
+        background: white;
+        color: #333;
+        transition: border-color 0.2s;
+        min-height: 36px;
+        font-weight: 500;
+    }
+
+    .full-page-table input[type="number"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .full-page-table input[type="number"]:disabled {
+        background: #f5f5f5;
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-content {
+        text-align: center;
+        padding: 40px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .loading {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Mode and Role Badges */
+    .mode-badge {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .role-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+        vertical-align: middle;
+    }
+
+    /* Print styles */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading"></div>
+            <p style="margin-top: 16px;">Loading data...</p>
+        </div>
+    </div>
+
+    <!-- Full Page View for Detailed Parade State -->
+    <div class="full-page-view" id="fullPageView">
+        <div class="full-page-header">
+            <button class="back-btn" onclick="closeFullPageView()">
+                ← Back to Dashboard
+            </button>
+            <h2 class="full-page-title">📊 Parade State - Detailed View</h2>
+            <div style="width: 120px;"></div> <!-- Spacer for alignment -->
+        </div>
+
+        <div class="full-page-content">
+            <!-- Search Section -->
+            <div class="search-section-full">
+                <input type="date" class="search-input" id="fullPageDate" placeholder="Select date" max="">
+                <button class="btn btn-secondary" onclick="searchFullPageByDate()" id="fullPageSearchBtn">
+                    🔍 Search Parade State
+                </button>
+            </div>
+
+            <!-- Status Message Area -->
+            <div id="fullPageStatusMessage" style="display: none;"></div>
+
+            <!-- Table Container -->
+            <div class="table-wrapper" id="fullPageTableContainer" style="display: none;">
+                <table class="full-page-table" id="fullPageTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">CATEGORY</th>
+                            <th>AUTH</th>
+                            <th>H/S</th>
+                            <th>POSTED/STR</th>
+                            <th>LVE</th>
+                            <th>COURSE</th>
+                            <th>DET</th>
+                            <th>MH</th>
+                            <th>SICK/LVE</th>
+                            <th>EX</th>
+                            <th>TD</th>
+                            <th>ATT</th>
+                            <th>AWL/OSL/JC</th>
+                            <th class="bg-warning">T/OUT</th>
+                            <th class="bg-info text-white">PRES/DET</th>
+                            <th class="bg-success text-white">PRES/UNIT</th>
+                            <th>DUES IN</th>
+                            <th>DUES OUT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fullPageTableBody">
+                        <!-- Generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Bar with Date Selection -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalAuth">0</div>
+                    <div class="stat-label">Total Posted Strength</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="color: #10b981; background: #d1fae5;"><i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="presentUnit">0</div>
+                    <div class="stat-label">Present Unit Strength</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="color: #ef4444; background: #fee2e2;"><i class="fas fa-sign-out-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalOut">0</div>
+                    <div class="stat-label">Total Out</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="date-selection-container">
+                    <div class="date-label">📅 Select Date</div>
+                    <input type="date" class="date-input" id="searchDate" placeholder="Select date" max="">
+                </div>
+            </div>
+        </div>
+
+        <!-- CO Dashboard Section -->
+        <div class="co-dashboard no-print" id="coDashboard" style="padding: 10px 24px;">
+            <!-- Date selection removed from here -->
+        </div>
+
+        <!-- CO Cards Container -->
+        <div class="co-cards-container">
+            <!-- Leave Percentage Card -->
+            <div class="co-card">
+                <div class="co-card-title">📊 Leave % (All Companies)</div>
+                <div class="chart-container" style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="coLeaveChart"></canvas>
+                </div>
+                <div class="co-table-container">
+                    <table class="co-table" id="coLeaveTable">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Leave %</th>
+                                <th>On Leave</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 20px; color: #999;">
+                                    Select a date to view data
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Company Wise Man Power Card -->
+            <div class="co-card">
+                <div class="co-card-title">👥 Company Wise Man Power</div>
+                <div class="chart-container" style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="coManpowerChart"></canvas>
+                </div>
+                <div class="co-table-container">
+                    <table class="co-table" id="coManpowerTable">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Officers</th>
+                                <th>JCOs</th>
+                                <th>Other Ranks</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px; color: #999;">
+                                    Select a date to view data
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expand View Button -->
+        <button class="expand-view-btn" onclick="openFullPageView()">
+            <i class="fas fa-expand-arrows-alt"></i> Expand View to See Full Parade State Table
+        </button>
+    </div>
+
+    
+    <script>
+        const API_BASE_URL = '';
+        const DEFAULT_DATE = new Date().toISOString().split('T')[0];
+        let coLeaveChartInstance = null;
+        let coManpowerChartInstance = null;
+        const TODAY = DEFAULT_DATE;
+
+        const categories = [
+            { name: 'OFFR', key: 'offr', isTotal: false, isFirstSection: true },
+            { name: 'JCO', key: 'jco', isTotal: false, isFirstSection: true },
+            { name: 'JCO(ERE)', key: 'jcoEre', isTotal: false, isFirstSection: true },
+            { name: 'OR', key: 'or', isTotal: false, isFirstSection: true },
+            { name: 'OR (ERE)', key: 'orEre', isTotal: false, isFirstSection: true },
+            { name: 'TOTAL', key: 'firstTotal', isTotal: true, isFirstTotal: true },
+            { name: 'O&A OR', key: 'oaOr', isTotal: false, isSecondSection: true },
+            { name: 'ATT SUMMIARY', key: 'attSummary', isTotal: false, isSecondSection: true },
+            { name: 'ATT OFFR', key: 'attOffr', isTotal: false, isSecondSection: true },
+            { name: 'ATT JCO', key: 'attJco', isTotal: false, isSecondSection: true },
+            { name: 'ATT OR', key: 'attOr', isTotal: false, isSecondSection: true },
+            { name: 'TOTAL', key: 'secondTotal', isTotal: true, isSecondTotal: true },
+            { name: 'G/TOTAL', key: 'grandTotal', isTotal: true, isGrandTotal: true }
+        ];
+
+        const columnCount = 17;
+        let data = {};
+        let currentDate = DEFAULT_DATE;
+        let isDataModified = false;
+        let userCompany = '';
+        let userRole = '';
+        let isUsingTemplate = false;
+        let templateOriginalDate = '';
+        let isFullPageModeReadOnly = false;
+
+        const COL_INDICES = {
+            AUTH: 0,
+            HS: 1,
+            POSTED_STR: 2,
+            LVE: 3,
+            COURSE: 4,
+            DET: 5,
+            MH: 6,
+            SICK_LVE: 7,
+            EX: 8,
+            TD: 9,
+            ATT: 10,
+            AWL_OSL_JC: 11,
+            T_OUT: 12,
+            PRESENT_DET: 13,
+            PRESENT_UNIT: 14,
+            DUES_IN: 15,
+            DUES_OUT: 16
+        };
+
+        // API Helper Functions
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('API Request Error:', error);
+                throw error;
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('active', show);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            if (!statusEl) return;
+
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'flex';
+
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function showFullPageStatus(message, type = 'info') {
+            const statusEl = document.getElementById('fullPageStatusMessage');
+            if (!statusEl) return;
+
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+            statusEl.style.display = 'flex';
+
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function initData() {
+            categories.forEach(cat => {
+                if (!cat.isTotal) {
+                    data[cat.key] = Array(columnCount).fill(0);
+                }
+            });
+        }
+
+        function calculateTOut(rowData) {
+            const lve = rowData[COL_INDICES.LVE] || 0;
+            const course = rowData[COL_INDICES.COURSE] || 0;
+            const mh = rowData[COL_INDICES.MH] || 0;
+            const sickLve = rowData[COL_INDICES.SICK_LVE] || 0;
+            const ex = rowData[COL_INDICES.EX] || 0;
+            const td = rowData[COL_INDICES.TD] || 0;
+            const att = rowData[COL_INDICES.ATT] || 0;
+            const det = rowData[COL_INDICES.DET] || 0;
+            const awlOslJc = rowData[COL_INDICES.AWL_OSL_JC] || 0;
+
+            return lve + course + det + mh + sickLve + ex + td + att + awlOslJc;
+        }
+
+        function calculatePresentUnit(rowData) {
+            const postedStr = rowData[COL_INDICES.POSTED_STR] || 0;
+            const tOut = calculateTOut(rowData);
+            return Math.max(0, postedStr - tOut);
+        }
+
+        function getPresentDet(rowData) {
+            return rowData[COL_INDICES.DET] || 0;
+        }
+
+        function getCalculatedRowValues(rowData) {
+            return {
+                tOut: calculateTOut(rowData),
+                presentDet: getPresentDet(rowData),
+                presentUnit: calculatePresentUnit(rowData)
+            };
+        }
+
+        function calculateFirstTotal(columnIndex) {
+            let total = 0;
+            const firstSectionCategories = categories.filter(cat => cat.isFirstSection && !cat.isTotal);
+
+            firstSectionCategories.forEach(cat => {
+                if (data[cat.key] && data[cat.key].length > columnIndex) {
+                    if (columnIndex === COL_INDICES.T_OUT) {
+                        total += calculateTOut(data[cat.key]);
+                    } else if (columnIndex === COL_INDICES.PRESENT_DET) {
+                        total += getPresentDet(data[cat.key]);
+                    } else if (columnIndex === COL_INDICES.PRESENT_UNIT) {
+                        total += calculatePresentUnit(data[cat.key]);
+                    } else {
+                        total += data[cat.key][columnIndex] || 0;
+                    }
+                }
+            });
+
+            return total;
+        }
+
+        function calculateSecondTotal(columnIndex) {
+            let total = 0;
+            const secondSectionCategories = categories.filter(cat => cat.isSecondSection && !cat.isTotal);
+
+            secondSectionCategories.forEach(cat => {
+                if (data[cat.key] && data[cat.key].length > columnIndex) {
+                    if (columnIndex === COL_INDICES.T_OUT) {
+                        total += calculateTOut(data[cat.key]);
+                    } else if (columnIndex === COL_INDICES.PRESENT_DET) {
+                        total += getPresentDet(data[cat.key]);
+                    } else if (columnIndex === COL_INDICES.PRESENT_UNIT) {
+                        total += calculatePresentUnit(data[cat.key]);
+                    } else {
+                        total += data[cat.key][columnIndex] || 0;
+                    }
+                }
+            });
+
+            return total;
+        }
+
+        function calculateGrandTotal(columnIndex) {
+            return calculateFirstTotal(columnIndex) + calculateSecondTotal(columnIndex);
+        }
+
+        // Full Page View Functions
+        function openFullPageView() {
+            // Store current state
+            const fullPageDateInput = document.getElementById('fullPageDate');
+            fullPageDateInput.value = currentDate;
+            fullPageDateInput.max = TODAY;
+
+            // Show full page view
+            document.getElementById('fullPageView').classList.add('active');
+
+            // Hide main container
+            document.querySelector('.container').style.display = 'none';
+
+            // Load data for full page view
+            loadFullPageData(currentDate);
+        }
+
+        function closeFullPageView() {
+            // Hide full page view
+            document.getElementById('fullPageView').classList.remove('active');
+
+            // Show main container
+            document.querySelector('.container').style.display = 'block';
+
+            // Refresh main dashboard data
+            loadDataForDate(currentDate);
+        }
+
+        async function searchFullPageByDate() {
+            const searchDate = document.getElementById('fullPageDate').value;
+            if (!searchDate) {
+                showFullPageStatus('Please select a date', 'error');
+                return;
+            }
+
+            const searchInput = document.getElementById('fullPageDate');
+            searchInput.classList.remove('future-date');
+
+            loadFullPageData(searchDate);
+        }
+
+        function createFullPageInputCell(categoryKey, columnIndex) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.step = '1';
+            input.value = data[categoryKey] ? (data[categoryKey][columnIndex] || 0) : 0;
+            input.dataset.category = categoryKey;
+            input.dataset.column = columnIndex;
+
+            const isCalculatedColumn = columnIndex === COL_INDICES.T_OUT ||
+                columnIndex === COL_INDICES.PRESENT_DET ||
+                columnIndex === COL_INDICES.PRESENT_UNIT;
+
+            if (isCalculatedColumn || categoryKey.includes('Total')) {
+                input.disabled = true;
+                input.classList.add('read-only-cell');
+            } else {
+                const isFutureDate = new Date(currentDate) > new Date(TODAY);
+                if (isFutureDate) {
+                    input.disabled = true;
+                    input.title = "Cannot edit data for future dates";
+                }
+
+
+                input.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    const category = e.target.dataset.category;
+                    const column = parseInt(e.target.dataset.column);
+
+                    data[category][column] = isNaN(value) ? 0 : value;
+
+                    if (column === COL_INDICES.POSTED_STR ||
+                        column === COL_INDICES.LVE ||
+                        column === COL_INDICES.COURSE ||
+                        column === COL_INDICES.DET ||
+                        column === COL_INDICES.MH ||
+                        column === COL_INDICES.SICK_LVE ||
+                        column === COL_INDICES.EX ||
+                        column === COL_INDICES.TD ||
+                        column === COL_INDICES.ATT ||
+                        column === COL_INDICES.AWL_OSL_JC) {
+
+                        updateFullPageCalculatedValuesForRow(category);
+                    }
+
+                    updateFullPageAllTotals();
+                    isDataModified = true;
+                });
+            }
+
+            return input;
+        }
+
+        function createFullPageCalculatedCell(categoryKey, columnIndex) {
+            const span = document.createElement('span');
+            span.className = 'calculated-value';
+            span.textContent = data[categoryKey] ? (data[categoryKey][columnIndex] || 0) : 0;
+
+            if (columnIndex === COL_INDICES.T_OUT) {
+                span.style.color = '#856404';
+                span.style.background = '#fff3cd';
+                span.title = "Calculated: LVE + COURSE + DET + MH + SICK/LVE + EX + TD + ATT + AWL/OSL/JC";
+            } else if (columnIndex === COL_INDICES.PRESENT_DET) {
+                span.style.color = '#0c5460';
+                span.style.background = '#d1ecf1';
+                span.title = "Same as DET column value";
+            } else if (columnIndex === COL_INDICES.PRESENT_UNIT) {
+                span.style.color = '#155724';
+                span.style.background = '#d4edda';
+                span.title = "Calculated: POSTED/STR - T/OUT";
+            }
+
+            return span;
+        }
+
+        function updateFullPageCalculatedValuesForRow(categoryKey) {
+            const rowData = data[categoryKey] || Array(columnCount).fill(0);
+            const calculated = getCalculatedRowValues(rowData);
+
+            data[categoryKey][COL_INDICES.T_OUT] = calculated.tOut;
+            data[categoryKey][COL_INDICES.PRESENT_DET] = calculated.presentDet;
+            data[categoryKey][COL_INDICES.PRESENT_UNIT] = calculated.presentUnit;
+
+            // Update display
+            const row = document.querySelector(`tr[data-category="${categoryKey}"]`);
+            if (row) {
+                const tOutCell = row.querySelector(`td:nth-child(${COL_INDICES.T_OUT + 2})`);
+                const presentDetCell = row.querySelector(`td:nth-child(${COL_INDICES.PRESENT_DET + 2})`);
+                const presentUnitCell = row.querySelector(`td:nth-child(${COL_INDICES.PRESENT_UNIT + 2})`);
+
+                if (tOutCell) {
+                    const span = tOutCell.querySelector('span');
+                    if (span) span.textContent = calculated.tOut;
+                }
+                if (presentDetCell) {
+                    const span = presentDetCell.querySelector('span');
+                    if (span) span.textContent = calculated.presentDet;
+                }
+                if (presentUnitCell) {
+                    const span = presentUnitCell.querySelector('span');
+                    if (span) span.textContent = calculated.presentUnit;
+                }
+            }
+        }
+
+        function updateFullPageAllTotals() {
+            for (let i = 0; i < columnCount; i++) {
+                const firstTotal = calculateFirstTotal(i);
+                const secondTotal = calculateSecondTotal(i);
+                const grandTotal = calculateGrandTotal(i);
+
+                data.firstTotal[i] = firstTotal;
+                data.secondTotal[i] = secondTotal;
+                data.grandTotal[i] = grandTotal;
+
+                // Update display for total rows
+                ['firstTotal', 'secondTotal', 'grandTotal'].forEach(categoryKey => {
+                    const row = document.querySelector(`tr[data-category="${categoryKey}"]`);
+                    if (row) {
+                        const cell = row.querySelector(`td:nth-child(${i + 2})`);
+                        if (cell) {
+                            const span = cell.querySelector('span');
+                            if (span) {
+                                span.textContent = data[categoryKey][i];
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function createFullPageTable(isReadOnly = false) {
+            const tbody = document.getElementById('fullPageTableBody');
+            tbody.innerHTML = '';
+
+            isFullPageModeReadOnly = isReadOnly;
+
+            categories.forEach(cat => {
+                const tr = document.createElement('tr');
+                tr.dataset.category = cat.key;
+
+                if (cat.isTotal) {
+                    if (cat.isGrandTotal) {
+                        tr.className = 'grand-total-row';
+                    } else {
+                        tr.className = 'total-row';
+                    }
+                }
+
+                // Category Label Cell
+                const tdCat = document.createElement('td');
+                tdCat.className = 'category-label';
+                tdCat.textContent = cat.name;
+                tr.appendChild(tdCat);
+
+                // Data Cells
+                for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+                    const td = document.createElement('td');
+
+                    if (cat.isTotal) {
+                        // Total rows are always calculated and read-only
+                        const span = document.createElement('span');
+                        span.className = 'calculated-value';
+                        if (cat.isFirstTotal) {
+                            span.textContent = calculateFirstTotal(columnIndex);
+                        } else if (cat.isSecondTotal) {
+                            span.textContent = calculateSecondTotal(columnIndex);
+                        } else if (cat.isGrandTotal) {
+                            span.textContent = calculateGrandTotal(columnIndex);
+                        }
+                        td.appendChild(span);
+                    } else {
+                        // Regular data rows
+                        if (columnIndex === COL_INDICES.T_OUT ||
+                            columnIndex === COL_INDICES.PRESENT_DET ||
+                            columnIndex === COL_INDICES.PRESENT_UNIT) {
+
+                            // Calculated cells
+                            const calculatedCell = createFullPageCalculatedCell(cat.key, columnIndex);
+                            td.appendChild(calculatedCell);
+                            td.classList.add('calculated-cell');
+                        } else {
+                            // Editable cells (unless in read-only mode)
+                            if (isReadOnly) {
+                                const readOnlyCell = document.createElement('span');
+                                readOnlyCell.className = 'read-only-cell';
+                                readOnlyCell.textContent = data[cat.key] ? (data[cat.key][columnIndex] || 0) : 0;
+                                readOnlyCell.title = "Read-only: CO View - Aggregated from all companies";
+                                td.appendChild(readOnlyCell);
+                                td.classList.add('read-only-cell');
+                            } else {
+                                const inputCell = createFullPageInputCell(cat.key, columnIndex);
+                                td.appendChild(inputCell);
+                            }
+                        }
+                    }
+
+                    tr.appendChild(td);
+                }
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadFullPageData(date) {
+            try {
+                showLoading(true);
+                showFullPageStatus('Loading parade state data...', 'info');
+
+                // Hide table container initially
+                document.getElementById('fullPageTableContainer').style.display = 'none';
+
+                // Clear previous data
+                initData();
+
+                // For CO, 2IC, ADJUTANT, OC: Load aggregated data from all companies
+                if (['CO', '2IC', 'ADJUTANT', 'OC'].includes(userRole)) {
+                    const response = await fetch(`${API_BASE_URL}/api/co-dashboard/parade-table/${date}`);
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        console.error('Failed to load CO parade table:', result.message);
+
+                        // Show "No Data Available" message
+                        const tbody = document.getElementById('fullPageTableBody');
+                        tbody.innerHTML = `
+                        <tr>
+                            <td colspan="18" style="text-align: center; padding: 40px; color: #999; font-size: 16px;">
+                                📭 No Data Available for ${date}
+                            </td>
+                        </tr>
+                    `;
+
+                        document.getElementById('fullPageTableContainer').style.display = 'block';
+                        showFullPageStatus('No data found for this date', 'warning');
+                        return;
+                    }
+
+                    const aggregatedData = result.data.data;
+
+                    // Initialize data structure with aggregated values
+                    initData();
+                    for (const [category, values] of Object.entries(aggregatedData)) {
+                        if (data.hasOwnProperty(category)) {
+                            data[category] = values.slice(0, columnCount);
+                        }
+                    }
+
+                    // Create table with read-only mode
+                    createFullPageTable(true);
+
+                    // Show table container
+                    document.getElementById('fullPageTableContainer').style.display = 'block';
+
+                    showFullPageStatus(`Loaded aggregated data from ${result.companies_count || 0} companies`, 'success');
+
+                } else {
+                    // For non-CO users: Load individual company data
+                    const response = await apiRequest(`/api/parade-state/get/${date}`);
+
+                    if (response.success && response.data) {
+                        const loadedData = response.data.data;
+                        currentDate = loadedData.date || date;
+
+                        // Check if using template
+                        isUsingTemplate = loadedData.is_previous_day_template || false;
+                        templateOriginalDate = loadedData.original_date || '';
+
+                        userCompany = loadedData.company || '';
+
+                        // Parse loaded data
+                        initData();
+                        for (const [category, values] of Object.entries(loadedData)) {
+                            if (data.hasOwnProperty(category)) {
+                                data[category] = values.slice(0, columnCount);
+                            }
+                        }
+
+                        // Create table in editable mode
+                        createFullPageTable(false);
+
+                        // Show table container
+                        document.getElementById('fullPageTableContainer').style.display = 'block';
+
+                        if (isUsingTemplate) {
+                            showFullPageStatus(`Using ${templateOriginalDate}'s data as template for ${currentDate}`, 'warning');
+                        } else {
+                            showFullPageStatus(`Loaded parade state for ${currentDate}`, 'success');
+                        }
+
+                    } else if (response.error === 'Cannot access data for future dates') {
+                        showFullPageStatus('Cannot access data for future dates', 'error');
+                        initData();
+                        createFullPageTable(false);
+
+                        document.getElementById('fullPageTableContainer').style.display = 'block';
+
+                        const searchInput = document.getElementById('fullPageDate');
+                        searchInput.classList.add('future-date');
+                        isDataModified = false;
+
+                    } else {
+                        // No data found - show empty table for data entry
+                        initData();
+                        createFullPageTable(false);
+                        isDataModified = false;
+
+                        document.getElementById('fullPageTableContainer').style.display = 'block';
+
+                        showFullPageStatus(`No existing data for ${date}`, 'warning');
+                    }
+                }
+
+                // Update current date
+                currentDate = date;
+
+            } catch (error) {
+                console.error('Error loading full page data:', error);
+
+                // Show error in table
+                const tbody = document.getElementById('fullPageTableBody');
+                tbody.innerHTML = `
+                <tr>
+                    <td colspan="18" style="text-align: center; padding: 40px; color: #e53e3e; font-size: 16px;">
+                        ⚠️ Error loading data: ${error.message}
+                    </td>
+                </tr>
+            `;
+
+                document.getElementById('fullPageTableContainer').style.display = 'block';
+                showFullPageStatus(`Failed to load data: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // CO Dashboard Functions
+        async function loadCODashboardData(selectedDate) {
+            if (!['CO', '2IC', 'ADJUTANT', 'OC'].includes(userRole)) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/co-dashboard/all-data/${selectedDate}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    console.error('Failed to load CO dashboard data:', result.message);
+
+                    // Show "No Data" message
+                    document.querySelector('#coLeaveTable tbody').innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                            📭 No Data Available
+                        </td>
+                    </tr>
+                `;
+                    document.querySelector('#coManpowerTable tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                            📭 No Data Available
+                        </td>
+                    </tr>
+                `;
+
+                    // Also clear stats for no data
+                    document.getElementById('totalAuth').textContent = '0';
+                    document.getElementById('presentUnit').textContent = '0';
+                    document.getElementById('totalOut').textContent = '0';
+
+                    return;
+                }
+
+                const coData = result.data;
+
+                // Update Leave Table
+                const leaveTbody = document.querySelector('#coLeaveTable tbody');
+                leaveTbody.innerHTML = '';
+
+                // Check if there's actual data
+                if (!coData.leave_status || !coData.leave_status.by_company || coData.leave_status.by_company.length === 0) {
+                    leaveTbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                            📭 No Data Available
+                        </td>
+                    </tr>
+                `;
+                    if (coLeaveChartInstance) coLeaveChartInstance.destroy();
+                } else {
+                    const leaveLabels = [];
+                    const leaveData = [];
+                    const leaveBgColors = [];
+                    const companyColors = [
+                        'rgba(59, 130, 246, 0.8)', // Blue
+                        'rgba(16, 185, 129, 0.8)', // Green
+                        'rgba(245, 158, 11, 0.8)', // Yellow
+                        'rgba(239, 68, 68, 0.8)',  // Red
+                        'rgba(139, 92, 246, 0.8)', // Purple
+                        'rgba(236, 72, 153, 0.8)', // Pink
+                        'rgba(14, 165, 233, 0.8)', // Light Blue
+                        'rgba(20, 184, 166, 0.8)'  // Teal
+                    ];
+
+                    coData.leave_status.by_company.forEach((row, index) => {
+                        leaveLabels.push(row.company.toUpperCase());
+                        const percentage = row.leave_percentage || 0;
+                        leaveData.push(percentage);
+
+                        let percentClass = "";
+                        if (percentage >= 40) {
+                            percentClass = "percentage-high";
+                        } else if (percentage >= 20) {
+                            percentClass = "percentage-medium";
+                        } else {
+                            percentClass = "percentage-low";
+                        }
+                        leaveBgColors.push(companyColors[index % companyColors.length]);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                        <td><strong>${row.company.toUpperCase()}</strong></td>
+                        <td class="${percentClass}">${percentage}%</td>
+                        <td>${row.on_leave || 0}</td>
+                        <td>${row.total_strength || 0}</td>
+                    `;
+                        leaveTbody.appendChild(tr);
+                    });
+
+                    // Add total row for leave
+                    const totalLeavePercentClass = coData.leave_status.total.leave_percentage >= 40 ? 'percentage-high' :
+                        coData.leave_status.total.leave_percentage >= 20 ? 'percentage-medium' : 'percentage-low';
+                    const totalLeaveTr = document.createElement('tr');
+                    totalLeaveTr.className = 'total-row';
+                    totalLeaveTr.innerHTML = `
+                    <td><strong>TOTAL</strong></td>
+                    <td class="${totalLeavePercentClass}">${coData.leave_status.total.leave_percentage}%</td>
+                    <td>${coData.leave_status.total.on_leave}</td>
+                    <td>${coData.leave_status.total.total_strength}</td>
+                `;
+                    leaveTbody.appendChild(totalLeaveTr);
+
+                    updateLeaveChart(leaveLabels, leaveData, leaveBgColors);
+                }
+
+                // Update Manpower Table
+                const manpowerTbody = document.querySelector('#coManpowerTable tbody');
+                manpowerTbody.innerHTML = '';
+
+                // Check if there's actual data
+                if (!coData.manpower || !coData.manpower.by_company || coData.manpower.by_company.length === 0) {
+                    manpowerTbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                            📭 No Data Available
+                        </td>
+                    </tr>
+                `;
+                    if (coManpowerChartInstance) coManpowerChartInstance.destroy();
+                } else {
+                    const manpowerLabels = [];
+                    const totalData = [];
+                    const officersData = [];
+                    const jcosData = [];
+                    const orData = [];
+
+                    coData.manpower.by_company.forEach(row => {
+                        manpowerLabels.push(row.company.toUpperCase());
+                        totalData.push(row.total || 0);
+                        officersData.push(row.officers || 0);
+                        jcosData.push(row.jcos || 0);
+                        orData.push(row.other_ranks || 0);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                        <td><strong>${row.company.toUpperCase()}</strong></td>
+                        <td>${row.officers || 0}</td>
+                        <td>${row.jcos || 0}</td>
+                        <td>${row.other_ranks || 0}</td>
+                        <td><strong>${row.total || 0}</strong></td>
+                    `;
+                        manpowerTbody.appendChild(tr);
+                    });
+
+                    // Add total row for manpower
+                    const totalManpowerTr = document.createElement('tr');
+                    totalManpowerTr.className = 'total-row';
+                    totalManpowerTr.innerHTML = `
+                    <td><strong>TOTAL</strong></td>
+                    <td>${coData.manpower.total.officers}</td>
+                    <td>${coData.manpower.total.jcos}</td>
+                    <td>${coData.manpower.total.other_ranks}</td>
+                    <td><strong>${coData.manpower.total.total}</strong></td>
+                `;
+                    manpowerTbody.appendChild(totalManpowerTr);
+
+                    updateManpowerChart(manpowerLabels, totalData, officersData, jcosData, orData);
+                }
+
+            } catch (error) {
+                console.error('Error loading CO dashboard data:', error);
+
+                // Show error message in tables
+                document.querySelector('#coLeaveTable tbody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #e53e3e; font-size: 14px;">
+                        ⚠️ Error loading data
+                    </td>
+                </tr>
+            `;
+                document.querySelector('#coManpowerTable tbody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #e53e3e; font-size: 14px;">
+                        ⚠️ Error loading data
+                    </td>
+                </tr>
+            `;
+            }
+        }
+
+        function updateLeaveChart(labels, data, bgColors) {
+            const ctx = document.getElementById('coLeaveChart');
+            if (!ctx) return;
+
+            if (coLeaveChartInstance) {
+                coLeaveChartInstance.destroy();
+            }
+
+            coLeaveChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Leave Percentage',
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function (value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateManpowerChart(labels, totals, officers, jcos, ors) {
+            const ctx = document.getElementById('coManpowerChart');
+            if (!ctx) return;
+
+            if (coManpowerChartInstance) {
+                coManpowerChartInstance.destroy();
+            }
+
+            coManpowerChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Total', data: totals, backgroundColor: 'rgba(139, 92, 246, 0.8)' },
+                        { label: 'Officers', data: officers, backgroundColor: 'rgba(239, 68, 68, 0.8)' },
+                        { label: 'JCOs', data: jcos, backgroundColor: 'rgba(245, 158, 11, 0.8)' },
+                        { label: 'OR', data: ors, backgroundColor: 'rgba(16, 185, 129, 0.8)' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { stacked: false },
+                        y: { stacked: false, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        async function getUserInfo() {
+            try {
+                const response = await apiRequest('/api/user-info');
+                if (response.success) {
+                    userCompany = response.company || '';
+                    userRole = response.role || '';
+
+                    // Show CO dashboard if user is CO, 2IC, ADJUTANT, OC
+                    if (['CO', '2IC', 'ADJUTANT', 'OC'].includes(userRole)) {
+                        document.getElementById('coDashboard').classList.add('active');
+                    }
+                }
+            } catch (error) {
+                console.log("Could not get user info");
+            }
+        }
+
+        async function loadDataForDate(date) {
+            try {
+                showLoading(true);
+                showStatus('Loading parade state data...', 'info');
+
+                // Format date for display
+                const dateObj = new Date(date);
+                const formattedDate = dateObj.toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                // For CO, 2IC, ADJUTANT, OC: Load aggregated dashboard state
+                if (['CO', '2IC', 'ADJUTANT', 'OC'].includes(userRole)) {
+                    const response = await fetch(`${API_BASE_URL}/api/co-dashboard/all-data/${date}`);
+                    const result = await response.json();
+
+                    if (response.ok && result.success && result.data) {
+                        const coData = result.data;
+
+                        // Update stats bar with aggregated totals
+                        document.getElementById('totalAuth').textContent = coData.parade_summary.total_posted_str;
+                        document.getElementById('presentUnit').textContent = coData.parade_summary.present_unit;
+                        document.getElementById('totalOut').textContent = coData.parade_summary.total_out;
+
+                        // Set current date
+                        currentDate = date;
+
+                        // Update CO dashboard tables
+                        await loadCODashboardData(date);
+
+                        showStatus(`CO Dashboard loaded for ${formattedDate}`, 'success');
+                    } else {
+                        // No data found for this date
+                        document.querySelector('#coLeaveTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                                📭 No Data Available
+                            </td>
+                        </tr>
+                    `;
+                        document.querySelector('#coManpowerTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #999; font-size: 14px;">
+                                📭 No Data Available
+                            </td>
+                        </tr>
+                    `;
+
+                        // Clear stats
+                        document.getElementById('totalAuth').textContent = '0';
+                        document.getElementById('presentUnit').textContent = '0';
+                        document.getElementById('totalOut').textContent = '0';
+
+                        showStatus(`No data available for ${formattedDate}`, 'warning');
+                    }
+                } else {
+                    // For non-CO users: Load individual company data
+                    const response = await apiRequest(`/api/parade-state/get/${date}`);
+
+                    if (response.success && response.data) {
+                        const loadedData = response.data.data;
+                        currentDate = loadedData.date || date;
+
+                        // Check if using template
+                        isUsingTemplate = loadedData.is_previous_day_template || false;
+                        templateOriginalDate = loadedData.original_date || '';
+
+                        userCompany = loadedData.company || '';
+
+                        // Parse loaded data
+                        initData();
+                        for (const [category, values] of Object.entries(loadedData)) {
+                            if (data.hasOwnProperty(category)) {
+                                data[category] = values.slice(0, columnCount);
+                            }
+                        }
+
+                        // Update stats
+                        updateStats();
+                        isDataModified = false;
+
+                        if (isUsingTemplate) {
+                            showStatus(`Using ${templateOriginalDate}'s data as template for ${currentDate}. Use "Expand View" to edit and save.`, 'warning');
+                        } else {
+                            showStatus(`Loaded parade state for ${currentDate}`, 'success');
+                        }
+                    } else if (response.error === 'Cannot access data for future dates') {
+                        showStatus('Cannot access data for future dates', 'error');
+                        initData();
+
+                        const searchInput = document.getElementById('searchDate');
+                        searchInput.classList.add('future-date');
+                        isDataModified = false;
+
+                        // Clear tables for future dates
+                        document.querySelector('#coLeaveTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #999;">
+                                Select a date to view data
+                            </td>
+                        </tr>
+                    `;
+                        document.querySelector('#coManpowerTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #999;">
+                                Select a date to view data
+                            </td>
+                        </tr>
+                    `;
+                    } else {
+                        // No existing data found for this date
+                        initData();
+                        isDataModified = false;
+
+                        // Reset tables to default "Select a date" message
+                        document.querySelector('#coLeaveTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #999;">
+                                Select a date to view data
+                            </td>
+                        </tr>
+                    `;
+                        document.querySelector('#coManpowerTable tbody').innerHTML = `
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #999;">
+                                Select a date to view data
+                            </td>
+                        </tr>
+                    `;
+
+                        // Clear stats
+                        document.getElementById('totalAuth').textContent = '0';
+                        document.getElementById('presentUnit').textContent = '0';
+                        document.getElementById('totalOut').textContent = '0';
+
+                        showStatus(`No existing data for ${formattedDate}. Use "Expand View" to enter new data.`, 'warning');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showStatus(`Failed to load data: ${error.message}`, 'error');
+
+                // Show error in tables
+                document.querySelector('#coLeaveTable tbody').innerHTML = `
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #e53e3e; font-size: 14px;">
+                        ⚠️ Error loading data
+                    </td>
+                </tr>
+            `;
+                document.querySelector('#coManpowerTable tbody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #e53e3e; font-size: 14px;">
+                        ⚠️ Error loading data
+                    </td>
+                </tr>
+            `;
+
+                // Clear stats on error
+                document.getElementById('totalAuth').textContent = '0';
+                document.getElementById('presentUnit').textContent = '0';
+                document.getElementById('totalOut').textContent = '0';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalAuth').textContent = calculateGrandTotal(COL_INDICES.POSTED_STR);
+            document.getElementById('presentUnit').textContent = calculateGrandTotal(COL_INDICES.PRESENT_UNIT);
+            document.getElementById('totalOut').textContent = calculateGrandTotal(COL_INDICES.T_OUT);
+        }
+
+        async function searchByDate() {
+            const searchDate = document.getElementById('searchDate').value;
+            if (!searchDate) {
+                return; // Do nothing if no date is selected
+            }
+
+            // Reset template notice
+            isUsingTemplate = false;
+            templateOriginalDate = '';
+
+            // Reset input styling
+            const searchInput = document.getElementById('searchDate');
+            searchInput.classList.remove('future-date');
+
+            loadDataForDate(searchDate);
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const searchInput = document.getElementById('searchDate');
+
+            // Set default to today
+            searchInput.value = today;
+            searchInput.max = today;
+            currentDate = today;
+
+            await getUserInfo();
+            initData();
+            updateStats();
+
+            // Load today's data automatically
+            await loadDataForDate(today);
+
+            // Add event listener for date input
+            searchInput.addEventListener('change', searchByDate);
+
+            // Also add input event for immediate response
+            searchInput.addEventListener('input', function () {
+                if (this.value) {
+                    searchByDate();
+                }
+            });
+
+            // Warn user before leaving if data is modified
+            window.addEventListener('beforeunload', (e) => {
+                if (isDataModified && userRole !== 'CO') {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                }
+            });
+        });
+    </script>

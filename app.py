@@ -4317,6 +4317,80 @@ def get_assigned_alarm():
         cursor.close()
         conn.close()
 
+@app.route('/api/dashboard/count-dues-in')
+def get_count_dues_in():
+
+    user = require_login()
+    if not user:
+        return jsonify({
+            "status": "error",
+            "message": "Unauthorized"
+        }), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) AS count_dues_in
+            FROM dues_in
+        """)
+
+        result = cursor.fetchone()
+
+        return jsonify({
+            "status": "success",
+            "count_dues_in": result['count_dues_in'] if result else 0
+        }), 200
+
+    except Exception as e:
+        print("Error fetching dues_in count:", str(e))
+
+        return jsonify({
+            "status": "error",
+            "message": "Internal Server Error"
+        }), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+@app.route('/api/dashboard/count-dues-out')
+def get_count_dues_out():
+
+    user = require_login()
+    if not user:
+        return jsonify({
+            "status": "error",
+            "message": "Unauthorized"
+        }), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) AS count_dues_out
+            FROM dues_out
+        """)
+
+        result = cursor.fetchone()
+
+        return jsonify({
+            "status": "success",
+            "count_dues_out": result['count_dues_out'] if result else 0
+        }), 200
+
+    except Exception as e:
+        print("Error fetching dues_in count:", str(e))
+
+        return jsonify({
+            "status": "error",
+            "message": "Internal Server Error"
+        }), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 

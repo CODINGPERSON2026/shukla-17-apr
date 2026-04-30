@@ -2032,7 +2032,7 @@ ORDER BY lsi.to_date ASC;
                 "army_number": row["army_number"],
                 "name": row["name"],
                 "rank": row["rank"],
-                "leave_end_date": row["leave_end_date"].strftime("%Y-%m-%d")
+                "leave_end_date": row["leave_end_date"].strftime("%d %b %Y")
             })
 
         return jsonify(result)
@@ -2140,3 +2140,67 @@ def get_releiver_details():
     except Exception as e:
         print("Error fetching reliever details:", e)
         return jsonify([]), 500
+# ====================== NEW ROUTE: GET LEAVE BALANCE ======================
+@leave_bp.route('/get_leave_balance')
+def get_leave_balance():
+    army_number = request.args.get('army_number')
+    leave_type = request.args.get('leave_type')   # AL, CL, AAL, PL
+    year = request.args.get('year')
+
+    if not army_number or not leave_type:
+        return jsonify({"error": "army_number and leave_type are required"}), 400
+
+    # Use current year if not provided
+    if not year:
+        year = str(datetime.now().year)
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # Fetch record from leave_details table
+            cursor.execute("""
+                SELECT AL, CL, AAL, PL 
+                FROM leave_details 
+                WHERE army_number = %s AND year = %s
+            """, (army_number, year))
+            
+            record = cursor.fetchone()
+
+            # Define entitlements
+            entitlements = {
+                "AL": 60,
+                "CL": 30,
+                "AAL": 20,
+                "PL": 15          # Change this if your PL entitlement is different
+            }
+
+            entitled = entitlements.get(leave_type, 0)
+            taken = 0
+
+            if record:
+                if leave_type == "AL":
+                    taken = record.get('AL') or 0
+                elif leave_type == "CL":
+                    taken = record.get('CL') or 0
+                elif leave_type == "AAL":
+                    taken = record.get('AAL') or 0
+                elif leave_type == "PL":
+                    taken = record.get('PL') or 0
+
+            balance = max(0, entitled - taken)
+
+            return jsonify({
+                "success": True,
+                "leave_type": leave_type,
+                "entitled": entitled,
+                "taken": taken,
+                "balance": balance,
+                "year": year
+            })
+
+    except Exception as e:
+        print(f"Error in get_leave_balance: {e}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    
+    finally:
+        conn.close()

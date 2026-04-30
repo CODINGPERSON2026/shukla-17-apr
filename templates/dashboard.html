@@ -1069,6 +1069,9 @@
           <i class="fas fa-sign-in-alt"></i>
         </div>
         <small class="text-muted">DUES IN</small>
+        <H3 id="count-dues-in">
+          <div class="shimmer-number mx-auto"></div>
+                  </H3>
       </div>
 
       <div
@@ -1081,6 +1084,9 @@
           <i class="fas fa-edit"></i>
         </div>
         <small class="text-muted">DUES OUT</small>
+        <h3 id="count-dues-out">
+          <div class="shimmer-number mx-auto"></div>
+        </h3>
       </div>
       {% endif %}
     </div>
@@ -1374,6 +1380,7 @@
 
         try {
           const res = await fetch(endpoint);
+          console.log(res)
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
           const data = await res.json();
@@ -1505,11 +1512,22 @@
             endpoint: "/api/dashboard/boards",
             key: "count",
           },
+          {
+            id:'count-dues-in',
+            endpoint:'/api/dashboard/count-dues-in',
+            key:'count_dues_in'
+          },
+          {
+            id:'count-dues-out',
+            endpoint:'/api/dashboard/count-dues-out',
+            key:'count_dues_out'
+          }
         ];
         console.log(simpleCards, "thse are simple cards");
         // Add simple card fetches
         simpleCards.forEach((card) => {
           if (document.getElementById(card.id)) {
+            console.log(card)
             fetchPromises.push(fetchCardData(card.id, card.endpoint, card.key));
           }
         });

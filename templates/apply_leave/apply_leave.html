@@ -451,10 +451,11 @@
 
 <div class="content-wrapper">
   {% set header = "Leave Management" %}
-  {% set subscript = "Search employee → Select employee → Apply Combined Leave" %}
+  {% set subscript = "Search employee → Select employee → Apply Leave" %}
   {% include 'navbar/navbar.html' %}
 
   <!-- SEARCH -->
+   {%if role == 'ONCO'%}
   <div class="card p-4 mb-4">
     <h5>🔍 Search Employee</h5>
     <div class="input-group">
@@ -462,7 +463,7 @@
       <button class="btn btn-primary" id="searchBtn">Search</button>
     </div>
   </div>
- 
+ {%endif%}
   <!-- RESULTS -->
   <div id="resultsSection" class="card p-4 mb-4" style="display:none;">
     <h5>👤 Select Employee</h5>
@@ -483,7 +484,7 @@
     <div id="leaveHistoryBtnWrapper" style="display:none; margin-top:1.5rem;">
       <div style="display: flex; gap: 12px;">
         <button id="checkLeaveHistoryBtn" onclick="openLeaveHistory()">📋 Check Leave History</button>
-        <button id="openLeaveModalBtn" onclick="openLeaveApplicationModal()">✨ Apply Combined Leave</button>
+        <button id="openLeaveModalBtn" onclick="openLeaveApplicationModal()">✨ Apply Leave</button>
       </div>
     </div>
   </div>
@@ -684,6 +685,7 @@
   let selectedPersonArmyNumber = null;
   let personnel_name = null;
   let selectedRelieverArmyNumber = null;
+  let selectedPersonRank = null;
 
   const showLoading = () => loadingOverlay.classList.remove("d-none");
   const hideLoading = () => loadingOverlay.classList.add("d-none");
@@ -695,6 +697,83 @@
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), delay);
     };
+  }
+
+  /* ====================== DISABLE PAST DATES ====================== */
+  function disablePastDates() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('prefixDate').min = today;
+    document.getElementById('suffixDate').min = today;
+    document.querySelectorAll('.from-date, .to-date').forEach(input => {
+      input.min = today;
+    });
+  }
+
+  /* ====================== UPDATE LEAVE BALANCE ====================== */
+  async function updateLeaveBalance(block, leaveType) {
+    const index = block.querySelector('.leave-type-select').dataset.index;
+    const balanceDiv = document.getElementById(`balanceDisplay${index}`);
+    const fromInput = block.querySelector('.from-date');
+    const toInput = block.querySelector('.to-date');
+
+    if (!leaveType || !selectedPersonArmyNumber) {
+      balanceDiv.innerHTML = '';
+      block.style.opacity = "1";
+      block.style.pointerEvents = "auto";
+      block.style.backgroundColor = "";
+      block.style.borderColor = "";
+      fromInput.disabled = false;
+      toInput.disabled = false;
+      return;
+    }
+
+    const currentYear = new Date().getFullYear();
+    balanceDiv.innerHTML = `<span style="color:#64748b">Loading balance...</span>`;
+
+    try {
+      const res = await fetch(`/apply_leave/get_leave_balance?army_number=${encodeURIComponent(selectedPersonArmyNumber)}&leave_type=${leaveType}&year=${currentYear}`);
+      
+      if (!res.ok) throw new Error("Failed");
+
+      const data = await res.json();
+
+      if (data.success) {
+        let color = data.balance >= 5 ? '#16a34a' : (data.balance > 0 ? '#ca8a04' : '#dc2626');
+        
+        balanceDiv.innerHTML = `
+          <span style="color:${color}">
+            Balance: <strong>${data.balance}</strong> days left 
+            <small style="color:#64748b">(${data.entitled} entitled, ${data.taken} taken)</small>
+          </span>
+        `;
+
+        const isZeroBalance = data.balance <= 0;
+
+        if (isZeroBalance) {
+          block.style.opacity = "0.65";
+          block.style.backgroundColor = "#f8fafc";
+          block.style.borderColor = "#e2e8f0";
+          fromInput.disabled = true;
+          toInput.disabled = true;
+          fromInput.value = '';
+          toInput.value = '';
+          balanceDiv.innerHTML += `<br><small style="color:#dc2626;font-weight:600;">● No balance left for this leave type.</small>`;
+        } else {
+          block.style.opacity = "1";
+          block.style.backgroundColor = "";
+          block.style.borderColor = "";
+          fromInput.disabled = false;
+          toInput.disabled = false;
+        }
+      } else {
+        balanceDiv.innerHTML = `<span style="color:#dc2626">Error loading balance</span>`;
+      }
+    } catch (err) {
+      console.error("Balance fetch error:", err);
+      balanceDiv.innerHTML = `<span style="color:#dc2626">Could not load balance</span>`;
+    }
+
+    calculateTotalDays();
   }
 
   /* ====================== RELIEVER SEARCH ====================== */
@@ -753,7 +832,6 @@
       return;
     }
    
-    // Reset form
     document.getElementById('leaveBlocksContainer').innerHTML = '';
     document.getElementById('prefixDate').value = '';
     document.getElementById('suffixDate').value = '';
@@ -783,9 +861,9 @@
     document.getElementById('sameAsPermanent').checked = true;
     toggleAddressFields();
 
-    // Add first leave block
     addLeaveBlock();
-   
+    disablePastDates();
+
     document.getElementById('leaveApplicationModal').classList.add('show');
   }
  
@@ -809,6 +887,12 @@
 
     const firstFromVal = blocks[0].querySelector('.from-date').value;
     if (!firstFromVal) return true;
+
+    if (prefixVal === firstFromVal) {
+      prefixHint.className = 'date-hint error';
+      prefixHint.textContent = '❌ Prefix date cannot be same as From date';
+      return false;
+    }
 
     const prefixDate = new Date(prefixVal);
     const firstFromDate = new Date(firstFromVal);
@@ -840,6 +924,12 @@
     const lastToVal = blocks[blocks.length-1].querySelector('.to-date').value;
     if (!lastToVal) return true;
 
+    if (suffixVal === lastToVal) {
+      suffixHint.className = 'date-hint error';
+      suffixHint.textContent = '❌ Suffix date cannot be same as To date';
+      return false;
+    }
+
     const suffixDate = new Date(suffixVal);
     const lastToDate = new Date(lastToVal);
 
@@ -854,7 +944,33 @@
     }
   }
 
-  /* ====================== TRANSPORT - MODE CHANGE ====================== */
+  /* ====================== FIXED: LEAVE BLOCK DATE VALIDATION ====================== */
+  function validateLeaveBlockDates(block) {
+    const fromInput = block.querySelector('.from-date');
+    const toInput = block.querySelector('.to-date');
+
+    if (!fromInput.value || !toInput.value) {
+      fromInput.style.borderColor = '';
+      toInput.style.borderColor = '';
+      return true;
+    }
+
+    const fromDate = new Date(fromInput.value);
+    const toDate = new Date(toInput.value);
+
+    // From date cannot be after To date
+    if (fromDate > toDate) {
+      fromInput.style.borderColor = '#dc2626';
+      toInput.style.borderColor = '#dc2626';
+      return false;
+    } else {
+      fromInput.style.borderColor = '';
+      toInput.style.borderColor = '';
+      return true;
+    }
+  }
+
+  /* ====================== TRANSPORT & ADDRESS ====================== */
   function handleOnwardModeChange() {
     const mode = document.getElementById('onwardMode').value;
     document.getElementById('onwardAirTypeDiv').style.display = mode === 'Air' ? 'block' : 'none';
@@ -867,7 +983,6 @@
     document.getElementById('returnTrainTypeDiv').style.display = mode === 'Train' ? 'block' : 'none';
   }
 
-  /* ====================== TRANSPORT - MULTIPLE LEGS ====================== */
   function addOnwardLeg() {
     const container = document.getElementById('onwardLegsContainer');
     const legIndex = container.children.length + 1;
@@ -952,13 +1067,12 @@
     return legs;
   }
 
-  /* ====================== ADDRESS WHILE ON LEAVE ====================== */
   function toggleAddressFields() {
     const isSame = document.getElementById('sameAsPermanent').checked;
     document.getElementById('addressFieldsContainer').style.display = isSame ? 'none' : 'flex';
   }
 
-  /* ====================== SEARCH ====================== */
+  /* ====================== SEARCH PERSONNEL ====================== */
   searchBtn.onclick = async () => {
     if (!searchArmyNumber.value.trim()) return alert("Enter Army Number");
     showLoading();
@@ -967,6 +1081,7 @@
     resultsSection.style.display = "block";
     resultsTable.innerHTML = "";
     leaveHistoryBtnWrapper.style.display = "none";
+
     if (data.exists) {
       const leave = data.existing_leave;
       let html = `<tr><td colspan="7" style="text-align:center; padding:1.5rem;">`;
@@ -985,6 +1100,7 @@
       hideLoading();
       return;
     }
+
     data.forEach(p => {
       const r = resultsTable.insertRow();
       const radio = document.createElement("input");
@@ -993,6 +1109,7 @@
       radio.onchange = () => {
         selectedPersonArmyNumber = p.army_number;
         personnel_name = p.name;
+        selectedPersonRank = p.rank;
         leaveHistoryBtnWrapper.style.display = "block";
       };
       r.insertCell().appendChild(radio);
@@ -1008,7 +1125,6 @@
   };
 
   function downloadCertificate(armyNumber) {
-    console.log("Downloading for:", armyNumber);
     window.open(`/apply_leave/download_certificate/${armyNumber}?t=${Date.now()}`, '_blank');
   }
 
@@ -1036,6 +1152,7 @@
             <option value="AAL">AAL - Additional Annual Leave</option>
             <option value="PL">PL - Paternity Leave</option>
           </select>
+          <div class="balance-display mt-2 small" id="balanceDisplay${index}" style="font-weight:600; min-height:1.2em;"></div>
         </div>
         <div class="col-md-4">
           <label class="form-label">From Date</label>
@@ -1054,16 +1171,42 @@
       setTimeout(() => autoFillNextStartDate(index), 100);
     }
 
-    block.querySelectorAll('select, input').forEach(el => {
-      el.addEventListener('change', calculateTotalDays);
-    });
-   
+    const today = new Date().toISOString().split('T')[0];
+    block.querySelectorAll('.from-date, .to-date').forEach(input => input.min = today);
+
     const typeSelect = block.querySelector('.leave-type-select');
+    const fromInput = block.querySelector('.from-date');
+    const toInput = block.querySelector('.to-date');
+
+    // AGNIVEER Logic
+    if (selectedPersonRank && (selectedPersonRank.toUpperCase() === "AGNIVEER" || selectedPersonRank.toLowerCase() === "agniveer")) {
+      typeSelect.innerHTML = `
+        <option value="">Select Type</option>
+        <option value="CL">CL - Casual Leave</option>
+      `;
+    }
+
     typeSelect.addEventListener('change', function() {
       const displaySpan = document.getElementById(`leaveTypeDisplay${index}`);
       if (displaySpan) {
         displaySpan.textContent = this.value ? `— ${this.value}` : '';
       }
+      updateLeaveBalance(block, this.value);
+    });
+
+    // Improved listeners with proper validation
+    fromInput.addEventListener('change', () => {
+      validateLeaveBlockDates(block);
+      calculateTotalDays();
+    });
+
+    toInput.addEventListener('change', () => {
+      validateLeaveBlockDates(block);
+      calculateTotalDays();
+    });
+
+    block.querySelectorAll('select, input').forEach(el => {
+      el.addEventListener('change', calculateTotalDays);
     });
   }
 
@@ -1088,7 +1231,7 @@
    
     calculateTotalDays();
   }
- 
+
   function autoFillNextStartDate(currentIndex) {
     const blocks = document.querySelectorAll('.leave-block');
     if (currentIndex === 0 || currentIndex >= blocks.length) return;
@@ -1102,9 +1245,9 @@
     calculateTotalDays();
   }
 
-  /* ====================== CALCULATION ====================== */
+  /* ====================== FIXED: CALCULATE TOTAL DAYS ====================== */
   function daysBetween(d1, d2) {
-    return Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+    return Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
   }
 
   function calculateTotalDays() {
@@ -1112,31 +1255,49 @@
     const suffixVal = document.getElementById('suffixDate').value;
     let totalDays = 0;
     let summaryHTML = '';
-   
+    let isValid = true;
+
     const blocks = document.querySelectorAll('.leave-block');
-   
+
     blocks.forEach((block, i) => {
       const leaveType = block.querySelector('.leave-type-select').value;
       const fromVal = block.querySelector('.from-date').value;
       const toVal = block.querySelector('.to-date').value;
      
       if (!leaveType || !fromVal || !toVal) return;
-     
+
       const from = new Date(fromVal);
       const to = new Date(toVal);
      
-      if (to < from) return;
+      // Validation: From date cannot be after To date
+      if (from > to) {
+        block.querySelector('.to-date').style.borderColor = '#dc2626';
+        isValid = false;
+        return;
+      } else {
+        block.querySelector('.to-date').style.borderColor = '';
+      }
      
+      // IMPORTANT FIX: Same date now counts as 1 day
       const days = daysBetween(from, to) + 1;
       totalDays += days;
      
       summaryHTML += `
         <div class="summary-item">
           <strong>Leave ${i+1}:</strong> ${leaveType} — ${fromVal} to ${toVal}
-          <span class="summary-badge">${days} days</span>
+          <span class="summary-badge">${days} day${days > 1 ? 's' : ''}</span>
         </div>
       `;
     });
+
+    if (!isValid) {
+      document.getElementById('days').value = '';
+      document.getElementById('totalDaysBadge').textContent = 'Invalid Dates';
+      document.getElementById('totalDaysBadge').style.color = '#dc2626';
+      return;
+    } else {
+      document.getElementById('totalDaysBadge').style.color = '';
+    }
 
     let prefixDays = 0;
     if (prefixVal && blocks.length > 0) {
@@ -1177,7 +1338,7 @@
     }
    
     document.getElementById('days').value = totalDays;
-    document.getElementById('totalDaysBadge').textContent = `${totalDays} Days`;
+    document.getElementById('totalDaysBadge').textContent = `${totalDays} Day${totalDays !== 1 ? 's' : ''}`;
    
     if (summaryHTML) {
       summaryHTML += `<hr style="border-top: 2px solid #bfdbfe; margin: 1rem 0;"><div style="font-size: 1.1rem; font-weight: 700; color: #1e3a5f;">🎯 Total Period Away: ${totalDays} days</div>`;
@@ -1190,15 +1351,37 @@
     validatePrefixDate();
     validateSuffixDate();
   }
- 
+
   [document.getElementById('prefixDate'), document.getElementById('suffixDate')].forEach(el => {
     el.addEventListener('change', calculateTotalDays);
   });
 
-  /* ====================== SUBMIT ====================== */
+  /* ====================== SUBMIT LEAVE ====================== */
   applyLeaveBtn.onclick = async () => {
     if (!validatePrefixDate() || !validateSuffixDate()) {
       alert("Please correct the prefix and suffix date errors before submitting.");
+      return;
+    }
+
+    // Extra safety check for From > To
+    let hasSameDateError = false;
+    let hasInvalidRange = false;
+
+    document.querySelectorAll('.leave-block').forEach(block => {
+      const from = block.querySelector('.from-date').value;
+      const to = block.querySelector('.to-date').value;
+      if (from && to) {
+        if (from === to) {
+          // Allowed now
+        }
+        if (new Date(from) > new Date(to)) {
+          hasInvalidRange = true;
+        }
+      }
+    });
+
+    if (hasInvalidRange) {
+      alert("From Date cannot be after To Date in any leave block.");
       return;
     }
 
@@ -1208,7 +1391,6 @@
       const type = block.querySelector('.leave-type-select').value;
       const from = block.querySelector('.from-date').value;
       const to = block.querySelector('.to-date').value;
-     
       if (type && from && to) {
         leaveData.push({ leave_type: type, from_date: from, to_date: to });
       }
@@ -1229,7 +1411,6 @@
       return;
     }
 
-    // Transport Data with multiple legs
     const transportData = {
       onward: {
         mode: document.getElementById('onwardMode').value,
@@ -1245,7 +1426,6 @@
       }
     };
 
-    // Address While on Leave
     const addressData = {
       same_as_permanent: document.getElementById('sameAsPermanent').checked,
       address_line1: document.getElementById('leaveAddressLine1').value.trim(),
@@ -1279,7 +1459,7 @@
           combined_leaves: leaveData,
           transport: transportData,
           address_while_on_leave: addressData,
-          reliever_army_number: selectedRelieverArmyNumber   // New field
+          reliever_army_number: selectedRelieverArmyNumber
         })
       });
       const response = await res.json();
@@ -1378,7 +1558,6 @@
             </thead>
             <tbody>
       `;
-     
       leaveTypes.forEach(lt => {
         const balance = lt.total - lt.taken;
         html += `
@@ -1396,7 +1575,6 @@
         `;
       });
       html += `</tbody></table>`;
-     
       if (remarks) {
         html += `<div style="padding:.6rem 1.2rem; font-size:.83rem; color:#64748b; border-bottom:1px solid #f1f5f9;">
                    📝 <em>${remarks}</em>
@@ -1404,24 +1582,14 @@
       }
       html += `</div>`;
     });
-   
     leaveHistoryBody.innerHTML = html;
   }
 
   function processLeaveFromHistory(leaveTypeCode, balance) {
     closeLeaveHistory();
     openLeaveApplicationModal();
-   
-    setTimeout(() => {
-      const firstSelect = document.querySelector('.leave-type-select');
-      if (firstSelect) {
-        firstSelect.value = leaveTypeCode;
-        firstSelect.dispatchEvent(new Event('change'));
-      }
-    }, 300);
   }
 
-  // Address toggle listener
   document.addEventListener('DOMContentLoaded', () => {
     const sameCheckbox = document.getElementById('sameAsPermanent');
     if (sameCheckbox) {

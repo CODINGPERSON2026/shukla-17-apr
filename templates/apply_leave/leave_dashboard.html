@@ -1,213 +1,321 @@
-<!-- ================= LEAVE DASHBOARD CLEAN ================= -->
+<!-- ================= LEAVE DASHBOARD ================= -->
+
 <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
 <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-free-7.1.0-web/css/all.min.css') }}" />
-<script src="/static/Chart.umd.min.js"></script>
 
 <style>
   body {
     background: #f8fafc;
   }
 
-  /* ===== HEADER ===== */
-  .dashboard-header {
+  .leave-dashboard-content {
+    padding: 20px;
+  }
+
+  /* ================= HEADER ================= */
+  .leave-header {
     background: #ffffff;
-    padding: 18px 25px;
-    border-radius: 14px;
-    margin-bottom: 20px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 24px;
     border-left: 6px solid #2563eb;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
   }
 
-  .dashboard-header h4 {
-    font-weight: 700;
+  .leave-header h4 {
     margin: 0;
-    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
   }
 
-  /* ===== CARDS ===== */
-  .dashboard-card {
-    border-radius: 14px;
-    padding: 1.2rem;
-    background: #ffffff;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    transition: 0.25s;
-  }
-
-  .dashboard-card:hover {
-    transform: translateY(-3px);
-  }
-
-  .dashboard-title {
+  .total-badge {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-size: 0.9rem;
     font-weight: 600;
-    color: #334155;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
   }
 
-  /* ===== TABLE ===== */
-  .table-expiring th {
-    font-size: .75rem;
-    text-transform: uppercase;
+  /* ================= STAT CARDS ================= */
+  .stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 1.25rem 1rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    height: 100%;
+    text-align: center;
+    border-top: 5px solid;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  .stat-card.blue    { border-top-color: #2563eb; }
+  .stat-card.green   { border-top-color: #10b981; }
+  .stat-card.purple  { border-top-color: #8b5cf6; }
+  .stat-card.orange  { border-top-color: #f59e0b; }
+  .stat-card.red     { border-top-color: #ef4444; }
+
+  .stat-card i {
+    font-size: 1.35rem;
+    margin-bottom: 10px;
     color: #64748b;
   }
 
-  .table-expiring td {
+  .stat-number {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  /* Mini Progress */
+  .mini-progress {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .mini-progress-bar {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.6s ease;
+  }
+
+  .blue .mini-progress-bar    { background: #2563eb; }
+  .green .mini-progress-bar   { background: #10b981; }
+  .purple .mini-progress-bar  { background: #8b5cf6; }
+  .orange .mini-progress-bar  { background: #f59e0b; }
+  .red .mini-progress-bar     { background: #ef4444; }
+
+  /* ================= TABLE CARD ================= */
+  .dashboard-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .dashboard-title {
+    font-size: 1.1rem;
+    font-weight: 700;
     color: #1e293b;
   }
 
-  .badge-days {
-    background: #fef3c7;
-    color: #92400e;
-    padding: .3rem .6rem;
-    border-radius: 6px;
+  /* ================= SEARCH ================= */
+  .table-search-box {
+    position: relative;
+    width: 300px;
+  }
+
+  .table-search-box i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.95rem;
+  }
+
+  .table-search-box input {
+    padding-left: 42px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 0.9rem;
+  }
+
+  .table-search-box input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  /* ================= TABLE ================= */
+  .table-expiring {
+    margin-bottom: 0;
+  }
+
+  .table-expiring th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #64748b;
+    font-weight: 700;
+    padding: 14px 12px;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .table-expiring td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    font-size: 0.92rem;
+    color: #334155;
+  }
+
+  /* Row Hover Effect */
+  .table-expiring tbody tr:hover {
+    background-color: #f1f5f9;
+  }
+
+  /* Army No - Highlight */
+  .table-expiring td strong {
+    color: #1e40af;
     font-weight: 600;
   }
 
-  /* ===== TOTAL BADGE ===== */
-  .total-badge {
-    background: #2563eb;
-    color: #fff;
-    font-weight: 700;
+  /* Badge - Days Left */
+  .badge-days {
+    background: linear-gradient(135deg, #fef3c7, #fde68c);
+    color: #92400e;
     padding: 6px 14px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .leave-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 12px;
+    }
+    .table-search-box {
+      width: 100%;
+    }
+    .stat-number {
+      font-size: 1.4rem;
+    }
   }
 </style>
 
-<!-- ================= HEADER ================= -->
-<div class="dashboard-header d-flex justify-content-between align-items-center">
-  <h4>
-    <i class="fa-solid fa-shield-halved me-2"></i>
-    Leave Dashboard
-  </h4>
+<!-- ================= MAIN CONTENT ================= -->
+<div class="leave-dashboard-content">
 
-  <span id="totalLeaveCount" class="total-badge">
-    0 On Leave
-  </span>
-</div>
-
-<div class="row mb-4">
-
-  <!-- ================= LEFT: CHART ================= -->
-  <div class="col-md-6">
-    <div class="dashboard-card">
-      <h6 class="dashboard-title mb-3">
-        <i class="fa-solid fa-chart-column me-2"></i>
-        Leave Distribution
-      </h6>
-
-      <canvas id="leaveChart" height="200"></canvas>
-    </div>
+  <!-- HEADER -->
+  <div class="leave-header d-flex justify-content-between align-items-center">
+    <h4>
+      <i class="fa-solid fa-shield-halved me-2 text-primary"></i>
+      Leave Statistics Dashboard
+    </h4>
+    <span id="totalLeaveCount" class="total-badge">
+      0 On Leave
+    </span>
   </div>
 
-  <!-- ================= RIGHT: EXPIRING ================= -->
-  <div class="col-md-6">
-    <div class="dashboard-card">
-      <h6 class="dashboard-title mb-3">
-        <i class="fa-solid fa-clock me-2"></i>
-        Leaves Expiring
-      </h6>
+  <!-- LEAVE TYPE CARDS -->
+  <div class="row g-3 mb-4" id="leaveTypeCards">
+    <!-- Cards will be injected here by JS -->
+  </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover table-expiring">
-          <thead>
-            <tr>
-              <th>Army No</th>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>End Date</th>
-              <th>Days Left</th>
-            </tr>
-          </thead>
-          <tbody id="expiringTable">
-            <tr>
-              <td colspan="5" class="text-center text-muted">Loading...</td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- EXPIRING LEAVES TABLE -->
+  <div class="row">
+    <div class="col-12">
+      <div class="dashboard-card">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+          <h6 class="dashboard-title mb-0">
+            <i class="fa-solid fa-clock-rotate-left me-2 text-warning"></i>
+            Leaves Expiring Soon
+          </h6>
+
+          <div class="table-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" 
+                   id="expiringSearch" 
+                   class="form-control" 
+                   placeholder="Search by Army No, Rank or Name...">
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-expiring align-middle">
+            <thead>
+              <tr>
+                <th>Army No</th>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>End Date</th>
+                <th>Days Left</th>
+              </tr>
+            </thead>
+            <tbody id="expiringTable">
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">Loading data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
-/* ================= CHART ================= */
-let chartInstance = null;
-
-async function loadLeaveChart() {
+// ================= LOAD LEAVE STATS =================
+async function loadLeaveStats() {
   try {
     const res = await fetch('/apply_leave/leave-type-stats');
     const data = await res.json();
 
-    const labels = Object.keys(data);
-    const values = Object.values(data);
+    const total = Object.values(data).reduce((a, b) => a + b, 0);
+    document.getElementById('totalLeaveCount').innerText = `${total} On Leave`;
 
-    // TOTAL PEOPLE
-    const total = values.reduce((a, b) => a + b, 0);
-    document.getElementById("totalLeaveCount").innerText = `${total} On Leave`;
+    const container = document.getElementById('leaveTypeCards');
+    container.innerHTML = '';
 
-    const ctx = document.getElementById('leaveChart');
+    const colors = ['blue', 'green', 'purple', 'orange', 'red'];
+    let colorIndex = 0;
 
-    if (chartInstance) {
-      chartInstance.destroy();
-    }
+    Object.entries(data).forEach(([leaveType, count]) => {
+      const color = colors[colorIndex % colors.length];
+      const progressWidth = total > 0 ? Math.min((count / total) * 100, 100) : 0;
 
-    chartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: values,
-          backgroundColor: '#2563eb', // single color
-          borderRadius: 6,
-          barThickness: 40
-        }]
-      },
-      options: {
-        animation: {
-          duration: 800
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const value = context.raw;
-                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                return `${value} people (${percent}%)`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: "#334155"
-            },
-            grid: {
-              display: false
-            }
-          },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1,
-              color: "#334155"
-            },
-            grid: {
-              color: "rgba(0,0,0,0.05)"
-            }
-          }
-        }
-      }
+      const cardHTML = `
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+          <div class="stat-card ${color}">
+            <i class="fa-solid fa-users"></i>
+            <div class="stat-number">${count}</div>
+            <div class="stat-label">${leaveType} Leave</div>
+            <div class="mini-progress">
+              <div class="mini-progress-bar" style="width: ${progressWidth}%"></div>
+            </div>
+          </div>
+        </div>`;
+      
+      container.innerHTML += cardHTML;
+      colorIndex++;
     });
 
   } catch (err) {
-    console.error("Chart load failed", err);
+    console.error('Failed to load leave stats', err);
+    document.getElementById('leaveTypeCards').innerHTML = `
+      <div class="col-12 text-center text-muted py-4">
+        Failed to load leave statistics
+      </div>`;
   }
 }
 
-/* ================= EXPIRING LEAVES ================= */
+// ================= LOAD EXPIRING LEAVES =================
 async function loadExpiringLeaves() {
   try {
     const res = await fetch('/apply_leave/expiring-soon');
@@ -216,39 +324,63 @@ async function loadExpiringLeaves() {
     const tbody = document.getElementById('expiringTable');
     tbody.innerHTML = '';
 
-    if (!data.length) {
+    if (!data || data.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="5" class="text-center text-muted">No upcoming returns</td>
+          <td colspan="5" class="text-center text-muted py-5">
+            No leaves expiring soon
+          </td>
         </tr>`;
       return;
     }
 
     const today = new Date();
 
-    data.forEach(p => {
-      const end = new Date(p.leave_end_date);
-      const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    data.forEach(person => {
+      const endDate = new Date(person.leave_end_date);
+      const diffTime = endDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       tbody.innerHTML += `
         <tr>
-          <td>${p.army_number}</td>
-          <td>${p.rank}</td>
-          <td>${p.name}</td>
-          <td>${p.leave_end_date}</td>
-          <td><span class="badge-days">${diffDays} days</span></td>
-        </tr>
-      `;
+          <td><strong>${person.army_number}</strong></td>
+          <td>${person.rank}</td>
+          <td>${person.name}</td>
+          <td>${person.leave_end_date}</td>
+          <td>
+            <span class="badge-days">${diffDays} days</span>
+          </td>
+        </tr>`;
     });
 
   } catch (err) {
-    console.error("Expiring leave load failed", err);
+    console.error('Failed to load expiring leaves', err);
+    document.getElementById('expiringTable').innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-danger py-5">
+          Failed to load data. Please try again.
+        </td>
+      </tr>`;
   }
 }
 
-/* ================= INIT ================= */
+// ================= LIVE SEARCH =================
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'expiringSearch') {
+    const searchValue = e.target.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#expiringTable tr');
+
+    rows.forEach(row => {
+      if (row.cells.length < 5) return; // skip header or empty rows
+      const rowText = row.textContent.toLowerCase();
+      row.style.display = rowText.includes(searchValue) ? '' : 'none';
+    });
+  }
+});
+
+// ================= INITIALIZE =================
 document.addEventListener('DOMContentLoaded', () => {
-  loadLeaveChart();
+  loadLeaveStats();
   loadExpiringLeaves();
 });
 </script>

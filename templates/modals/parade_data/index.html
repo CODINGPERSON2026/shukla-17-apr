@@ -611,7 +611,7 @@
         <div class="modal-content">
 
             <!-- Header -->
-            <div class="modal-header bg-gradient"
+            <div class="modal-header"
                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <h5 class="modal-title text-white">
                     <i class="fas fa-clipboard-list"></i>
@@ -719,24 +719,6 @@
                     </div>
                 </div>
 
-                <!-- Status Bar -->
-                <div class="alert status-bar-custom d-none mb-2" id="statusBar">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-                            <span class="badge mode-badge bg-primary" id="modeDisplay">-</span>
-                            <span class="badge role-badge bg-secondary" id="roleDisplay">-</span>
-                            <span class="ms-2">
-                                <strong>Company:</strong> <span id="companyDisplay">-</span>
-                            </span>
-                            <span class="ms-2">
-                                <strong>Date:</strong> <span id="dateDisplay">-</span>
-                            </span>
-                        </div>
-                        <button class="btn btn-sm btn-light" id="btnRefresh">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Loading Spinner -->
                 <div class="text-center d-none loading-container" id="loadingSpinner">
@@ -885,6 +867,7 @@
             },
 
             // ─── UI setup ────────────────────────────────────────────────────────────
+                        // ─── UI setup ────────────────────────────────────────────────────────────
             setupUIForRole() {
                 const today            = this.getToday();
                 const dateInput        = document.getElementById('paradeDate');
@@ -895,7 +878,7 @@
 
                 if (dateInput) {
                     dateInput.value = today;
-                    dateInput.max   = today; // can never go to future
+                    // Future dates are now allowed - removed max restriction
                 }
 
                 if (this.userRole === 'O CENTRE NCO') {
@@ -933,39 +916,56 @@
              *   - QUICK UPDATE shown only when today is selected AND a specific company
              *     (not "All") is chosen
              */
-            syncEnterButtonState() {
+                        syncEnterButtonState() {
                 const btnEnter     = document.getElementById('btnEnterData');
                 const btnQuick     = document.getElementById('btnQuickUpdate');
                 const pastNotice   = document.getElementById('pastDateNotice');
                 const selectedDate = document.getElementById('paradeDate')?.value;
                 const today        = this.getToday();
+                
                 const isPast       = selectedDate && selectedDate < today;
                 const isToday      = selectedDate === today;
+                const isFuture     = selectedDate && selectedDate > today;
 
                 if (!btnEnter) return;
 
                 if (this.userRole === 'ONCO') {
-                    // ── ONCO logic (original, unchanged) ──
+                    // ── ONCO logic: Can edit Today + Future, View Only for Past ──
                     if (isPast) {
                         btnEnter.disabled = true;
-                        btnEnter.title    = 'ONCO can only enter/edit data for today';
-                        if (pastNotice) pastNotice.classList.remove('d-none');
-                        if (btnQuick)   btnQuick.classList.add('d-none');
-                    } else if (isToday) {
+                        btnEnter.title    = 'ONCO can only enter/edit data for today or future dates';
+                        if (pastNotice) {
+                            pastNotice.classList.remove('d-none');
+                            pastNotice.innerHTML = `<i class="fas fa-eye"></i> View Only – Past Date`;
+                        }
+                        if (btnQuick) btnQuick.classList.add('d-none');
+                    } 
+                    else if (isToday || isFuture) {
                         btnEnter.disabled = false;
-                        btnEnter.title    = '';
+                        btnEnter.title    = isFuture 
+                            ? 'You are entering data for a future date' 
+                            : '';
+                        
                         if (pastNotice) pastNotice.classList.add('d-none');
-                        if (btnQuick)   btnQuick.classList.remove('d-none');
+                        
+                        // Quick Update only for TODAY
+                        if (isToday) {
+                            if (btnQuick) btnQuick.classList.remove('d-none');
+                        } else {
+                            if (btnQuick) btnQuick.classList.add('d-none');
+                        }
                     }
 
                 } else if (this.userRole === 'O CENTRE NCO') {
-                    // ── O CENTRE NCO logic ──
-                    // ENTER is always enabled (no date restriction for this role)
+                    // ── O CENTRE NCO: Full access to any date ──
                     btnEnter.disabled = false;
-                    btnEnter.title    = '';
+                    btnEnter.title    = isFuture 
+                        ? 'You are entering data for a future date' 
+                        : '';
+                    
                     if (pastNotice) pastNotice.classList.add('d-none');
 
-                    // QUICK UPDATE: only when today is selected AND a specific company (not "All") is chosen
+                    // QUICK UPDATE: Only when today is selected AND specific company
                     const company = this.resolveCompany();
                     const hasSpecificCompany = company && company !== 'All';
 
@@ -1131,7 +1131,7 @@
 
                     // 5. Render table (edit mode, pre-filled with yesterday's values)
                     this.renderTable();
-                    this.updateStatusBar();
+                    
 
                     // 6. Highlight all editable input cells to show they came from yesterday
                     this.highlightCopiedCells();
@@ -1161,7 +1161,7 @@
                 this.currentCompany = this.resolveCompany();
 
                 this.renderTable();
-                this.updateStatusBar();
+                
 
                 const banner = document.getElementById('quickUpdateBanner');
                 if (banner) banner.classList.add('d-none');
@@ -1188,25 +1188,32 @@
             },
 
             // ─── Enter / View handlers ────────────────────────────────────────────────
-            async handleEnterData() {
+                        async handleEnterData() {
                 const date    = document.getElementById('paradeDate')?.value;
                 const today   = this.getToday();
                 const company = this.resolveCompany();
 
-                if (!date) { this.showAlert('Please select a date', 'warning'); return; }
+                if (!date) { 
+                    this.showAlert('Please select a date', 'warning'); 
+                    return; 
+                }
 
                 if (this.userRole === 'O CENTRE NCO') {
-                    if (!company)          { this.showAlert('Please select a company', 'warning'); return; }
-                    if (company === 'All') { this.showAlert('Please select a specific company for data entry', 'warning'); return; }
+                    if (!company)          { 
+                        this.showAlert('Please select a company', 'warning'); 
+                        return; 
+                    }
+                    if (company === 'All') { 
+                        this.showAlert('Please select a specific company for data entry', 'warning'); 
+                        return; 
+                    }
                 }
 
-                // ONCO guard – past dates are view-only
-                if (this.userRole === 'ONCO' && date !== today) {
-                    this.showAlert('ONCO can only enter/edit data for today', 'error');
+                // ONCO guard: Allow Today + Future dates. Block only Past dates.
+                if (this.userRole === 'ONCO' && date < today) {
+                    this.showAlert('ONCO can only enter/edit data for today or future dates', 'error');
                     return;
                 }
-
-                if (date > today) { this.showAlert('Cannot enter data for future dates', 'error'); return; }
 
                 this.currentMode    = 'edit';
                 this.currentDate    = date;
@@ -1265,18 +1272,18 @@
                             if (this.currentMode === 'edit') {
                                 this.paradeData = this.getEmptyData();
                                 this.renderTable();
-                                this.updateStatusBar();
+                                
                                 this.showAlert('No existing data. You can enter new data below.', 'info');
                             } else {
                                 this.paradeData = this.getEmptyData();
                                 this.renderTable();
-                                this.updateStatusBar();
+                                
                                 this.showAlert('No data found for this date and company.', 'info');
                             }
                         } else {
                             this.paradeData = result.data.data || {};
                             this.renderTable();
-                            this.updateStatusBar();
+                            
                         }
 
                         const exportBtn = document.getElementById('btnExportCSV');
@@ -1437,75 +1444,75 @@
             },
 
             // ─── save ─────────────────────────────────────────────────────────────────
-            async saveData() {
-                if (this.currentMode !== 'edit') {
-                    this.showAlert('Cannot save in view mode', 'warning'); return;
-                }
-                if (!this.paradeData || Object.keys(this.paradeData).length === 0) {
-                    this.showAlert('No data to save', 'warning'); return;
-                }
+            // ─── save ─────────────────────────────────────────────────────────────────
+async saveData() {
+    if (this.currentMode !== 'edit') {
+        this.showAlert('Cannot save in view mode', 'warning'); return;
+    }
+    if (!this.paradeData || Object.keys(this.paradeData).length === 0) {
+        this.showAlert('No data to save', 'warning'); return;
+    }
 
-                const today = this.getToday();
-                if (this.userRole === 'ONCO' && this.currentDate !== today) {
-                    this.showAlert('ONCO can only save data for today', 'error'); return;
-                }
+    const today = this.getToday();
 
-                const saveBtn     = document.getElementById('btnSave');
-                const originalTxt = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                saveBtn.disabled  = true;
+    // UPDATED: Allow future dates for both roles
+    if (this.userRole === 'ONCO' && this.currentDate < today) {
+        this.showAlert('ONCO can only save data for today or future dates (not past dates)', 'error'); 
+        return;
+    }
 
-                try {
-                    const companyToSave = this.userRole === 'ONCO' ? this.userCompany : this.currentCompany;
+    // Optional: Show a confirmation for future dates
+    if (this.currentDate > today) {
+        const confirmFuture = confirm(
+            `You are about to save parade data for a FUTURE date (${this.currentDate}).\n\nContinue?`
+        );
+        if (!confirmFuture) return;
+    }
 
-                    const response = await fetch('/api/parade-data/save', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            date:    this.currentDate,
-                            company: companyToSave,
-                            data:    this.paradeData
-                        })
-                    });
+    const saveBtn     = document.getElementById('btnSave');
+    const originalTxt = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.disabled  = true;
 
-                    const result = await response.json();
+    try {
+        const companyToSave = this.userRole === 'ONCO' ? this.userCompany : this.currentCompany;
 
-                    if (result.success) {
-                        this.showAlert('Data saved successfully!', 'success');
-                        // Hide quick-update banner after save
-                        const banner = document.getElementById('quickUpdateBanner');
-                        if (banner) banner.classList.add('d-none');
-                        if (this.userRole === 'ONCO') {
-                            this.currentMode = 'view';
-                            this.renderTable();
-                            this.updateStatusBar();
-                        }
-                    } else {
-                        this.showAlert(result.error || 'Failed to save data', 'error');
-                    }
-                } catch (error) {
-                    console.error('Save error:', error);
-                    this.showAlert('Error saving data: ' + error.message, 'error');
-                } finally {
-                    saveBtn.innerHTML = originalTxt;
-                    saveBtn.disabled  = false;
-                }
-            },
+        const response = await fetch('/api/parade-data/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date:    this.currentDate,
+                company: companyToSave,
+                data:    this.paradeData
+            })
+        });
 
-            // ─── export ───────────────────────────────────────────────────────────────
-            async exportCSV() {
-                if (!this.currentDate || !this.currentCompany) {
-                    this.showAlert('Please load data first', 'warning'); return;
-                }
-                try {
-                    const company = this.userRole === 'ONCO' ? this.userCompany : this.currentCompany;
-                    const url     = `/api/parade-data/export-csv/${this.currentDate}/${encodeURIComponent(company)}?t=${Date.now()}`;
-                    window.open(url, '_blank');
-                } catch (error) {
-                    console.error('Export error:', error);
-                    this.showAlert('Error exporting CSV', 'error');
-                }
-            },
+        const result = await response.json();
+
+        if (result.success) {
+            this.showAlert(`Data saved successfully for ${this.currentDate}!`, 'success');
+            
+            // Hide quick-update banner after save
+            const banner = document.getElementById('quickUpdateBanner');
+            if (banner) banner.classList.add('d-none');
+
+            // Optional: Switch to view mode after saving for ONCO
+            if (this.userRole === 'ONCO') {
+                this.currentMode = 'view';
+                this.renderTable();
+                
+            }
+        } else {
+            this.showAlert(result.error || 'Failed to save data', 'error');
+        }
+    } catch (error) {
+        console.error('Save error:', error);
+        this.showAlert('Error saving data: ' + error.message, 'error');
+    } finally {
+        saveBtn.innerHTML = originalTxt;
+        saveBtn.disabled  = false;
+    }
+},
 
             refreshData() {
                 if (this.currentMode && this.currentDate && this.currentCompany) this.loadData();
@@ -1517,26 +1524,7 @@
                 return data;
             },
 
-            // ─── status bar ───────────────────────────────────────────────────────────
-            updateStatusBar() {
-                const statusBar   = document.getElementById('statusBar');
-                const modeDisplay = document.getElementById('modeDisplay');
-                const roleDisplay = document.getElementById('roleDisplay');
-                const companyDisp = document.getElementById('companyDisplay');
-                const dateDisp    = document.getElementById('dateDisplay');
-
-                if (statusBar)   statusBar.classList.remove('d-none');
-                if (modeDisplay) {
-                    modeDisplay.textContent = this.currentMode === 'edit' ? 'EDIT MODE' : 'VIEW MODE';
-                    modeDisplay.className   = `badge mode-badge ${this.currentMode === 'edit' ? 'bg-success' : 'bg-info'}`;
-                }
-                if (roleDisplay) {
-                    roleDisplay.textContent = this.userRole;
-                    roleDisplay.className   = `badge role-badge ${this.userRole === 'O CENTRE NCO' ? 'bg-primary' : 'bg-warning'}`;
-                }
-                if (companyDisp) companyDisp.textContent = this.currentCompany;
-                if (dateDisp)    dateDisp.textContent    = this.currentDate;
-            },
+         
 
             showLoading(show) {
                 const spinner = document.getElementById('loadingSpinner');

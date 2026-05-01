@@ -667,6 +667,9 @@ def assign_personnel():
                     DELETE FROM personnel
                     WHERE army_number = %s
                 """, (pid,))
+                cursor.execute("""
+                DELETE FROM weight_info where army_number = %s
+                               """,(pid,))
 
             elif action_type == "td":
 
@@ -1889,7 +1892,11 @@ def dashboard_summary():
 
         # 2️⃣ Manpower Count (Rank-wise - Aggregated for latest available date)
         # Get the latest reporting date across all companies (if Admin) or for specific company
-        date_query = "SELECT MAX(report_date) as max_date FROM parade_state_daily"
+        date_query = """
+SELECT report_date as max_date
+FROM parade_state_daily
+WHERE report_date = CURRENT_DATE
+"""
         date_params = []
         if company != "Admin":
             date_query += " WHERE company = %s"
@@ -2974,20 +2981,20 @@ def save_parade_data():
             requested_date = datetime.strptime(report_date_str, '%Y-%m-%d').date()
             today_date = date.today()
             
-            if requested_date != today_date:
-                return jsonify({
-                    'success': False,
-                    'error': 'ONCO can only save data for today'
-                }), 400
+            # if requested_date != today_date:
+            #     return jsonify({
+            #         'success': False,
+            #         'error': 'ONCO can only save data for today'
+            #     }), 400
         
         # Validate date is not in future for any user
         requested_date = datetime.strptime(report_date_str, '%Y-%m-%d').date()
         today_date = date.today()
-        if requested_date > today_date:
-            return jsonify({
-                'success': False,
-                'error': 'Cannot save data for future dates'
-            }), 400
+        # if requested_date > today_date:
+        #     return jsonify({
+        #         'success': False,
+        #         'error': 'Cannot save data for future dates'
+        #     }), 400
         
         print(f"DEBUG: Saving data for date: {report_date_str}, company: {final_company}, user role: {user_role}")
         

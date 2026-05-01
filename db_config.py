@@ -4,7 +4,7 @@ from imports import *
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'qaz123QAZ!@#',
+    'password': 'yawar@123',
     'database': 'hrms',
     'port': 3306
 }
